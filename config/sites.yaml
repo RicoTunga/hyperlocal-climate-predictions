@@ -1,0 +1,21 @@
+# One entry per study site. Code should read sites from here, never hard-code coordinates.
+# Bounding box order: lon_min, lon_max, lat_min, lat_max
+period:
+  start: 2016-01-01
+  end: 2025-12-31
+
+sites:
+  nakuru:
+    name: Nakuru County (pilot)
+    bbox: {lon_min: 35.50, lon_max: 36.65, lat_min: -1.10, lat_max: 0.30}
+    points:                      # representative grid points (fill in after exploring data)
+      - {name: nakuru_centre, lat: -0.30, lon: 36.07}
+  busia:
+    name: Busia (station data from Mr Solomon)
+    bbox: {lon_min: 33.90, lon_max: 34.30, lat_min: 0.25, lat_max: 0.65}   # PLACEHOLDER: replace with real coordinates
+    points:
+      - {name: busia_town, lat: 0.46, lon: 34.11}                          # PLACEHOLDER
+
+forecast:
+  horizons: [1, 2, 3, 4, 5, 6, 7]
+  targets: [precip_mm, rh_pct]

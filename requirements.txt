@@ -1,0 +1,29 @@
+# Core data + ML
+pandas
+numpy
+pyarrow
+scikit-learn
+xgboost
+lightgbm
+catboost
+optuna
+shap
+matplotlib
+
+# Data acquisition
+xarray
+netCDF4
+cdsapi
+earthengine-api
+requests
+pyyaml
+python-dotenv
+
+# Notebooks
+ipykernel
+jupyter
+
+# Added later (dashboard phase)
+# streamlit
+# streamlit-authenticator
+# psycopg2-binary
