@@ -1,5 +1,12 @@
-# One entry per study site. Code should read sites from here, never hard-code coordinates.
-# Bounding box order: lon_min, lon_max, lat_min, lat_max
+# Study sites. Code reads locations from here; never hard-code coordinates.
+#
+# bbox        = study box (lon/lat degrees). Used for CHIRPS and for the pixels we model.
+#               Snapped OUTWARD to the 0.05 deg CHIRPS grid so it covers the whole county.
+# era5_area   = ERA5 download area. Snapped OUTWARD to the 0.25 deg ERA5 grid, then padded
+#               by one extra ERA5 cell so edge pixels have ERA5 neighbours to interpolate from.
+#               cdsapi wants [north, west, south, east].
+# official_*  = where the numbers came from (kept so the methodology chapter can cite them).
+
 period:
   start: 2016-01-01
   end: 2025-12-31
@@ -7,14 +14,23 @@ period:
 sites:
   nakuru:
     name: Nakuru County (pilot)
-    bbox: {lon_min: 35.50, lon_max: 36.65, lat_min: -1.10, lat_max: 0.30}
-    points:                      # representative grid points (fill in after exploring data)
-      - {name: nakuru_centre, lat: -0.30, lon: 36.07}
+    # Official extent: Nakuru County CIDP 2023-2027, section 1.2 "Position and Size"
+    # (citing the County Spatial Plan 2019-2029):
+    #   lon 35.41 E to 36.60 E, lat 1.16 S to 0.23 N
+    official_extent: {lon_min: 35.41, lon_max: 36.60, lat_min: -1.16, lat_max: 0.23}
+    bbox: {lon_min: 35.40, lon_max: 36.60, lat_min: -1.20, lat_max: 0.25}
+    era5_area: {north: 0.50, west: 35.00, south: -1.50, east: 37.00}
+
   busia:
-    name: Busia (station data from Mr Solomon)
-    bbox: {lon_min: 33.90, lon_max: 34.30, lat_min: 0.25, lat_max: 0.65}   # PLACEHOLDER: replace with real coordinates
-    points:
-      - {name: busia_town, lat: 0.46, lon: 34.11}                          # PLACEHOLDER
+    name: Busia County, Kenya (station data from Mr Solomon)
+    # WEAKER SOURCE. Busia County's own CIDP gives only "latitude 0 to 0 deg 45 min N and
+    # longitude 34 deg 25 min E" (a single longitude, not a range). The western edge is
+    # estimated from settlement coordinates near the Uganda border (about 33.97 E) and
+    # Busia town (0.463 N, 34.105 E). Treat this box as a generous envelope, not an official
+    # extent. Re-check it once the station coordinates are known.
+    official_extent: {lat_min: 0.0, lat_max: 0.75, lon_reference: 34.42}
+    bbox: {lon_min: 33.90, lon_max: 34.50, lat_min: -0.10, lat_max: 0.80}
+    era5_area: {north: 1.25, west: 33.50, south: -0.50, east: 34.75}
 
 forecast:
   horizons: [1, 2, 3, 4, 5, 6, 7]
