@@ -28,3 +28,18 @@ features:
   tendency_vars: [rh_pct, sp_hpa, t2m_c]   # change since the previous day
   neighbourhood_sizes: [3, 5]        # squares of k x k pixels (3 = ~15 km, 5 = ~25 km)
   pixel_batch: 100                   # pixels processed at a time (memory)
+
+# Model training (src/models/train.py)
+modelling:
+  dev_pixels: 60                 # develop on this many pixels per site, spread evenly over elevation
+  # Early stopping uses the last training year, never the validation year:
+  # fit on train targets before early_stop_start, stop on targets in that year (after gap_days).
+  early_stop_start: 2023-01-01
+  early_stopping_rounds: 100
+  seed: 0
+  params:
+    lightgbm: {n_estimators: 3000, learning_rate: 0.03, num_leaves: 63, min_child_samples: 100,
+               subsample: 0.8, subsample_freq: 1, colsample_bytree: 0.8, verbose: -1}
+    xgboost:  {n_estimators: 3000, learning_rate: 0.03, max_depth: 7, min_child_weight: 10,
+               subsample: 0.8, colsample_bytree: 0.8, tree_method: hist}
+    catboost: {iterations: 3000, learning_rate: 0.05, depth: 7, verbose: 0, allow_writing_files: false}

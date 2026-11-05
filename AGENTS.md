@@ -22,7 +22,7 @@ config/sites.yaml        study sites, boxes, ERA5 areas, period 2016-01-01..2026
 config/experiment.yaml   train/validation/test dates, gap_days, rain thresholds, climatology window
 src/ingestion/           chirps.py, era5.py, elevation.py   (data acquisition)
 src/features/            merge.py (joins sources), build.py (per-pixel features -> data/processed/features_<site>.parquet)
-src/models/              evaluation.py (splits, horizon frames, metrics), baselines.py; training and tuning go here
+src/models/              evaluation.py (splits, horizon frames, metrics), baselines.py, train.py (models per horizon/task/algorithm); tuning goes here
 src/explain/             (empty) SHAP
 app/                     (empty) Streamlit dashboard, built last
 notebooks/               01_data_tour.ipynb
@@ -44,7 +44,7 @@ To rebuild from scratch, in order:
 
 ## Evaluation harness (built)
 
-`src/models/evaluation.py` defines the convention every model must use: a forecast issued on day t (data up to t) is for target day t + h. All horizons are scored on the same target days, `[split start + 7 days, split end]` (validation: 2024-01-08..2024-12-31), which leaves 7 clear days after the last training target. `load_site(site, until=...)` drops later rows on load, so pass the split end, never the test period while developing. `python -m src.models.baselines` scores persistence and per-pixel day-of-year climatology (training years only, +/- 15 days) on validation and writes `reports/baselines_validation.csv`.
+`src/models/evaluation.py` defines the convention every model must use: a forecast issued on day t (data up to t) is for target day t + h. All horizons are scored on the same target days, `[split start + 7 days, split end]` (validation: 2024-01-08..2024-12-31), which leaves 7 clear days after the last training target. `load_site(site, until=...)` drops later rows on load, so pass the split end, never the test period while developing. `python -m src.models.baselines` scores persistence and per-pixel day-of-year climatology (training years only, +/- 15 days) on validation and writes `reports/baselines_validation.csv`. `python -m src.models.train --horizons 1 ...` trains LightGBM, XGBoost and CatBoost on `modelling.dev_pixels` pixels per site (evenly spread over elevation), fits on train targets before 2023, early-stops on 2023 (never on validation), scores on validation next to both baselines on the same rows, and appends to `reports/models_validation.csv`; fitted models go to `models/<site>/h<h>/`.
 
 ## Rules (these protect the validity of the results)
 
