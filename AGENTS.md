@@ -21,7 +21,7 @@ The user is a student. Explain what you do and why, keep code readable and comme
 config/sites.yaml        study sites, boxes, ERA5 areas, period 2016-01-01..2026-09-30, horizons, targets
 config/experiment.yaml   train/validation/test dates, gap_days, rain thresholds, climatology window
 src/ingestion/           chirps.py, era5.py, elevation.py   (data acquisition)
-src/features/            merge.py                            (joins sources; feature code goes here)
+src/features/            merge.py (joins sources), build.py (per-pixel features -> data/processed/features_<site>.parquet)
 src/models/              evaluation.py (splits, horizon frames, metrics), baselines.py; training and tuning go here
 src/explain/             (empty) SHAP
 app/                     (empty) Streamlit dashboard, built last
@@ -40,6 +40,7 @@ To rebuild from scratch, in order:
 2. ERA5: `python test_timeseries.py --site <site> --start 2016-01-01 --end 2026-10-21`, move the downloaded file into `data/raw/era5_manual/<site>/`, then `python -m src.ingestion.era5 --local --site <site>`
 3. `python -m src.ingestion.elevation`
 4. `python -m src.features.merge`
+5. `python -m src.features.build` (72 features, settings in `config/experiment.yaml`; about 1 minute, builds in pixel batches because the laptop has ~8 GB RAM)
 
 ## Evaluation harness (built)
 

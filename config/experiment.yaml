@@ -16,3 +16,15 @@ rain:
 
 climatology:
   window_days: 15              # pool +/- 15 calendar days around each day of year
+
+# Features built by src/features/build.py. Every feature on day t uses data up to day t only.
+features:
+  rain_lags: [1, 3, 7, 14]           # rainfall k days before day t
+  rain_windows: [7, 14]              # rolling mean, std, min, max and wet-day count, ending on day t
+  rain_long_window: 30               # rolling mean only (slow "how wet has it been" signal)
+  era5_vars: [rh_pct, tcc, t2m_c, d2m_c, sp_hpa, wind_ms]
+  era5_lags: [1, 3, 7]
+  era5_windows: [7, 14]              # rolling mean and std
+  tendency_vars: [rh_pct, sp_hpa, t2m_c]   # change since the previous day
+  neighbourhood_sizes: [3, 5]        # squares of k x k pixels (3 = ~15 km, 5 = ~25 km)
+  pixel_batch: 100                   # pixels processed at a time (memory)

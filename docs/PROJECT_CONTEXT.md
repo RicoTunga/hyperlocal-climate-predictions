@@ -83,7 +83,7 @@ DECIDED (Option B): train 2016-2023, validation 2024, final test Jan 2025 to 202
 ## 8. Plan from here
 
 1. DONE (November 2026): baselines (persistence, day-of-year climatology) and the evaluation harness (time-ordered splits, metrics, per horizon); see `src/models/evaluation.py`, `src/models/baselines.py`, `reports/baselines_validation.csv`. Validation 2024 results: for rainfall, climatology beats persistence at every horizon and threshold (Brier at 1 mm: Nakuru 0.177 vs 0.24 to 0.35; Busia 0.237 vs 0.36 to 0.48), so climatology is the bar for rain. For humidity, persistence beats climatology up to day 3 at Nakuru (RMSE 5.4 vs 8.4 % on day 1) and up to day 2 at Busia (5.1 vs 6.3 %).
-2. Feature engineering: per-pixel lags (1, 3, 7, 14 days) and rolling mean/std/min/max (7 and 14 days) of rainfall and ERA5 variables, sine/cosine day of year, pixel latitude, longitude and elevation, regional context (lagged region-wide mean rainfall and humidity). All shifted so day t uses only data up to t.
+2. DONE (November 2026): `src/features/build.py`, 72 features per pixel-day (settings in `config/experiment.yaml`): rainfall lags 1/3/7/14, 7 and 14-day mean/std/min/max and wet-day counts, 30-day mean, days since last wet day; six ERA5 variables (rh, tcc, t2m, d2m, sp, wind) with lags 1/3/7, 7 and 14-day mean/std and day-to-day change for rh, sp, t2m (ERA5 rolling min/max left out to save memory; daily min/max columns exist); regional mean rain, wet-pixel share, humidity and their recent history; 3x3 and 5x5 neighbourhood mean rain; sine/cosine day of year. Regional and neighbourhood features use other pixels on day t, so the spatial hold-out experiment must rebuild them without held-out pixels. Original plan: per-pixel lags (1, 3, 7, 14 days) and rolling mean/std/min/max (7 and 14 days) of rainfall and ERA5 variables, sine/cosine day of year, pixel latitude, longitude and elevation, regional context (lagged region-wide mean rainfall and humidity). All shifted so day t uses only data up to t.
 3. First models (XGBoost, LightGBM, CatBoost) for horizon 1, then all horizons; then Optuna tuning.
 4. SHAP on the best models; spatial hold-out and transfer experiments; compare against Busia station data when available.
 5. Forecast fusion and downstream (disease-risk) indicators if time allows; Streamlit dashboard last.
@@ -111,7 +111,8 @@ DECIDED (Option B): train 2016-2023, validation 2024, final test Jan 2025 to 202
 - Tested only offline on synthetic data: the data-tour notebook, the ERA5 download/split/fallback logic, merge failure detection.
 - Data extended to 2026-09-30 (November 2026) and checked on the real data: expected row counts, identical pixel and date sets across sources, and 2016-2025 values identical to before the extension.
 - Baselines run on the real data (validation 2024). `tests/test_baselines.py` (9 tests, synthetic data) covers the time shifts, leap-year day numbering, split gap, climatology window wrap-around and metrics.
-- Not yet built: features, models, SHAP, dashboard.
+- Features built on the real data for both sites (row counts match, NaN only in the 29-day warm-up, spot checks against independent recalculation PASS). `tests/test_features.py` (8 tests) includes a future-invariance test: changing all data after day T leaves every feature up to T unchanged.
+- Not yet built: models, SHAP, dashboard.
 
 ## Confirmed findings to keep in mind
 - Both sites are bimodal: long rains Mar-May are about 37% of annual rain at each site; Nakuru also has a wet Jun-Sep (~31%) and dry Dec-Feb; Busia has no dry month.
