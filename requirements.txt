@@ -23,6 +23,9 @@ python-dotenv
 ipykernel
 jupyter
 
+# Testing
+pytest
+
 # Added later (dashboard phase)
 # streamlit
 # streamlit-authenticator

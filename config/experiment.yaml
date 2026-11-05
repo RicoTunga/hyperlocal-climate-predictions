@@ -1,0 +1,18 @@
+# Experiment settings: data splits and evaluation choices. Code reads these; never hard-code.
+# Decided in docs/PROJECT_CONTEXT.md section 6 (Option B). Ask before changing.
+
+splits:
+  train:      {start: 2016-01-01, end: 2023-12-31}
+  validation: {start: 2024-01-01, end: 2024-12-31}
+  test:       {start: 2025-01-01, end: 2026-09-30}   # final reporting only; code refuses to touch it
+
+# Minimum number of clear days between the last target day of one split and the first
+# target day of the next (at least the longest forecast horizon).
+gap_days: 7
+
+rain:
+  wet_threshold_mm: 1.0        # wet day = at least 1 mm
+  exceedance_mm: [10, 25]      # also reported
+
+climatology:
+  window_days: 15              # pool +/- 15 calendar days around each day of year

@@ -19,12 +19,15 @@ The user is a student. Explain what you do and why, keep code readable and comme
 
 ```
 config/sites.yaml        study sites, boxes, ERA5 areas, period 2016-01-01..2026-09-30, horizons, targets
+config/experiment.yaml   train/validation/test dates, gap_days, rain thresholds, climatology window
 src/ingestion/           chirps.py, era5.py, elevation.py   (data acquisition)
 src/features/            merge.py                            (joins sources; feature code goes here)
-src/models/              (empty) baselines, training, evaluation, tuning
+src/models/              evaluation.py (splits, horizon frames, metrics), baselines.py; training and tuning go here
 src/explain/             (empty) SHAP
 app/                     (empty) Streamlit dashboard, built last
 notebooks/               01_data_tour.ipynb
+tests/                   pytest tests (run: python -m pytest -q)
+reports/                 small result tables (committed), e.g. baselines_validation.csv
 data/raw, data/processed, models/   git-ignored, rebuilt by the scripts
 ```
 
@@ -38,6 +41,10 @@ To rebuild from scratch, in order:
 3. `python -m src.ingestion.elevation`
 4. `python -m src.features.merge`
 
+## Evaluation harness (built)
+
+`src/models/evaluation.py` defines the convention every model must use: a forecast issued on day t (data up to t) is for target day t + h. All horizons are scored on the same target days, `[split start + 7 days, split end]` (validation: 2024-01-08..2024-12-31), which leaves 7 clear days after the last training target. `load_site(site, until=...)` drops later rows on load, so pass the split end, never the test period while developing. `python -m src.models.baselines` scores persistence and per-pixel day-of-year climatology (training years only, +/- 15 days) on validation and writes `reports/baselines_validation.csv`.
+
 ## Rules (these protect the validity of the results)
 
 1. **Time-series integrity.** Never use random train/test splits or random K-fold. Use time-ordered splits (`TimeSeriesSplit` with a gap of at least the forecast horizon). Features for a prediction made on day t may use only data from day t and earlier. Rolling and lag features must be computed per pixel and must not include the target day. Fit any scaler or imputer inside the training fold only.
@@ -45,7 +52,7 @@ To rebuild from scratch, in order:
 3. **Pixels on the same day are strongly correlated** (storms cover many pixels), so split by time, never by pixel or row, for the main evaluation. Spatial hold-out (unseen pixels) is a separate, additional test.
 4. **Baselines first.** Every model result must be reported next to persistence and day-of-year climatology, per horizon and per target.
 5. **The unit of analysis is the pixel-day.** Do not average over the whole box.
-6. **No hard-coded coordinates or dates.** Read them from `config/sites.yaml`.
+6. **No hard-coded coordinates or dates.** Read them from `config/sites.yaml` (sites, period) and `config/experiment.yaml` (splits).
 7. **Never commit** anything in `data/`, `models/`, `.env`, or credentials. Run `git status` before committing and check no `.parquet`, `.nc` or key files appear.
 8. **Ask before** large downloads, changing `config/sites.yaml`, or changing a decision listed in `docs/PROJECT_CONTEXT.md`.
 9. **Verify, don't assume.** Run what you write on the real data where possible, report the actual output, and say plainly when something was not tested.

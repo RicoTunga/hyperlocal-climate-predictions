@@ -82,7 +82,7 @@ DECIDED (Option B): train 2016-2023, validation 2024, final test Jan 2025 to 202
 
 ## 8. Plan from here
 
-1. Baselines (persistence, day-of-year climatology) and the evaluation harness (time-ordered splits, metrics, per horizon).
+1. DONE (November 2026): baselines (persistence, day-of-year climatology) and the evaluation harness (time-ordered splits, metrics, per horizon); see `src/models/evaluation.py`, `src/models/baselines.py`, `reports/baselines_validation.csv`. Validation 2024 results: for rainfall, climatology beats persistence at every horizon and threshold (Brier at 1 mm: Nakuru 0.177 vs 0.24 to 0.35; Busia 0.237 vs 0.36 to 0.48), so climatology is the bar for rain. For humidity, persistence beats climatology up to day 3 at Nakuru (RMSE 5.4 vs 8.4 % on day 1) and up to day 2 at Busia (5.1 vs 6.3 %).
 2. Feature engineering: per-pixel lags (1, 3, 7, 14 days) and rolling mean/std/min/max (7 and 14 days) of rainfall and ERA5 variables, sine/cosine day of year, pixel latitude, longitude and elevation, regional context (lagged region-wide mean rainfall and humidity). All shifted so day t uses only data up to t.
 3. First models (XGBoost, LightGBM, CatBoost) for horizon 1, then all horizons; then Optuna tuning.
 4. SHAP on the best models; spatial hold-out and transfer experiments; compare against Busia station data when available.
@@ -96,10 +96,11 @@ DECIDED (Option B): train 2016-2023, validation 2024, final test Jan 2025 to 202
 - Both boxes include land outside the county (and Uganda, for Busia) and lake pixels.
 - The CDS time-series dataset is labelled experimental and ERA5 has a reporting delay, so live inference for a deployed dashboard needs a different input (for example an NWP forecast feed). Not solved yet.
 - `notebooks/01_data_tour.ipynb` was tested on synthetic data and run by the user; sections 3 and 9 outputs were not yet reported back.
+- Evaluation years are wetter than training. Nakuru wet-day share: train 2016-2023 20.1%, validation 2024 24.8%. During the extension data check (area-average monthly totals only, no model results), Jan-Sep 2026 had several months outside the 2016-2025 range (very wet Feb-Mar, dry Jan and Jun-Sep), and ERA5 humidity/cloud agree. Consequences: climatology is a weaker baseline in those years, and probability forecasts calibrated to the training base rate may be miscalibrated. Plan: report test results for 2025 and 2026 separately and by season, and show skill against both baselines. No feature or tuning choice may be based on this test-period check.
 
 ## 10. Gotchas
 
-- The CHIRPS monthly cache is keyed by dates only. If a site box in `config/sites.yaml` changes, delete `data/raw/chirps/<site>/` and the `chirps_<site>.parquet` file before re-running. The ERA5 cache includes a hash of area and variables, so it cannot go stale this way.
+- The CHIRPS monthly cache is keyed by dates only. If a site box in `config/sites.yaml` changes, delete `data/raw/chirps/<site>/` and the `chirps_<site>.parquet` file before re-running. Since November 2026 a chunk is only cached (or reused) if every pixel has every day, so a month fetched before CHIRPS published it in full is refetched. The ERA5 cache includes a hash of area and variables, so it cannot go stale this way.
 - `era5 --local` reads every `.nc` or `.zip` in `data/raw/era5_manual/<site>/` and `data/raw/era5/<site>/`. Do not mix download routes for one site. A zip file may carry a `.nc` extension (the code checks content).
 - Commands run as modules from the repo root. PowerShell quoting: wrap `python -c` code in double quotes with single quotes inside.
 - CDS and Earth Engine licences/accounts are the user's own; the ERA5 licence acceptance and Earth Engine API enablement were already done.
@@ -108,7 +109,9 @@ DECIDED (Option B): train 2016-2023, validation 2024, final test Jan 2025 to 202
 
 - Run on the user's real data: `chirps.py`, `era5.py --local`, `elevation.py`, `merge.py`, `test_access.py`, `test_timeseries.py`. Reports matched expected pixel, day and row counts with zero missing values.
 - Tested only offline on synthetic data: the data-tour notebook, the ERA5 download/split/fallback logic, merge failure detection.
-- Not yet built: baselines, features, models, SHAP, dashboard.
+- Data extended to 2026-09-30 (November 2026) and checked on the real data: expected row counts, identical pixel and date sets across sources, and 2016-2025 values identical to before the extension.
+- Baselines run on the real data (validation 2024). `tests/test_baselines.py` (9 tests, synthetic data) covers the time shifts, leap-year day numbering, split gap, climatology window wrap-around and metrics.
+- Not yet built: features, models, SHAP, dashboard.
 
 ## Confirmed findings to keep in mind
 - Both sites are bimodal: long rains Mar-May are about 37% of annual rain at each site; Nakuru also has a wet Jun-Sep (~31%) and dry Dec-Feb; Busia has no dry month.
