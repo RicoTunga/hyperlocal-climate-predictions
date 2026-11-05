@@ -71,6 +71,13 @@ def fetch_chunk(region: ee.Geometry, proj: ee.Projection, start: str, end: str,
     return df
 
 
+def chunk_complete(df: pd.DataFrame, n_days: int) -> bool:
+    """True if every pixel in the chunk has a value for each of the n_days days."""
+    if df.empty or df["date"].nunique() != n_days:
+        return False
+    return len(df) == df["pixel_id"].nunique() * n_days and not df["precip_mm"].isna().any()
+
+
 def ingest_site(site_key: str, site: dict, start: str, end: str, tag: str) -> None:
     b = site["bbox"]
     region = ee.Geometry.Rectangle([b["lon_min"], b["lat_min"], b["lon_max"], b["lat_max"]])
@@ -87,11 +94,22 @@ def ingest_site(site_key: str, site: dict, start: str, end: str, tag: str) -> No
         e = min(period.end_time.normalize() + pd.Timedelta(days=1),
                 end_ts + pd.Timedelta(days=1))  # end is exclusive in filterDate
         cache = cache_dir / f"{s:%Y%m%d}_{e:%Y%m%d}.parquet"
+        n_days = (e - s).days  # days in [s, e)
         if cache.exists():
-            chunks.append(pd.read_parquet(cache))
-            continue
+            df = pd.read_parquet(cache)
+            # The cache is keyed by dates only. A chunk fetched before CHIRPS had published
+            # the whole month would be short; refetch it instead of reusing it.
+            if chunk_complete(df, n_days):
+                chunks.append(df)
+                continue
+            print(f"  cached chunk {cache.name} is incomplete, refetching")
         print(f"  fetching {s:%Y-%m-%d} to {(e - pd.Timedelta(days=1)):%Y-%m-%d}")
         df = fetch_chunk(region, proj, f"{s:%Y-%m-%d}", f"{e:%Y-%m-%d}")
+        if not chunk_complete(df, n_days):
+            raise SystemExit(
+                f"CHIRPS returned {df['date'].nunique()} of {n_days} days for "
+                f"{s:%Y-%m-%d}..{e:%Y-%m-%d} (not published yet?). Not cached. "
+                "Set an earlier period end in config/sites.yaml or wait for CHIRPS.")
         df.to_parquet(cache, index=False)
         chunks.append(df)
 
