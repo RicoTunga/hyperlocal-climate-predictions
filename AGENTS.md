@@ -22,7 +22,7 @@ config/sites.yaml        study sites, boxes, ERA5 areas, period 2016-01-01..2026
 config/experiment.yaml   train/validation/test dates, gap_days, rain thresholds, climatology window
 src/ingestion/           chirps.py, era5.py, elevation.py   (data acquisition)
 src/features/            merge.py (joins sources), build.py (per-pixel features -> data/processed/features_<site>.parquet)
-src/models/              evaluation.py (splits, horizon frames, metrics), baselines.py, train.py (models per horizon/task/algorithm), uncertainty.py (bootstrap intervals), tune.py (Optuna)
+src/models/              evaluation.py (splits, horizon frames, metrics), baselines.py, train.py (models per horizon/task/algorithm), uncertainty.py (bootstrap intervals), tune.py (Optuna), calibration.py (reliability of rain probabilities)
 src/explain/             (empty) SHAP
 app/                     (empty) Streamlit dashboard, built last
 notebooks/               01_data_tour.ipynb
@@ -70,6 +70,7 @@ To rebuild from scratch, in order:
 - Main model: **CatBoost with default settings** (tuning gave no measurable gain). LightGBM and XGBoost are reported as comparisons.
 - Train on **60 pixels per site** (elevation-spread sample) and **score on all pixels**: `python -m src.models.train --algos catboost --pixels 60 --score-pixels all --horizons 1 2 3 4 5 6 7`. Larger training samples gave no consistent gain and nearly ran out of memory on the 8 GB laptop.
 - Runs scored on the same pixels can be compared as paired differences (`uncertainty.py` writes `reports/training_size_ci_validation.csv`).
+- `python -m src.models.calibration` checks the rain probabilities of the decided setup (bias with intervals, calibration slope, Brier decomposition, reliability diagrams in `reports/figures/reliability_validation.png`).
 
 ## Data split (decided, do not change without asking)
 Train 2016-01-01 to 2023-12-31. Validation 2024. Final test 2025-01-01 to 2026-09-30 (about 21 months), touched only for final reporting. Use time-ordered splits with a gap of at least 7 days; never shuffle.
