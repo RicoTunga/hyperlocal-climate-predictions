@@ -50,3 +50,14 @@ uncertainty:
   block_days: 7
   n_boot: 2000
   seed: 0
+
+# Hyperparameter tuning (src/models/tune.py). Uses TRAINING years only: expanding-window
+# cross-validation, each fold fits on targets before eval year Y and scores on Y (after gap_days).
+# The validation year is never loaded during tuning.
+tuning:
+  algo: catboost
+  horizon: 1
+  tasks: [occ1, wet, rh]          # rain probability, wet-day amount, humidity
+  eval_years: [2021, 2022, 2023]
+  n_trials: 20                    # per site x task (~100 s per trial); defaults are always trial 0
+  seed: 0

@@ -37,3 +37,18 @@ def test_targets_are_not_features():
     # no feature column is identical to the target (a sign of leakage)
     for c in cols:
         assert not np.allclose(t[c].fillna(-999).to_numpy(), t["y_rain"].to_numpy()), c
+
+
+def test_runs_with_different_pixel_counts_use_different_folders(tmp_path, monkeypatch):
+    import src.models.train as train
+    import src.models.uncertainty as unc
+    monkeypatch.setattr(train, "MODELS", tmp_path)
+    monkeypatch.setattr(unc, "MODELS", tmp_path)
+    a, b, c = (train.run_dir("busia", 60, 60, 1), train.run_dir("busia", 60, 216, 1),
+               train.run_dir("busia", 216, 216, 1))
+    assert len({a, b, c}) == 3
+    for d in (a, b, c):
+        d.mkdir(parents=True)
+        (d / "val_predictions.parquet").write_bytes(b"")
+    found = {(n_tr, n_sc, h) for n_tr, n_sc, h, _ in unc.prediction_files("busia")}
+    assert found == {(60, 60, 1), (60, 216, 1), (216, 216, 1)}

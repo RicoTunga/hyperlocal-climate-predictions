@@ -1,0 +1,54 @@
+{
+  "busia": {
+    "occ1": {
+      "depth": 4,
+      "learning_rate": 0.06681624849705411,
+      "l2_leaf_reg": 1.090579032931188,
+      "random_strength": 4.800811597918978,
+      "bagging_temperature": 0.5031400049436165,
+      "rsm": 0.389421724551311
+    },
+    "wet": {
+      "depth": 5,
+      "learning_rate": 0.040678950688572156,
+      "l2_leaf_reg": 8.937091893984693,
+      "random_strength": 0.23259346466513084,
+      "bagging_temperature": 1.6737130075840585,
+      "rsm": 0.3612215389383675
+    },
+    "rh": {
+      "depth": 7,
+      "learning_rate": 0.03798824132381809,
+      "l2_leaf_reg": 30.19597713985528,
+      "random_strength": 0.515827521230406,
+      "bagging_temperature": 0.19362473635786007,
+      "rsm": 0.8554302760875109
+    }
+  },
+  "nakuru": {
+    "occ1": {
+      "depth": 7,
+      "learning_rate": 0.03808608003931879,
+      "l2_leaf_reg": 12.878213270051923,
+      "random_strength": 9.220546626692602,
+      "bagging_temperature": 0.5134437127570414,
+      "rsm": 0.6015660011121869
+    },
+    "wet": {
+      "depth": 4,
+      "learning_rate": 0.06141660811103999,
+      "l2_leaf_reg": 1.8116872295002713,
+      "random_strength": 7.556623080070602,
+      "bagging_temperature": 0.23524697083565727,
+      "rsm": 0.6854253137655384
+    },
+    "rh": {
+      "depth": 8,
+      "learning_rate": 0.04234725245300573,
+      "l2_leaf_reg": 23.755460000377127,
+      "random_strength": 0.439844709021156,
+      "bagging_temperature": 1.5416908251362038,
+      "rsm": 0.8806186346081607
+    }
+  }
+}

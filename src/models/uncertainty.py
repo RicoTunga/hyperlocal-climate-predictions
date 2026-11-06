@@ -1,6 +1,7 @@
 """95% confidence intervals for validation skill scores, by a moving-block bootstrap over days.
 
-Run from the repo root after src.models.train (which saves models/<site>/h<h>/val_predictions.parquet):
+Run from the repo root after src.models.train (which saves
+models/<site>/train<N>_score<M>/h<h>/val_predictions.parquet; every saved run is processed):
 
     python -m src.models.uncertainty
 
@@ -35,6 +36,14 @@ ROOT = Path(__file__).resolve().parents[2]
 MODELS = ROOT / "models"
 REPORTS = ROOT / "reports"
 ALGOS = ["lightgbm", "xgboost", "catboost"]
+BASELINES = ["persistence", "climatology"]
+
+
+def model_names(columns) -> list:
+    """Baselines first, then every model that has predictions saved (e.g. catboost_tuned)."""
+    found = sorted({c.split("__")[0] for c in columns if "__" in c} - set(BASELINES))
+    order = [a for a in ALGOS if a in found] + [m for m in found if m not in ALGOS]
+    return [b for b in BASELINES if f"{b}__rh" in columns] + order
 
 
 def block_bootstrap_weights(n_days: int, block: int, n_boot: int, seed: int) -> np.ndarray:
@@ -86,7 +95,7 @@ def bootstrap_site_horizon(pr: pd.DataFrame, W: np.ndarray, wet_mm: float, excee
     n_days = len(uniq)
     assert W.shape[1] == n_days, "weights do not match the number of target days"
     ones = np.ones(n_days)
-    models = [m for m in ["persistence", "climatology"] + ALGOS if f"{m}__rh" in pr.columns]
+    models = model_names(pr.columns)
 
     rows, draws = [], {}
     for spec in task_specs(wet_mm, exceed):
@@ -137,7 +146,8 @@ def paired_differences(draws: dict, point: pd.DataFrame) -> list[dict]:
         return "bss" if target.startswith("rain>=") else "rmse_skill"
 
     targets = sorted({t for _, t in draws})
-    algos = [a for a in ALGOS if any(m == a for m, _ in draws)]
+    names = {m for m, _ in draws} - set(BASELINES)
+    algos = [a for a in ALGOS if a in names] + sorted(names - set(ALGOS))
     for t in targets:
         for a, b in itertools.combinations(algos, 2):
             diff = draws[(a, t)]["skill_vs_climatology"] - draws[(b, t)]["skill_vs_climatology"]
@@ -160,63 +170,73 @@ def fmt(r) -> str:
     return f"{r['estimate']:+.3f} [{r['ci_low']:+.3f},{r['ci_high']:+.3f}]{star}"
 
 
+def prediction_files(site: str) -> list[tuple[int, int, int, Path]]:
+    """(n_train_pixels, n_score_pixels, horizon, file) for every saved run of a site."""
+    out = []
+    for f in sorted((MODELS / site).glob("train*_score*/h*/val_predictions.parquet")):
+        n_train, n_score = (int(x) for x in f.parent.parent.name.replace("train", "").split("_score"))
+        out.append((n_train, n_score, int(f.parent.name[1:]), f))
+    return out
+
+
 def main() -> None:
     sites_cfg, exp = load_configs()
     ucfg, wet_mm, exceed = exp["uncertainty"], exp["rain"]["wet_threshold_mm"], exp["rain"]["exceedance_mm"]
     all_rows, all_diffs = [], []
     for site in sites_cfg["sites"]:
-        for h in sites_cfg["forecast"]["horizons"]:
-            f = MODELS / site / f"h{h}" / "val_predictions.parquet"
-            if not f.exists():
-                print(f"  missing {f} (run src.models.train for this horizon)")
-                continue
+        files = prediction_files(site)
+        if not files:
+            print(f"  no saved predictions for {site} (run src.models.train first)")
+        for n_train, n_score, h, f in files:
             pr = pd.read_parquet(f)
             n_days = pr["target_date"].nunique()
-            # same seed for every site/horizon: the same days are resampled everywhere
+            # same seed everywhere: the same days are resampled for every site, run and horizon
             W = block_bootstrap_weights(n_days, ucfg["block_days"], ucfg["n_boot"], ucfg["seed"])
             rows, draws = bootstrap_site_horizon(pr, W, wet_mm, exceed)
-            point = pd.DataFrame(rows)
-            diffs = paired_differences(draws, point)
+            diffs = paired_differences(draws, pd.DataFrame(rows))
             for r in rows + diffs:
-                r.update(site=site, horizon=h)
+                r.update(site=site, n_train_pixels=n_train, n_score_pixels=n_score, horizon=h)
             all_rows += rows
             all_diffs += diffs
 
-    res = pd.DataFrame(all_rows)
-    dif = pd.DataFrame(all_diffs)
-    lead = ["site", "horizon"]
+    lead = ["site", "n_train_pixels", "n_score_pixels", "horizon"]
+    res, dif = pd.DataFrame(all_rows), pd.DataFrame(all_diffs)
     res = res[lead + [c for c in res.columns if c not in lead]]
     dif = dif[lead + [c for c in dif.columns if c not in lead]]
 
     # consistency check: point estimates must equal those computed in src.models.train
     mv = pd.read_csv(REPORTS / "models_validation.csv")
-    a = res[(res["reference"] == "climatology") & res["model"].isin(ALGOS)]
-    m = a.merge(mv, on=["site", "horizon", "model", "target", "metric"], suffixes=("", "_train"))
+    a = res[(res["reference"] == "climatology") & ~res["model"].isin(BASELINES)]
+    m = a.merge(mv, on=lead + ["model", "target", "metric"], suffixes=("", "_train"))
     max_diff = (m["estimate"] - m["value"]).abs().max()
     print(f"{'PASS ' if max_diff < 1e-6 else 'CHECK'} point estimates match reports/models_validation.csv "
-          f"({len(m)} values, max difference {max_diff:.1g})")
+          f"({len(m)} of {len(a)} values matched, max difference {max_diff:.1g})")
     print(f"bootstrap: {ucfg['n_boot']} resamples of {ucfg['block_days']}-day blocks of target days; "
           "[95% interval], * = interval excludes 0")
 
     show = [("rain>=1mm", "bss"), ("rain>=10mm", "bss"), ("rain>=25mm", "bss"),
             ("rain_mm_wet", "rmse_skill"), ("rh_pct", "rmse_skill")]
-    for site, g in res[(res["reference"] == "climatology")].groupby("site"):
-        for algo in ["lightgbm"]:
-            t = g[g["model"] == algo]
-            tab = pd.DataFrame({f"{tg} {mt}": t[(t["target"] == tg) & (t["metric"] == mt)]
-                                .set_index("horizon").apply(fmt, axis=1) for tg, mt in show})
-            print(f"\n{site}, {algo}: skill vs climatology")
-            print(tab.to_string())
-        dd = dif[dif["site"] == site]
-        sig = dd[(dd["ci_low"] > 0) | (dd["ci_high"] < 0)]
-        algo_sig = sig[~sig["comparison"].str.contains("two-stage")]
-        print(f"  algorithm differences whose interval excludes 0: {len(algo_sig)} of "
-              f"{(~dd['comparison'].str.contains('two-stage')).sum()}"
-              + (f" -> {sorted(set(zip(algo_sig['horizon'], algo_sig['target'], algo_sig['comparison'])))[:6]}"
-                 if len(algo_sig) else ""))
-        ts = dd[dd["comparison"] == "lightgbm: two-stage - direct"].set_index("horizon").apply(fmt, axis=1)
-        print("  lightgbm two-stage minus direct (rmse_skill, all days): "
-              + "; ".join(f"h{h} {v.strip()}" for h, v in ts.items()))
+    clim_ref = res[res["reference"] == "climatology"]
+    for (site, n_train, n_score), g in clim_ref.groupby(["site", "n_train_pixels", "n_score_pixels"]):
+        algo = next((a for a in ["catboost", "lightgbm", "xgboost"] if a in set(g["model"])), None)
+        if algo is None:
+            continue
+        t = g[g["model"] == algo]
+        tab = pd.DataFrame({f"{tg} {mt}": t[(t["target"] == tg) & (t["metric"] == mt)]
+                            .set_index("horizon").apply(fmt, axis=1) for tg, mt in show})
+        print(f"\n{site}, trained on {n_train} / scored on {n_score} pixels, {algo}: skill vs climatology")
+        print(tab.to_string())
+        dd = dif[(dif["site"] == site) & (dif["n_train_pixels"] == n_train) & (dif["n_score_pixels"] == n_score)]
+        pairs = dd[~dd["comparison"].str.contains("two-stage")]
+        sig = pairs[(pairs["ci_low"] > 0) | (pairs["ci_high"] < 0)]
+        print(f"  model differences whose interval excludes 0: {len(sig)} of {len(pairs)}")
+        tuned = pairs[pairs["comparison"].str.contains("_tuned")]
+        if len(tuned):
+            print("  tuned vs default (skill difference vs climatology):")
+            for (h, comp), x in tuned.groupby(["horizon", "comparison"]):
+                print(f"    h{h} {comp}: " + "; ".join(f"{r['target']} {fmt(r).strip()}" for _, r in x.iterrows()
+                                                    if r["target"] in {"rain>=1mm", "rain_mm_wet", "rh_pct",
+                                                                       "rain_mm_all_2stage"}))
 
     REPORTS.mkdir(exist_ok=True)
     res.to_csv(REPORTS / "skill_ci_validation.csv", index=False)
