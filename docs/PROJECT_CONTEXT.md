@@ -135,7 +135,7 @@ DECIDED (Option B): train 2016-2023, validation 2024, final test Jan 2025 to 202
 - Spatial hold-out run on the real data (24 minutes, peak memory 2.0 GB). `tests/test_spatial_holdout.py` (3 tests: blocks partition the grid, the buffer holds, pairing by text labels). 37 tests in total.
 - Transfer test run on the real data (31 seconds). `tests/test_transfer.py` (1 test: the transfer prediction path, including the smearing factor, matches training exactly). 38 tests in total.
 - Final test run and analysed once (section 13).
-- Not yet built: final test scoring, dashboard.
+- Not yet built: dashboard; optional extras (forecast fusion, disease-risk indicators).
 
 ## Confirmed findings to keep in mind
 - Both sites are bimodal: long rains Mar-May are about 37% of annual rain at each site; Nakuru also has a wet Jun-Sep (~31%) and dry Dec-Feb; Busia has no dry month.
