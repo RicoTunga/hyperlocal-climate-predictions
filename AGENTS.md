@@ -23,7 +23,7 @@ config/experiment.yaml   train/validation/test dates, gap_days, rain thresholds,
 src/ingestion/           chirps.py, era5.py, elevation.py   (data acquisition)
 src/features/            merge.py (joins sources), build.py (per-pixel features -> data/processed/features_<site>.parquet)
 src/models/              evaluation.py (splits, horizon frames, metrics), baselines.py, train.py (models per horizon/task/algorithm), uncertainty.py (bootstrap intervals), tune.py (Optuna), calibration.py (reliability of rain probabilities), recalibrate.py (Platt test, not used)
-src/explain/             (empty) SHAP
+src/explain/             shap_analysis.py (SHAP by input group: overall and within-day)
 app/                     (empty) Streamlit dashboard, built last
 notebooks/               01_data_tour.ipynb
 tests/                   pytest tests (run: python -m pytest -q)
