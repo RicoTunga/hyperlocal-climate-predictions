@@ -139,3 +139,17 @@ DECIDED (Option B): train 2016-2023, validation 2024, final test Jan 2025 to 202
 - Both sites are bimodal: long rains Mar-May are about 37% of annual rain at each site; Nakuru also has a wet Jun-Sep (~31%) and dry Dec-Feb; Busia has no dry month.
 - Pixel-vs-region rainfall correlation is 0.62 (Nakuru) and 0.83 (Busia), so add neighbourhood features (lagged nearby-pixel and regional mean rain).
 - Humidity and temperature correlate 0.93-0.98 with the region because ERA5 is smoothly interpolated; do not claim measured microclimate.
+
+## 12. Final test protocol (fixed before the test is run, November 2026)
+
+Written and committed before any test-period forecast was made or scored. The test is run once. If a bug is found afterwards, it is fixed, the test is re-run, and both results are reported.
+
+**Data.** Test targets 2025-01-08 to 2026-09-30 (the first 7 days of 2025 are skipped so the gap after the last early-stopping target, 2024-12-31, is 7 clear days; every horizon is scored on the same days). Issue days from 2025-01-01. The only earlier look at the test period was the area-average monthly rainfall check during the data extension (section 9).
+
+**Models (decided, no changes).** CatBoost (main model), LightGBM and XGBoost with the default settings in `config/experiment.yaml`; no tuning, no recalibration, no feature changes. Same 60 training pixels per site (`dev_pixel_sample`); scored on all pixels. Retrained to include 2024: fit on targets 2016-01-02 to 2023-12-31, early stopping on targets 2024-01-08 to 2024-12-31, per-pixel climatology (as an input and as the baseline) fitted on 2016-2024. All six tasks, horizons 1-7.
+
+**Primary outcomes (declared in advance).** CatBoost, full test period, horizons 1-3, both sites: Brier skill vs climatology for rain >= 1 mm, and RMSE skill vs climatology for humidity, with 95% moving-block bootstrap intervals (7-day blocks over target days).
+
+**Also reported (secondary).** All targets (rain >= 1 / 10 / 25 mm, wet-day amount, direct and two-stage amount, humidity) and horizons 1-7; skill vs persistence too; 2025 and January-September 2026 separately; by season (JF, MAM, JJAS, OND, pooled over years); paired algorithm differences; two-stage vs direct; calibration (bias, slope, reliability) on the test period.
+
+**Expectations stated in advance** (from validation): rain skill clearly above climatology on days 1-2 (Nakuru also day 3), about zero beyond; humidity skilful to about day 3 (Nakuru) and day 6 (Busia). Because 2026 had several months outside the 2016-2025 range (wet February-March, dry June-September), climatology is expected to be a weaker baseline in 2026, which inflates skill vs climatology; this is why persistence is reported too and 2025 and 2026 are shown separately.

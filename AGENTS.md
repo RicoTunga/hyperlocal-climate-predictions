@@ -49,7 +49,7 @@ To rebuild from scratch, in order:
 ## Rules (these protect the validity of the results)
 
 1. **Time-series integrity.** Never use random train/test splits or random K-fold. Use time-ordered splits (`TimeSeriesSplit` with a gap of at least the forecast horizon). Features for a prediction made on day t may use only data from day t and earlier. Rolling and lag features must be computed per pixel and must not include the target day. Fit any scaler or imputer inside the training fold only.
-2. **Keep a final test period untouched** until the very end. Do not tune on it or look at it while developing.
+2. **Keep a final test period untouched** until the very end. Do not tune on it or look at it while developing. The test protocol is fixed in `docs/PROJECT_CONTEXT.md` section 12; follow it exactly.
 3. **Pixels on the same day are strongly correlated** (storms cover many pixels), so split by time, never by pixel or row, for the main evaluation. Spatial hold-out (unseen pixels) is a separate, additional test.
 4. **Baselines first.** Every model result must be reported next to persistence and day-of-year climatology, per horizon and per target.
 5. **The unit of analysis is the pixel-day.** Do not average over the whole box.
