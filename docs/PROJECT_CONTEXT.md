@@ -103,6 +103,7 @@ DECIDED (Option B): train 2016-2023, validation 2024, final test Jan 2025 to 202
 
 - The "truth" is itself gridded: CHIRPS rainfall estimate and ERA5 reanalysis humidity, not gauge readings. Busia station data is the only independent check (pending).
 - ERA5 temperature and pressure come from ERA5's smooth terrain and do not reflect each pixel's true elevation (for example about 747 hPa at a 3,440 m pixel). A lapse-rate correction is a possible later refinement.
+- Busia station data (Mr Solomon): DEFERRED by the user (November 2026); do not plan around it until the user raises it again.
 - Busia shows 50% wet days and rainfall up to about 2,398 mm/yr at some pixels (the county plan says 760 to 2,000 mm). Possibly a CHIRPS characteristic near Lake Victoria; check against station data.
 - Both boxes include land outside the county (and Uganda, for Busia) and lake pixels.
 - The CDS time-series dataset is labelled experimental and ERA5 has a reporting delay, so live inference for a deployed dashboard needs a different input (for example an NWP forecast feed). Not solved yet.
@@ -133,6 +134,7 @@ DECIDED (Option B): train 2016-2023, validation 2024, final test Jan 2025 to 202
 - SHAP run on the real validation data (60 evenly spaced days x all pixels, horizons 1/3/7, tasks rain >= 1 mm, wet-day amount, humidity); SHAP values add up to the model output for every row. `tests/test_shap_analysis.py` (3 tests). 34 tests in total.
 - Spatial hold-out run on the real data (24 minutes, peak memory 2.0 GB). `tests/test_spatial_holdout.py` (3 tests: blocks partition the grid, the buffer holds, pairing by text labels). 37 tests in total.
 - Transfer test run on the real data (31 seconds). `tests/test_transfer.py` (1 test: the transfer prediction path, including the smearing factor, matches training exactly). 38 tests in total.
+- Final test run and analysed once (section 13).
 - Not yet built: final test scoring, dashboard.
 
 ## Confirmed findings to keep in mind
@@ -153,3 +155,25 @@ Written and committed before any test-period forecast was made or scored. The te
 **Also reported (secondary).** All targets (rain >= 1 / 10 / 25 mm, wet-day amount, direct and two-stage amount, humidity) and horizons 1-7; skill vs persistence too; 2025 and January-September 2026 separately; by season (JF, MAM, JJAS, OND, pooled over years); paired algorithm differences; two-stage vs direct; calibration (bias, slope, reliability) on the test period.
 
 **Expectations stated in advance** (from validation): rain skill clearly above climatology on days 1-2 (Nakuru also day 3), about zero beyond; humidity skilful to about day 3 (Nakuru) and day 6 (Busia). Because 2026 had several months outside the 2016-2025 range (wet February-March, dry June-September), climatology is expected to be a weaker baseline in 2026, which inflates skill vs climatology; this is why persistence is reported too and 2025 and 2026 are shown separately.
+
+## 13. Final test results (run once, 6 November 2026, following section 12)
+
+Run as committed: protocol `dffea25`, code `f2f5c23`, plus `57ee9d3` (Nakuru's scoring split into pixel batches for memory after the first attempt was stopped for low RAM; each model trained once; the batch path reproduced the training code's scoring exactly, difference 0, at every horizon; no test result had been seen). Busia's first-run file `reports/test/models_test.csv` was deleted unread. Retrained on 2016-2024 (early stopping on 2024), test targets 2025-01-08 to 2026-09-30, all pixels (696 Nakuru, 216 Busia). Results in `reports/test/` (skill.csv, differences.csv, calibration.csv).
+
+**Primary outcomes** (CatBoost, full test period, skill vs climatology, 95% block-bootstrap intervals):
+
+| Day | Nakuru rain >= 1 mm | Nakuru humidity | Busia rain >= 1 mm | Busia humidity |
+|---|---|---|---|---|
+| 1 | +0.205 [+0.155, +0.258] | +0.521 [+0.472, +0.564] | +0.170 [+0.119, +0.222] | +0.389 [+0.299, +0.454] |
+| 2 | +0.078 [+0.041, +0.116] | +0.313 [+0.249, +0.370] | +0.077 [+0.043, +0.112] | +0.232 [+0.155, +0.288] |
+| 3 | +0.021 [-0.003, +0.046] | +0.227 [+0.158, +0.291] | +0.048 [+0.022, +0.073] | +0.136 [+0.067, +0.193] |
+
+11 of 12 primary outcomes exclude 0; the exception is Nakuru rain on day 3.
+
+**Against the stated expectations.** Rain: skilful on days 1-2 as expected; Nakuru day 3 marginal (expected skilful); Busia better than in validation (day 1 +0.170 vs +0.110; skilful to day 3). Humidity: skilful to day 7 at both sites (expected about day 3 Nakuru, day 6 Busia), partly because 2026 climatology was weak, as anticipated: day-1 Nakuru humidity +0.449 in 2025 vs +0.587 in 2026, Nakuru rain +0.176 vs +0.242. 2025 alone still shows clear day-1 skill everywhere (rain +0.176 / +0.188, humidity +0.449 / +0.393 for Nakuru / Busia). Every season (JF, MAM, JJAS, OND) shows clear day-1 skill at both sites for rain and humidity.
+
+**Secondary.** Against persistence the models are clearly better at every horizon (rain about +0.4 BSS, humidity +0.10 to +0.15 RMSE skill). Algorithms: 51 of 294 paired differences exclude 0; CatBoost won 40, XGBoost 9, LightGBM 2 (confirms decision 6). Two-stage and direct amounts tie at every horizon. Calibration of rain >= 1 mm: no significant bias at either site (Nakuru -0.004 to -0.028, Busia -0.002 to -0.011), slopes mostly 0.9-1.06 (lowest 0.74, Busia day 5); Busia's 2024 overconfidence mostly did not recur, supporting decision 8. Heavy rain (>= 25 mm) skill is small (day 1: Nakuru +0.052, Busia +0.066) and Busia day 7 is slightly worse than climatology (-0.012 [-0.019, -0.000]), as in validation. Wet-day amount: Nakuru skilful at every horizon (+0.189 day 1 to +0.045 day 7), Busia on day 1 only (+0.086).
+
+**Not computable.** 3 of 12,936 values (season JF, rain >= 25 mm, skill vs persistence): some resamples of January-February contain no >= 25 mm day, so the reference error is zero. No primary or main-table value is affected.
+
+**Summary for the write-up.** On 21 months of unseen data the models beat both baselines for rain on days 1-2 (Busia to day 3) and for humidity across the week, with well-calibrated probabilities; skill held up as well as or better than in validation.
