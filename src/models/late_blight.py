@@ -2,7 +2,8 @@
 
 Run from the repo root after src.features.humid_hours --site nakuru:
 
-    python -m src.models.late_blight validate
+    python -m src.models.late_blight validate   # develop on 2024
+    python -m src.models.late_blight test       # POST-HOC check on 2025-01-08..2026-09-30 (final-test config)
 
 Risk rules (decided November 2026; see docs/PROJECT_CONTEXT.md)
 - hutton (main): the Hutton criteria (James Hutton Institute / AHDB, Great Britain's national
@@ -135,19 +136,28 @@ def binary_skill(t: pd.DataFrame, p: np.ndarray, W: np.ndarray, day: np.ndarray,
     return out
 
 
-def validate(sites_cfg: dict, exp: dict) -> None:
+def run(sites_cfg: dict, exp: dict, step: str) -> None:
+    """step 'validate': train 2016-2023, score 2024. step 'test' (POST-HOC): the final-test config
+    (train to 2024-12-31, early stopping on 2024; src.models.final_test.final_config), score the test."""
+    split = "validation" if step == "validate" else "test"
+    if step == "test":
+        from src.models.final_test import final_config
+        exp = final_config(exp)
+    model_dir = "late_blight" if step == "validate" else "late_blight_final"
+    pre = "val" if step == "validate" else "test"
+    report = "validation" if step == "validate" else "test"
     mcfg, ucfg = exp["modelling"], exp["uncertainty"]
     wet_mm, exceed, window = exp["rain"]["wet_threshold_mm"], exp["rain"]["exceedance_mm"], exp["climatology"]["window_days"]
     train_start, train_end = split_bounds(exp, "train")
-    val_start, val_end = split_bounds(exp, "validation")
+    score_start, score_end = split_bounds(exp, split)
     es_start = pd.Timestamp(str(mcfg["early_stop_start"]))
     horizons = sites_cfg["forecast"]["horizons"]
 
     daily = pd.read_parquet(PROCESSED / f"{SITE}_daily.parquet",
                             columns=["pixel_id", "date", "t2m_min_c", "sp_hpa", "elev_mean_m"])
-    daily = daily[daily["date"] <= val_end]
+    daily = daily[daily["date"] <= score_end]
     hours = pd.read_parquet(PROCESSED / f"{SITE}_humid_hours.parquet")
-    labels = risk_labels(daily, hours[hours["date"] <= val_end], train_start, train_end)
+    labels = risk_labels(daily, hours[hours["date"] <= score_end], train_start, train_end)
     elev = daily.drop_duplicates("pixel_id").set_index("pixel_id")["elev_mean_m"]
     del daily, hours
     tr_lab = labels[(labels["date"] >= train_start) & (labels["date"] <= train_end)]
@@ -155,18 +165,18 @@ def validate(sites_cfg: dict, exp: dict) -> None:
     base = pd.DataFrame({r: tr_lab.assign(band=pd.cut(tr_lab["pixel_id"].map(elev), [0, 1800, 2200, 2600, 4000]))
                         .groupby("band", observed=True)[f"met_{r}"].mean() for r in RULES})
     OUT.mkdir(parents=True, exist_ok=True)
-    base.to_csv(OUT / "base_rates.csv")
-    print("base rates 2016-2023 by elevation band (share of days the rule is met):")
+    base.to_csv(OUT / ("base_rates.csv" if step == "validate" else "base_rates_final.csv"))
+    print(f"{step}: base rates {train_start.year}-{train_end.year} by elevation band (share of days the rule is met):")
     print("  " + (100 * base).round(1).to_string().replace("\n", "\n  "))
 
     train_px = dev_pixel_sample(SITE, mcfg["dev_pixels"])
     all_px = dev_pixel_sample(SITE, 10 ** 9)
-    targets = eval_target_dates(exp, "validation", max(horizons))
+    targets = eval_target_dates(exp, split, max(horizons))
     fit_t = lambda h: pd.date_range(train_start + pd.Timedelta(days=h), es_start - pd.Timedelta(days=1))  # noqa: E731
     es_t = pd.date_range(es_start + pd.Timedelta(days=exp["gap_days"]), train_end)
 
     # 1. train every model on the development pixels only (small tables), save, free
-    feat_tr = load_features(SITE, train_px, until=val_end)
+    feat_tr = load_features(SITE, train_px, until=train_end)  # nothing after training
     clim_tr = fit_climatology(feat_tr[(feat_tr["date"] >= train_start) & (feat_tr["date"] <= train_end)],
                               wet_mm, exceed, window)
     lab_tr = labels[labels["pixel_id"].isin(train_px)]
@@ -179,7 +189,7 @@ def validate(sites_cfg: dict, exp: dict) -> None:
             model = make_model("catboost", True, mcfg["params"], mcfg["seed"], mcfg["early_stopping_rounds"])
             model, n_trees[(rule, h)] = fit(model, "catboost", tr[cols], tr["y_risk"].astype(int), es[cols],
                                             es["y_risk"].astype(int), mcfg["early_stopping_rounds"])
-            d = MODELS / SITE / "late_blight" / rule / f"h{h}"
+            d = MODELS / SITE / model_dir / rule / f"h{h}"
             d.mkdir(parents=True, exist_ok=True)
             joblib.dump(model, d / "catboost_risk.joblib")
             print(f"  trained {rule} h{h}: {n_trees[(rule, h)]} trees")
@@ -188,13 +198,13 @@ def validate(sites_cfg: dict, exp: dict) -> None:
 
     # 2. score every pixel of 2024 in batches (memory), saving small per-batch prediction files
     batches = [all_px[i:i + SCORE_BATCH] for i in range(0, len(all_px), SCORE_BATCH)]
-    models = {(r, h): joblib.load(MODELS / SITE / "late_blight" / r / f"h{h}" / "catboost_risk.joblib")
+    models = {(r, h): joblib.load(MODELS / SITE / model_dir / r / f"h{h}" / "catboost_risk.joblib")
               for r in RULES for h in horizons}
     for k, px in enumerate(batches):
         hist = load_features(SITE, px, until=train_end, start=train_start, columns=["pixel_id", "date", "precip_mm", "rh_pct"])
         clim_b = fit_climatology(hist, wet_mm, exceed, window)
         del hist
-        feat_b = load_features(SITE, px, until=val_end, start=val_start)
+        feat_b = load_features(SITE, px, until=score_end, start=score_start)
         lab_b = labels[labels["pixel_id"].isin(px)]
         for rule in RULES:
             for h in horizons:
@@ -202,9 +212,9 @@ def validate(sites_cfg: dict, exp: dict) -> None:
                 m = models[(rule, h)]
                 assert list(m.feature_names_) == risk_columns(va)
                 p = predict(m, va[risk_columns(va)], True)
-                d = MODELS / SITE / "late_blight" / rule / f"h{h}"
+                d = MODELS / SITE / model_dir / rule / f"h{h}"
                 va[["pixel_id", "target_date", "y_risk", "clim_p_risk", "persistence"]].assign(catboost=p).to_parquet(
-                    d / f"val_predictions_part{k}.parquet", index=False)
+                    d / f"{pre}_predictions_part{k}.parquet", index=False)
                 del va
         del feat_b, clim_b, lab_b
         print(f"  scored batch {k + 1} of {len(batches)} ({len(px)} pixels)")
@@ -213,11 +223,11 @@ def validate(sites_cfg: dict, exp: dict) -> None:
     rows, by_band = [], []
     for rule in RULES:
         for h in horizons:
-            d = MODELS / SITE / "late_blight" / rule / f"h{h}"
-            parts = sorted(d.glob("val_predictions_part*.parquet"))
+            d = MODELS / SITE / model_dir / rule / f"h{h}"
+            parts = sorted(d.glob(f"{pre}_predictions_part*.parquet"))
             va = pd.concat([pd.read_parquet(f) for f in parts], ignore_index=True)
             assert va["pixel_id"].nunique() == len(all_px) and not va.duplicated(["pixel_id", "target_date"]).any()
-            va.to_parquet(d / "val_predictions.parquet", index=False)
+            va.to_parquet(d / f"{pre}_predictions.parquet", index=False)
             for f in parts:
                 f.unlink()
             p, n_iter = va["catboost"].to_numpy(), n_trees[(rule, h)]
@@ -235,23 +245,23 @@ def validate(sites_cfg: dict, exp: dict) -> None:
                   f"BSS vs clim {s['bss_vs_climatology']:+.3f} [{s['bss_vs_climatology_low']:+.3f},{s['bss_vs_climatology_high']:+.3f}] | "
                   f"vs persistence {s['bss_vs_persistence']:+.3f} | AUC {s['auc']:.3f} | slope {s['slope']:.2f} | bias {s['bias']:+.3f}")
             del va
-    pd.DataFrame(rows).to_csv(OUT / "validation_skill.csv", index=False)
+    pd.DataFrame(rows).to_csv(OUT / f"{report}_skill.csv", index=False)
     bb = pd.DataFrame(by_band)
-    bb.to_csv(OUT / "validation_by_elevation.csv", index=False)
+    bb.to_csv(OUT / f"{report}_by_elevation.csv", index=False)
     print("\nBSS vs climatology by elevation band (point estimates; base rate in 2024 in brackets):")
     for rule, g in bb.groupby("rule"):
         t = g.assign(v=g.apply(lambda r: f"{r['bss_vs_climatology']:+.3f} ({r['base_rate']:.2f})", axis=1)).pivot(
             index="horizon", columns="band", values="v")
         print(f"  {rule}:\n    " + t.to_string().replace("\n", "\n    "))
-    print(f"\nsaved {OUT / 'validation_skill.csv'}, {OUT / 'validation_by_elevation.csv'}, {OUT / 'base_rates.csv'}")
+    print(f"\nsaved {OUT / (report + '_skill.csv')}, {OUT / (report + '_by_elevation.csv')}")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Potato late-blight risk forecast (Nakuru).")
-    parser.add_argument("step", choices=["validate"])
-    parser.parse_args()
+    parser.add_argument("step", choices=["validate", "test"])
+    args = parser.parse_args()
     sites_cfg, exp = load_configs()
-    validate(sites_cfg, exp)
+    run(sites_cfg, exp, args.step)
 
 
 if __name__ == "__main__":
