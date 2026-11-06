@@ -97,7 +97,7 @@ def decided_run(site: str, n_train: int) -> list[tuple[int, Path]]:
     return sorted((h, f) for n, h, f in files if n == n_score)
 
 
-def analyse(sites_cfg, exp, models=("catboost", "climatology")):
+def analyse(sites_cfg, exp, models=("catboost", "catboost_recal", "climatology")):
     ucfg, wet_mm, exceed = exp["uncertainty"], exp["rain"]["wet_threshold_mm"], exp["rain"]["exceedance_mm"]
     summary, bins = [], []
     for site in sites_cfg["sites"]:
@@ -109,6 +109,8 @@ def analyse(sites_cfg, exp, models=("catboost", "climatology")):
             for thr in [wet_mm] + exceed:
                 y = (pr["y_rain"] >= thr).to_numpy(float)
                 for m in models:
+                    if f"{m}__occ{thr:g}" not in pr.columns:  # e.g. no recalibrated forecasts yet
+                        continue
                     p = pr[f"{m}__occ{thr:g}"].to_numpy(float)
                     bias, lo, hi, b = bootstrap_bias_and_bins(y, p, day, len(uniq), W)
                     slope, intercept = calibration_slope(y, p)
@@ -209,6 +211,11 @@ def main() -> None:
             "clim_bias [95%]": g[g.model == "climatology"].set_index("horizon").apply(fmt, axis=1),
             "clim_slope": g[g.model == "climatology"].set_index("horizon")["slope"].round(2),
         })
+        r = g[g.model == "catboost_recal"].set_index("horizon")
+        if len(r):
+            t["recal_bias [95%]"] = r.apply(fmt, axis=1)
+            t["recal_slope"] = r["slope"].round(2)
+            t["recal_rel"] = r["reliability"].round(4)
         print("  " + t.to_string().replace("\n", "\n  "))
     print(f"\nsaved {REPORTS / 'calibration_validation.csv'}, {REPORTS / 'calibration_bins_validation.csv'}, {fig}")
 
