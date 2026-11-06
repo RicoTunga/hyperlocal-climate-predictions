@@ -248,7 +248,7 @@ def run(sites_cfg: dict, exp: dict, step: str) -> None:
     pd.DataFrame(rows).to_csv(OUT / f"{report}_skill.csv", index=False)
     bb = pd.DataFrame(by_band)
     bb.to_csv(OUT / f"{report}_by_elevation.csv", index=False)
-    print("\nBSS vs climatology by elevation band (point estimates; base rate in 2024 in brackets):")
+    print("\nBSS vs climatology by elevation band (point estimates; base rate in the scored period in brackets):")
     for rule, g in bb.groupby("rule"):
         t = g.assign(v=g.apply(lambda r: f"{r['bss_vs_climatology']:+.3f} ({r['base_rate']:.2f})", axis=1)).pivot(
             index="horizon", columns="band", values="v")
