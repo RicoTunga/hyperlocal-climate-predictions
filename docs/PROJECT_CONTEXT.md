@@ -135,7 +135,8 @@ DECIDED (Option B): train 2016-2023, validation 2024, final test Jan 2025 to 202
 - Spatial hold-out run on the real data (24 minutes, peak memory 2.0 GB). `tests/test_spatial_holdout.py` (3 tests: blocks partition the grid, the buffer holds, pairing by text labels). 37 tests in total.
 - Transfer test run on the real data (31 seconds). `tests/test_transfer.py` (1 test: the transfer prediction path, including the smearing factor, matches training exactly). 38 tests in total.
 - Final test run and analysed once (section 13).
-- Not yet built: dashboard; optional extras (forecast fusion, disease-risk indicators).
+- Forecast fusion tested (section 14): no gain. `tests/test_fusion.py` (3 tests). 43 tests in total.
+- Not yet built: dashboard; optional extra: disease-risk indicator.
 
 ## Confirmed findings to keep in mind
 - Both sites are bimodal: long rains Mar-May are about 37% of annual rain at each site; Nakuru also has a wet Jun-Sep (~31%) and dry Dec-Feb; Busia has no dry month.
@@ -177,3 +178,9 @@ Run as committed: protocol `dffea25`, code `f2f5c23`, plus `57ee9d3` (Nakuru's s
 **Not computable.** 3 of 12,936 values (season JF, rain >= 25 mm, skill vs persistence): some resamples of January-February contain no >= 25 mm day, so the reference error is zero. No primary or main-table value is affected.
 
 **Summary for the write-up.** On 21 months of unseen data the models beat both baselines for rain on days 1-2 (Busia to day 3) and for humidity across the week, with well-calibrated probabilities; skill held up as well as or better than in validation.
+
+## 14. Forecast fusion (optional extra, November 2026)
+
+`src/models/fusion.py`. Methods fixed in advance: `ens` = equal-weight average of CatBoost, LightGBM and XGBoost; `blend_cat` / `blend_ens` = w x (CatBoost or ens) + (1 - w) x climatology, w fitted per site, horizon and task by least squares on 2024 and clipped to [0, 1]. Developed on validation 2024 only (60-pixel scoring, where all three algorithms were scored), blends cross-fitted by odd/even month; the method and the weights fitted on all of 2024 were committed (`1dbe705`) before the test forecasts were used. The test evaluation is POST-HOC: the test period had already been used for the main results (section 13).
+
+Results: no fusion improves on CatBoost alone. Validation 2024 (70 paired comparisons each): ens 1 clearly better / 4 worse, blend_cat 0 / 4, blend_ens 0 / 3. Test (post-hoc, all pixels): ens 1 / 3, blend_cat 1 / 2, blend_ens 1 / 3; the largest gain +0.009 (Nakuru rain day 3), the largest loss -0.028 (Nakuru humidity day 7); Busia day 2-3 rain slightly worse with every fusion (-0.006 to -0.017); all other differences within +/-0.03 and not distinguishable from 0. Why: CatBoost already uses climatology as an input and leans on it at longer horizons (weights mostly 0.85-1.0 on the model; exceptions Busia wet-day amount days 4-7, weight about 0, and Nakuru humidity at long range, about 0.55-0.6), and the three algorithms make very similar forecasts from the same inputs, so averaging cancels little error. Conclusion for the write-up: fusion of models built on the same data adds nothing measurable; real gains would need fusion with a different information source (for example an NWP forecast), listed as future work. CatBoost alone stays the final model.
