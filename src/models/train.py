@@ -21,7 +21,8 @@ Design (AGENTS.md and docs/PROJECT_CONTEXT.md section 6):
 - Developed on `dev_pixels` pixels per site spread evenly over elevation; the baselines are
   rescored on exactly the same rows.
 
-Output: printed report, reports/models_validation.csv, fitted models in models/<site>/h<h>/
+Output: printed report, reports/models_validation.csv, fitted models and validation predictions
+(val_predictions.parquet, used by src/models/uncertainty.py) in models/<site>/h<h>/
 (git-ignored).
 """
 import argparse
@@ -206,6 +207,13 @@ def run_site_horizon(site, feat, clim, h, exp, algos, max_h) -> list[dict]:
             print(f"  top features ({algo}) rain>=1mm: {list(imp_occ.nlargest(8).index)}")
             print(f"  top features ({algo}) humidity:  {list(imp.nlargest(8).index)}")
     print("  " + " | ".join(info))
+
+    # save every validation prediction (models and baselines) for confidence intervals etc.
+    saved = va[["pixel_id", "target_date", "y_rain", "y_rh"]].copy()
+    for name, p in preds.items():
+        for key, arr in p.items():
+            saved[f"{name}__{key}"] = np.asarray(arr, dtype=float)
+    saved.to_parquet(out_dir / "val_predictions.parquet", index=False)
 
     rows = score_all(va, preds, wet_mm, exceed)
     for r in rows:

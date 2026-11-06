@@ -43,3 +43,10 @@ modelling:
     xgboost:  {n_estimators: 3000, learning_rate: 0.03, max_depth: 7, min_child_weight: 10,
                subsample: 0.8, colsample_bytree: 0.8, tree_method: hist}
     catboost: {iterations: 3000, learning_rate: 0.05, depth: 7, verbose: 0, allow_writing_files: false}
+
+# Confidence intervals (src/models/uncertainty.py): moving-block bootstrap over target DAYS
+# (all pixels of a day stay together; consecutive days are resampled in blocks).
+uncertainty:
+  block_days: 7
+  n_boot: 2000
+  seed: 0
