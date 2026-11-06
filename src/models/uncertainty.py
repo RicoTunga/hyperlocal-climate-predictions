@@ -179,6 +179,60 @@ def prediction_files(site: str) -> list[tuple[int, int, int, Path]]:
     return out
 
 
+def combine_runs(frames: dict) -> pd.DataFrame:
+    """Put the predictions of several runs scored on the SAME rows side by side.
+
+    frames: n_train_pixels -> prediction frame. Model columns are renamed to
+    '<model>@train<N>__<task>'; baselines and targets must be identical across runs (same scored
+    pixels, same days, same climatology), which is checked."""
+    keys = ["pixel_id", "target_date"]
+    base_cols = keys + ["y_rain", "y_rh"]
+    out = None
+    for n_train, pr in sorted(frames.items()):
+        pr = pr.sort_values(keys).reset_index(drop=True)
+        baselines = [c for c in pr.columns if c.split("__")[0] in BASELINES]
+        models = [c for c in pr.columns if "__" in c and c not in baselines]
+        renamed = pr[keys + models].rename(
+            columns={c: f"{c.split('__')[0]}@train{n_train}__{c.split('__')[1]}" for c in models})
+        if out is None:
+            out = pr[base_cols + baselines].merge(renamed, on=keys, validate="one_to_one")
+            ref = pr[base_cols + baselines]
+        else:
+            same = pr[base_cols + baselines]
+            if len(same) != len(ref) or not (same[keys].equals(ref[keys])
+                                             and np.allclose(same[base_cols[2:] + baselines].to_numpy(),
+                                                             ref[base_cols[2:] + baselines].to_numpy())):
+                raise ValueError("Runs were not scored on identical rows with identical baselines.")
+            out = out.merge(renamed, on=keys, validate="one_to_one")
+    return out
+
+
+def training_size_comparisons(sites, ucfg, wet_mm, exceed) -> pd.DataFrame:
+    """Paired differences between runs that share the scored pixels but differ in training pixels."""
+    rows = []
+    for site in sites:
+        groups = {}
+        for n_train, n_score, h, f in prediction_files(site):
+            groups.setdefault((n_score, h), {})[n_train] = f
+        for (n_score, h), runs in sorted(groups.items()):
+            if len(runs) < 2:
+                continue
+            pr = combine_runs({n: pd.read_parquet(f) for n, f in runs.items()})
+            W = block_bootstrap_weights(pr["target_date"].nunique(), ucfg["block_days"], ucfg["n_boot"], ucfg["seed"])
+            r, draws = bootstrap_site_horizon(pr, W, wet_mm, exceed)
+            for d in paired_differences(draws, pd.DataFrame(r)):
+                if "@" in d["comparison"] and "two-stage" not in d["comparison"]:
+                    left, right = d["comparison"].split(" - ")
+                    (a, na), (b, nb) = (x.split("@train") for x in (left, right))
+                    if a != b:  # only the same algorithm at different training sizes
+                        continue
+                    if int(na) < int(nb):  # always report "more training pixels minus fewer"
+                        d = {**d, "comparison": f"{right} - {left}", "estimate": -d["estimate"],
+                             "ci_low": -d["ci_high"], "ci_high": -d["ci_low"]}
+                    rows.append({"site": site, "n_score_pixels": n_score, "horizon": h, **d})
+    return pd.DataFrame(rows)
+
+
 def main() -> None:
     sites_cfg, exp = load_configs()
     ucfg, wet_mm, exceed = exp["uncertainty"], exp["rain"]["wet_threshold_mm"], exp["rain"]["exceedance_mm"]
@@ -237,6 +291,17 @@ def main() -> None:
                 print(f"    h{h} {comp}: " + "; ".join(f"{r['target']} {fmt(r).strip()}" for _, r in x.iterrows()
                                                     if r["target"] in {"rain>=1mm", "rain_mm_wet", "rh_pct",
                                                                        "rain_mm_all_2stage"}))
+
+    size = training_size_comparisons(sites_cfg["sites"], ucfg, wet_mm, exceed)
+    if len(size):
+        print("\nmore vs fewer training pixels, same scored pixels and days (skill difference vs climatology):")
+        for (site, n_score, comp), g in size.groupby(["site", "n_score_pixels", "comparison"]):
+            g = g[g["target"].isin(["rain>=1mm", "rain>=10mm", "rain_mm_wet", "rh_pct"])]
+            tab = g.assign(v=g.apply(fmt, axis=1)).pivot(index="horizon", columns="target", values="v")
+            print(f"\n{site}, scored on {n_score} pixels: {comp}")
+            print(tab.to_string())
+        size.to_csv(REPORTS / "training_size_ci_validation.csv", index=False)
+        print(f"saved {REPORTS / 'training_size_ci_validation.csv'} ({len(size)} rows)")
 
     REPORTS.mkdir(exist_ok=True)
     res.to_csv(REPORTS / "skill_ci_validation.csv", index=False)

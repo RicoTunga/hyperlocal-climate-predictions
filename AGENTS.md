@@ -65,5 +65,11 @@ To rebuild from scratch, in order:
 - Rainfall is modelled in **two stages**: probability of rain (>= 1 mm), then amount on wet days (log scale); compare with a single direct model. Metrics: Brier score / ROC-AUC and Brier skill vs climatology for occurrence; MAE and RMSE for amount; RMSE, MAE, R2 for humidity.
 - Extreme rainfall days are real widespread events. **Keep them**; do not delete or cap.
 
+## Modelling decisions (already made)
+
+- Main model: **CatBoost with default settings** (tuning gave no measurable gain). LightGBM and XGBoost are reported as comparisons.
+- Train on **60 pixels per site** (elevation-spread sample) and **score on all pixels**: `python -m src.models.train --algos catboost --pixels 60 --score-pixels all --horizons 1 2 3 4 5 6 7`. Larger training samples gave no consistent gain and nearly ran out of memory on the 8 GB laptop.
+- Runs scored on the same pixels can be compared as paired differences (`uncertainty.py` writes `reports/training_size_ci_validation.csv`).
+
 ## Data split (decided, do not change without asking)
 Train 2016-01-01 to 2023-12-31. Validation 2024. Final test 2025-01-01 to 2026-09-30 (about 21 months), touched only for final reporting. Use time-ordered splits with a gap of at least 7 days; never shuffle.

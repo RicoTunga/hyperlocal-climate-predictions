@@ -64,3 +64,47 @@ def test_interval_contains_estimate_and_identical_models_differ_by_zero():
     diffs = pd.DataFrame(paired_differences(draws, res))
     same = diffs[diffs["comparison"] == "lightgbm - xgboost"]
     assert np.allclose(same[["estimate", "ci_low", "ci_high"]].to_numpy(), 0)
+
+
+def test_combine_runs_pairs_identical_rows_and_rejects_different_ones():
+    from src.models.uncertainty import combine_runs
+    a = make_predictions(seed=0)
+    b = a.copy()
+    b["lightgbm__occ1"] = np.clip(b["lightgbm__occ1"] + 0.05, 0, 1)  # different model, same rows
+    c = combine_runs({60: a, 200: b.sample(frac=1, random_state=0)})  # row order must not matter
+    assert {"lightgbm@train60__occ1", "lightgbm@train200__occ1", "climatology__occ1"} <= set(c.columns)
+    assert len(c) == len(a)
+    W = block_bootstrap_weights(c["target_date"].nunique(), 7, 100, 0)
+    rows, draws = bootstrap_site_horizon(c, W, wet_mm=1.0, exceed=[10])
+    d = pd.DataFrame(paired_differences(draws, pd.DataFrame(rows)))
+    pair = d["comparison"].isin(["lightgbm@train60 - lightgbm@train200", "lightgbm@train200 - lightgbm@train60"])
+    same = d[pair & (d["target"] == "rh_pct")]
+    assert len(same) == 1  # the comparison exists (the check below is not vacuous)
+    assert np.allclose(same[["estimate", "ci_low", "ci_high"]].to_numpy(), 0)  # rh identical in both
+    occ = d[pair & (d["target"] == "rain>=1mm")]
+    assert len(occ) == 1 and abs(occ["estimate"].item()) > 0  # occ1 differs between the runs
+    bad = b.copy()
+    bad["climatology__rh"] += 1.0  # baselines differ -> not the same scoring set
+    with pytest.raises(ValueError):
+        combine_runs({60: a, 200: bad})
+
+
+def test_training_size_comparison_reads_more_minus_fewer(tmp_path, monkeypatch):
+    import src.models.uncertainty as unc
+    monkeypatch.setattr(unc, "MODELS", tmp_path)
+    a = make_predictions(seed=0)
+    b = a.copy()
+    b["lightgbm__occ1"] = np.clip(b["lightgbm__occ1"] + 0.05, 0, 1)
+    for n, pr in [(60, a), (200, b)]:
+        d = tmp_path / "s" / f"train{n}_score300" / "h1"
+        d.mkdir(parents=True)
+        pr.to_parquet(d / "val_predictions.parquet")
+    res = unc.training_size_comparisons(["s"], {"block_days": 7, "n_boot": 100, "seed": 0}, 1.0, [10])
+    assert set(res["comparison"]) == {"lightgbm@train200 - lightgbm@train60",
+                                      "xgboost@train200 - xgboost@train60"}
+    occ = res[(res["comparison"].str.startswith("lightgbm")) & (res["target"] == "rain>=1mm")]
+    # b's occ1 forecast was made worse by +0.05 everywhere -> more-pixels run scores lower
+    direct = (binary_scores((a["y_rain"] >= 1), b["lightgbm__occ1"], a["climatology__occ1"])["bss"]
+              - binary_scores((a["y_rain"] >= 1), a["lightgbm__occ1"], a["climatology__occ1"])["bss"])
+    assert occ["estimate"].item() == pytest.approx(direct)
+    assert occ["ci_low"].item() <= occ["estimate"].item() <= occ["ci_high"].item()
