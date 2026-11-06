@@ -206,7 +206,7 @@ def fit_predict(algo, task, spec, tr, es, pred_rows, cols, params, mcfg, wet_mm)
 
 
 def run_site_horizon(site, feat, clim, h, exp, algos, max_h, tuned=None, score=None,
-                     out_tag=None) -> list[dict]:
+                     out_tag=None, score_split="validation") -> list[dict]:
     """Train on the pixels in `feat`; score on them, or on `score` = (features, climatology) of
     another pixel set (only the validation period is needed for scoring)."""
     mcfg, wet_mm, exceed = exp["modelling"], exp["rain"]["wet_threshold_mm"], exp["rain"]["exceedance_mm"]
@@ -216,13 +216,14 @@ def run_site_horizon(site, feat, clim, h, exp, algos, max_h, tuned=None, score=N
 
     fit_targets = pd.date_range(train_start + pd.Timedelta(days=h), es_start - pd.Timedelta(days=1))
     es_targets = pd.date_range(es_start + pd.Timedelta(days=gap), train_end)
-    val_targets = eval_target_dates(exp, "validation", max_h)
+    # targets of the split being scored (validation while developing; "test" only for the final test)
+    val_targets = eval_target_dates(exp, score_split, max_h)
     tr, es = (horizon_table(feat, clim, h, t) for t in (fit_targets, es_targets))
     va = horizon_table(*(score or (feat, clim)), h, val_targets)
     n_train, n_score = feat["pixel_id"].nunique(), va["pixel_id"].nunique()
     cols = feature_columns(tr)
     print(f"\n  --- horizon {h}: fit {len(tr):,} rows ({fit_targets[0]:%Y-%m-%d}..{fit_targets[-1]:%Y-%m-%d}), "
-          f"early stop {len(es):,} ({es_targets[0]:%Y-%m-%d}..), validation {len(va):,} on {n_score} pixels "
+          f"early stop {len(es):,} ({es_targets[0]:%Y-%m-%d}..), {score_split} {len(va):,} on {n_score} pixels "
           f"({val_targets[0]:%Y-%m-%d}..{val_targets[-1]:%Y-%m-%d}) | {len(cols)} features")
 
     tasks = task_definitions(wet_mm, exceed)
@@ -259,7 +260,7 @@ def run_site_horizon(site, feat, clim, h, exp, algos, max_h, tuned=None, score=N
     for name, p in preds.items():
         for key, arr in p.items():
             saved[f"{name}__{key}"] = np.asarray(arr, dtype=float)
-    f = out_dir / "val_predictions.parquet"
+    f = out_dir / ("val_predictions.parquet" if score_split == "validation" else f"{score_split}_predictions.parquet")
     if f.exists():
         old = pd.read_parquet(f)
         keep = [c for c in old.columns if "__" in c and c not in saved.columns]
@@ -273,7 +274,7 @@ def run_site_horizon(site, feat, clim, h, exp, algos, max_h, tuned=None, score=N
 
     rows = score_all(va, preds, wet_mm, exceed)
     for r in rows:
-        r.update(site=site, horizon=h, split="validation", n_train_pixels=n_train, n_score_pixels=n_score)
+        r.update(site=site, horizon=h, split=score_split, n_train_pixels=n_train, n_score_pixels=n_score)
     return rows
 
 
