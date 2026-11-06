@@ -21,8 +21,8 @@ The user is a student. Explain what you do and why, keep code readable and comme
 config/sites.yaml        study sites, boxes, ERA5 areas, period 2016-01-01..2026-09-30, horizons, targets
 config/experiment.yaml   train/validation/test dates, gap_days, rain thresholds, climatology window
 src/ingestion/           chirps.py, era5.py, elevation.py   (data acquisition)
-src/features/            merge.py (joins sources), build.py (per-pixel features -> data/processed/features_<site>.parquet)
-src/models/              evaluation.py (splits, horizon frames, metrics), baselines.py, train.py (models per horizon/task/algorithm), uncertainty.py (bootstrap intervals), tune.py (Optuna), calibration.py (reliability of rain probabilities), recalibrate.py (Platt test, not used), spatial_holdout.py (2 x 2 block hold-out), transfer.py (one site's models on the other), final_test.py (protocol test), fusion.py (ensemble and climatology blends, no gain)
+src/features/            merge.py (joins sources), build.py (per-pixel features -> data/processed/features_<site>.parquet), humid_hours.py (hours at RH >= 90%, separate file)
+src/models/              evaluation.py (splits, horizon frames, metrics), baselines.py, train.py (models per horizon/task/algorithm), uncertainty.py (bootstrap intervals), tune.py (Optuna), calibration.py (reliability of rain probabilities), recalibrate.py (Platt test, not used), spatial_holdout.py (2 x 2 block hold-out), transfer.py (one site's models on the other), final_test.py (protocol test), fusion.py (ensemble and climatology blends, no gain), late_blight.py (Nakuru late-blight risk)
 src/explain/             shap_analysis.py (SHAP by input group: overall and within-day)
 app/                     (empty) Streamlit dashboard, built last
 notebooks/               01_data_tour.ipynb
