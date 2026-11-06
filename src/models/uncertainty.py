@@ -179,21 +179,24 @@ def prediction_files(site: str) -> list[tuple[int, int, int, Path]]:
     return out
 
 
-def combine_runs(frames: dict) -> pd.DataFrame:
+def combine_runs(frames: dict, keep_models=None) -> pd.DataFrame:
     """Put the predictions of several runs scored on the SAME rows side by side.
 
-    frames: n_train_pixels -> prediction frame. Model columns are renamed to
-    '<model>@train<N>__<task>'; baselines and targets must be identical across runs (same scored
-    pixels, same days, same climatology), which is checked."""
+    frames: label -> prediction frame. A label is a number of training pixels (columns become
+    '<model>@train<N>__<task>') or a text label (columns become '<model>@<label>__<task>').
+    keep_models: optional list of model names to keep (default: all). Baselines and targets must
+    be identical across runs (same scored pixels, same days, same climatology), which is checked."""
     keys = ["pixel_id", "target_date"]
     base_cols = keys + ["y_rain", "y_rh"]
     out = None
-    for n_train, pr in sorted(frames.items()):
+    for label, pr in sorted(frames.items(), key=lambda kv: str(kv[0])):
+        suffix = label if isinstance(label, str) else f"train{label}"
         pr = pr.sort_values(keys).reset_index(drop=True)
         baselines = [c for c in pr.columns if c.split("__")[0] in BASELINES]
-        models = [c for c in pr.columns if "__" in c and c not in baselines]
+        models = [c for c in pr.columns if "__" in c and c not in baselines
+                  and (keep_models is None or c.split("__")[0] in keep_models)]
         renamed = pr[keys + models].rename(
-            columns={c: f"{c.split('__')[0]}@train{n_train}__{c.split('__')[1]}" for c in models})
+            columns={c: f"{c.split('__')[0]}@{suffix}__{c.split('__')[1]}" for c in models})
         if out is None:
             out = pr[base_cols + baselines].merge(renamed, on=keys, validate="one_to_one")
             ref = pr[base_cols + baselines]

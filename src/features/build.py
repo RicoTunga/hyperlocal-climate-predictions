@@ -24,8 +24,10 @@ Features (settings in config/experiment.yaml, section `features`):
   only the neighbours that exist), plus its 7-day mean
 
 Regional and neighbourhood features use the observed values of OTHER pixels on day t. That is
-fine for the main time-split evaluation, but the spatial hold-out experiment must rebuild them
-without the held-out pixels.
+fine for the main time-split evaluation. The spatial hold-out (src/models/spatial_holdout.py) keeps
+them as built: CHIRPS covers every pixel, so a location the model was not trained on still has
+these observations (decided November 2026; a stricter variant would rebuild them without the
+held-out pixels).
 
 Memory: per-pixel features are built and written in batches of pixels, so the full table never
 sits in memory at once (the laptop has about 8 GB RAM).

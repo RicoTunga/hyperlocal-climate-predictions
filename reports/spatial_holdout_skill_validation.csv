@@ -1,0 +1,781 @@
+site,scope,horizon,n_pixels,model,target,metric,reference,estimate,ci_low,ci_high
+nakuru,all pixels,1,696,persistence,rain>=1mm,bss,climatology,-0.36792011403236935,-0.5219036973616209,-0.2157559448135442
+nakuru,all pixels,1,696,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+nakuru,all pixels,1,696,catboost@holdout,rain>=1mm,bss,climatology,0.17584565668903218,0.09760189204581236,0.2556785582819793
+nakuru,all pixels,1,696,catboost@standard,rain>=1mm,bss,climatology,0.20083978163676608,0.12410402211015055,0.2789887044990054
+nakuru,all pixels,1,696,persistence,rain>=10mm,bss,climatology,-0.5524437822815504,-0.7009412645697309,-0.41255334084286277
+nakuru,all pixels,1,696,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+nakuru,all pixels,1,696,catboost@holdout,rain>=10mm,bss,climatology,0.1146275483219239,0.06075625523581632,0.16515669212737163
+nakuru,all pixels,1,696,catboost@standard,rain>=10mm,bss,climatology,0.12457745697329614,0.07100357834382952,0.1745042353647277
+nakuru,all pixels,1,696,persistence,rain>=25mm,bss,climatology,-0.6985745111848389,-0.9157502156209862,-0.5309062096218852
+nakuru,all pixels,1,696,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+nakuru,all pixels,1,696,catboost@holdout,rain>=25mm,bss,climatology,0.05397144530311604,0.015517744217688362,0.0837847504719823
+nakuru,all pixels,1,696,catboost@standard,rain>=25mm,bss,climatology,0.05873208484877268,0.02624796140099379,0.08495323182398007
+nakuru,all pixels,1,696,persistence,rain_mm_wet,rmse_skill,climatology,-0.27782248114069974,-0.4287826922517453,-0.12423624653145732
+nakuru,all pixels,1,696,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,all pixels,1,696,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.14644687805727807,0.07269715260489261,0.2259072521757397
+nakuru,all pixels,1,696,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.147198433121547,0.07320608736554977,0.2263931249065835
+nakuru,all pixels,1,696,persistence,rain_mm_all,rmse_skill,climatology,-0.27516756472179593,-0.3601723881225588,-0.20651552300044052
+nakuru,all pixels,1,696,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,all pixels,1,696,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.05701883120762441,0.02561593376476281,0.08089898205629162
+nakuru,all pixels,1,696,catboost@standard,rain_mm_all,rmse_skill,climatology,0.06429418633613104,0.03707546424931353,0.08641406667774461
+nakuru,all pixels,1,696,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.056649961359078405,0.02949877936524246,0.07954523614253121
+nakuru,all pixels,1,696,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.06716601169616698,0.03915691290768873,0.09256394035071566
+nakuru,all pixels,1,696,persistence,rh_pct,rmse_skill,climatology,0.3627366152221445,0.2953884935322806,0.41927227916583776
+nakuru,all pixels,1,696,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,all pixels,1,696,catboost@holdout,rh_pct,rmse_skill,climatology,0.43173384090373146,0.37068742183640757,0.4810705541134607
+nakuru,all pixels,1,696,catboost@standard,rh_pct,rmse_skill,climatology,0.44079850861244163,0.37956862842842676,0.49042811706383554
+nakuru,SW,1,180,persistence,rain>=1mm,bss,climatology,-0.39961979074523946,-0.5718041450177833,-0.2436684486668874
+nakuru,SW,1,180,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+nakuru,SW,1,180,catboost@holdout,rain>=1mm,bss,climatology,0.17209427721792725,0.0920346065632514,0.24880877672503499
+nakuru,SW,1,180,catboost@standard,rain>=1mm,bss,climatology,0.20308505487396378,0.12326516477833886,0.2788983257532516
+nakuru,SW,1,180,persistence,rain>=10mm,bss,climatology,-0.6090412520759605,-0.7873407202924397,-0.45614188598826044
+nakuru,SW,1,180,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+nakuru,SW,1,180,catboost@holdout,rain>=10mm,bss,climatology,0.10158773309368319,0.05472513602823591,0.1468801757986422
+nakuru,SW,1,180,catboost@standard,rain>=10mm,bss,climatology,0.12975158197670167,0.06815318242951113,0.18282842309604141
+nakuru,SW,1,180,persistence,rain>=25mm,bss,climatology,-0.7504480960708666,-0.9650107442575065,-0.5698896554225569
+nakuru,SW,1,180,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+nakuru,SW,1,180,catboost@holdout,rain>=25mm,bss,climatology,0.054950102771817666,0.02670418592479214,0.08256833084482637
+nakuru,SW,1,180,catboost@standard,rain>=25mm,bss,climatology,0.06330243259527923,0.033947942288822114,0.09123513022162803
+nakuru,SW,1,180,persistence,rain_mm_wet,rmse_skill,climatology,-0.36822171589833697,-0.5575041634450897,-0.1577368430082466
+nakuru,SW,1,180,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SW,1,180,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.15644656502347143,0.06602073182154916,0.2570289851474302
+nakuru,SW,1,180,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.16096416295268634,0.0773866501537722,0.25156676000759376
+nakuru,SW,1,180,persistence,rain_mm_all,rmse_skill,climatology,-0.2972054574876857,-0.37549178625879026,-0.22270838483846994
+nakuru,SW,1,180,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SW,1,180,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.05909221493998562,0.03674847690273596,0.07875930783036282
+nakuru,SW,1,180,catboost@standard,rain_mm_all,rmse_skill,climatology,0.07348386276279806,0.04521050718655531,0.09702182280959425
+nakuru,SW,1,180,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.05225440781809754,0.034618249338477666,0.0701215411472886
+nakuru,SW,1,180,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.07529521080910373,0.04739816368986923,0.09691555209448466
+nakuru,SW,1,180,persistence,rh_pct,rmse_skill,climatology,0.3775201124863973,0.2948019334391525,0.4488400501839435
+nakuru,SW,1,180,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SW,1,180,catboost@holdout,rh_pct,rmse_skill,climatology,0.43643627476347835,0.3629050897223102,0.4968458979654751
+nakuru,SW,1,180,catboost@standard,rh_pct,rmse_skill,climatology,0.45556215100728814,0.38217188875580915,0.5165880934080962
+nakuru,SE,1,180,persistence,rain>=1mm,bss,climatology,-0.2673925255571732,-0.45001554550380213,-0.09717341673713678
+nakuru,SE,1,180,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+nakuru,SE,1,180,catboost@holdout,rain>=1mm,bss,climatology,0.18168062691707376,0.08149255067216041,0.2728339716577229
+nakuru,SE,1,180,catboost@standard,rain>=1mm,bss,climatology,0.22350753046037364,0.13633618359868901,0.3097293176200345
+nakuru,SE,1,180,persistence,rain>=10mm,bss,climatology,-0.46122689678880624,-0.6933536788063477,-0.2544977017074174
+nakuru,SE,1,180,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+nakuru,SE,1,180,catboost@holdout,rain>=10mm,bss,climatology,0.1388351576293444,0.054519079230764274,0.21237986833983966
+nakuru,SE,1,180,catboost@standard,rain>=10mm,bss,climatology,0.13289425437743696,0.06429516288500967,0.1956148128330365
+nakuru,SE,1,180,persistence,rain>=25mm,bss,climatology,-0.5929991725881598,-0.9683163896821816,-0.3279239964624364
+nakuru,SE,1,180,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+nakuru,SE,1,180,catboost@holdout,rain>=25mm,bss,climatology,0.06455263081720164,0.0033317368095343858,0.10848598667431836
+nakuru,SE,1,180,catboost@standard,rain>=25mm,bss,climatology,0.06693748397018784,0.014593434041311045,0.10506355027170114
+nakuru,SE,1,180,persistence,rain_mm_wet,rmse_skill,climatology,-0.27425346727038646,-0.4495683475586212,-0.1102203943498635
+nakuru,SE,1,180,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SE,1,180,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.09038177436286332,-0.0005177198122445044,0.17526298761503778
+nakuru,SE,1,180,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.08060917801904555,-0.009934966715788201,0.16937214686402854
+nakuru,SE,1,180,persistence,rain_mm_all,rmse_skill,climatology,-0.21478017054241594,-0.357378793744021,-0.11461481386036598
+nakuru,SE,1,180,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SE,1,180,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.06449817514582779,0.01656110767170442,0.09347623230640267
+nakuru,SE,1,180,catboost@standard,rain_mm_all,rmse_skill,climatology,0.07080723763272523,0.03808783335440533,0.09773811283588493
+nakuru,SE,1,180,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.062947198920703,0.021622235338243635,0.09354869368032981
+nakuru,SE,1,180,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.06816877245321606,0.03731523441601275,0.09886029321287751
+nakuru,SE,1,180,persistence,rh_pct,rmse_skill,climatology,0.3014090613042625,0.2160880530998239,0.3743354117294661
+nakuru,SE,1,180,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SE,1,180,catboost@holdout,rh_pct,rmse_skill,climatology,0.3906051722488153,0.31110563330122737,0.4556823950867841
+nakuru,SE,1,180,catboost@standard,rh_pct,rmse_skill,climatology,0.39973470313358983,0.3212905407060347,0.46403478868220277
+nakuru,NW,1,168,persistence,rain>=1mm,bss,climatology,-0.5068067639688647,-0.6588784751522497,-0.34857237841337496
+nakuru,NW,1,168,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+nakuru,NW,1,168,catboost@holdout,rain>=1mm,bss,climatology,0.14656912279761347,0.06450374335145036,0.2280064274068713
+nakuru,NW,1,168,catboost@standard,rain>=1mm,bss,climatology,0.15652294684867007,0.07859867405808525,0.23478729345356167
+nakuru,NW,1,168,persistence,rain>=10mm,bss,climatology,-0.6019466170012151,-0.7350012446160132,-0.46754228773147527
+nakuru,NW,1,168,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+nakuru,NW,1,168,catboost@holdout,rain>=10mm,bss,climatology,0.09505377910932811,0.03297080829381566,0.15383362497364134
+nakuru,NW,1,168,catboost@standard,rain>=10mm,bss,climatology,0.10557748580332427,0.050539782823423036,0.1587912662781482
+nakuru,NW,1,168,persistence,rain>=25mm,bss,climatology,-0.7471971216953834,-0.9618673079085358,-0.5696762435340017
+nakuru,NW,1,168,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+nakuru,NW,1,168,catboost@holdout,rain>=25mm,bss,climatology,0.0578788417960866,-0.0048304208935863405,0.10501027325832106
+nakuru,NW,1,168,catboost@standard,rain>=25mm,bss,climatology,0.05496914296107902,0.023352871869540964,0.08187862597214236
+nakuru,NW,1,168,persistence,rain_mm_wet,rmse_skill,climatology,-0.2978182109994376,-0.44952414941237673,-0.14825438259891632
+nakuru,NW,1,168,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NW,1,168,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.17105704291176083,0.10226214331085115,0.24528072696289968
+nakuru,NW,1,168,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.16153858652309283,0.0935972096208514,0.23908964185959572
+nakuru,NW,1,168,persistence,rain_mm_all,rmse_skill,climatology,-0.3105558451688786,-0.3896614257475124,-0.2403415678034452
+nakuru,NW,1,168,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NW,1,168,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.03954712265915694,-0.0032810865500949348,0.07382077630514236
+nakuru,NW,1,168,catboost@standard,rain_mm_all,rmse_skill,climatology,0.04931654558510212,0.01655772949289524,0.07477924345173005
+nakuru,NW,1,168,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.05668092829137639,0.023229151689002848,0.08422299298849416
+nakuru,NW,1,168,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.06297890231397629,0.03251000481416789,0.0889243657015391
+nakuru,NW,1,168,persistence,rh_pct,rmse_skill,climatology,0.40493343886204103,0.3364072848374028,0.4628245142105811
+nakuru,NW,1,168,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NW,1,168,catboost@holdout,rh_pct,rmse_skill,climatology,0.46025828348679787,0.40465911521025316,0.508269817137561
+nakuru,NW,1,168,catboost@standard,rh_pct,rmse_skill,climatology,0.4666399195394698,0.40816631742941156,0.5165469225510727
+nakuru,NE,1,168,persistence,rain>=1mm,bss,climatology,-0.2880176739130087,-0.4738244730587099,-0.11725360755815051
+nakuru,NE,1,168,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+nakuru,NE,1,168,catboost@holdout,rain>=1mm,bss,climatology,0.20529922100663367,0.11224125643025144,0.29390832392834493
+nakuru,NE,1,168,catboost@standard,rain>=1mm,bss,climatology,0.2214890702047464,0.1282954097718902,0.3084581297519057
+nakuru,NE,1,168,persistence,rain>=10mm,bss,climatology,-0.5129573060259551,-0.7021725589701755,-0.32258085065206354
+nakuru,NE,1,168,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+nakuru,NE,1,168,catboost@holdout,rain>=10mm,bss,climatology,0.13047135384085062,0.06171096568383679,0.1963919178067468
+nakuru,NE,1,168,catboost@standard,rain>=10mm,bss,climatology,0.1321929422946736,0.06267769483894027,0.198997083047745
+nakuru,NE,1,168,persistence,rain>=25mm,bss,climatology,-0.7018598849248585,-0.938039642392885,-0.5225289872077492
+nakuru,NE,1,168,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+nakuru,NE,1,168,catboost@holdout,rain>=25mm,bss,climatology,0.032620924143472174,-0.0069291302682108966,0.05928842014310515
+nakuru,NE,1,168,catboost@standard,rain>=25mm,bss,climatology,0.04569755979245882,-0.0026337974453923547,0.08095305313998069
+nakuru,NE,1,168,persistence,rain_mm_wet,rmse_skill,climatology,-0.16963062513449567,-0.33478287728684686,0.00943868703174043
+nakuru,NE,1,168,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NE,1,168,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.1780207082600762,0.09070283434391574,0.28567879426008325
+nakuru,NE,1,168,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.197564116335871,0.10006293761883955,0.3059616109863421
+nakuru,NE,1,168,persistence,rain_mm_all,rmse_skill,climatology,-0.2881317952581519,-0.39221027299517813,-0.19427255039678215
+nakuru,NE,1,168,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NE,1,168,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.06422365835515331,0.03032918925884848,0.09333298123251109
+nakuru,NE,1,168,catboost@standard,rain_mm_all,rmse_skill,climatology,0.06112377923682866,0.020702000109044626,0.09251530132216178
+nakuru,NE,1,168,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.053427384019466895,0.01760021821358351,0.09060792856394102
+nakuru,NE,1,168,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.06051120307611124,0.025333336921797945,0.0943217103263112
+nakuru,NE,1,168,persistence,rh_pct,rmse_skill,climatology,0.3468678812865029,0.27765712442064466,0.40733579917874896
+nakuru,NE,1,168,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NE,1,168,catboost@holdout,rh_pct,rmse_skill,climatology,0.4265522023782523,0.366901608943276,0.4796295960841192
+nakuru,NE,1,168,catboost@standard,rh_pct,rmse_skill,climatology,0.4262919886609621,0.36641133675414955,0.48055801809030185
+nakuru,all pixels,2,696,persistence,rain>=1mm,bss,climatology,-0.6124179498517388,-0.7876437074832772,-0.44580758003545884
+nakuru,all pixels,2,696,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+nakuru,all pixels,2,696,catboost@holdout,rain>=1mm,bss,climatology,0.085016360496325,0.03254501364041953,0.13666844185716212
+nakuru,all pixels,2,696,catboost@standard,rain>=1mm,bss,climatology,0.09631194244692176,0.04164004312132979,0.15014646453886088
+nakuru,all pixels,2,696,persistence,rain>=10mm,bss,climatology,-0.7015166126345929,-0.8628741204179183,-0.5569533482940039
+nakuru,all pixels,2,696,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+nakuru,all pixels,2,696,catboost@holdout,rain>=10mm,bss,climatology,0.04938451135043276,0.017662129788173442,0.07780973279200729
+nakuru,all pixels,2,696,catboost@standard,rain>=10mm,bss,climatology,0.06447305077417254,0.029163955292328906,0.09578518135514624
+nakuru,all pixels,2,696,persistence,rain>=25mm,bss,climatology,-0.8297225481614772,-1.088241317030889,-0.6246406063330293
+nakuru,all pixels,2,696,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+nakuru,all pixels,2,696,catboost@holdout,rain>=25mm,bss,climatology,0.019596182528760275,0.0005778949238689242,0.0346967705793574
+nakuru,all pixels,2,696,catboost@standard,rain>=25mm,bss,climatology,0.025554884025211888,0.0070543813544991256,0.04084367494423181
+nakuru,all pixels,2,696,persistence,rain_mm_wet,rmse_skill,climatology,-0.3386489697001096,-0.48267721045551865,-0.18558329170535026
+nakuru,all pixels,2,696,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,all pixels,2,696,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.10647455038913045,0.043624312477127114,0.1677054926977619
+nakuru,all pixels,2,696,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.10449249161723795,0.04294347358299886,0.16528607126900197
+nakuru,all pixels,2,696,persistence,rain_mm_all,rmse_skill,climatology,-0.3293942157510228,-0.43223016918345697,-0.24424315301713584
+nakuru,all pixels,2,696,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,all pixels,2,696,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.028530414081919586,0.01092955700187333,0.04128307787736338
+nakuru,all pixels,2,696,catboost@standard,rain_mm_all,rmse_skill,climatology,0.024606421972452663,0.009074420674706239,0.03552253206971319
+nakuru,all pixels,2,696,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.030554949103380746,0.01260923202178107,0.04507250647445265
+nakuru,all pixels,2,696,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.03143560424707348,0.01631880571601696,0.043079450164633555
+nakuru,all pixels,2,696,persistence,rh_pct,rmse_skill,climatology,0.12740027964020595,0.0210672899285116,0.22132774532332905
+nakuru,all pixels,2,696,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,all pixels,2,696,catboost@holdout,rh_pct,rmse_skill,climatology,0.22664223396632854,0.15116453307210395,0.29513597723401347
+nakuru,all pixels,2,696,catboost@standard,rh_pct,rmse_skill,climatology,0.23521289118948518,0.1608294476510671,0.3029913826640605
+nakuru,SW,2,180,persistence,rain>=1mm,bss,climatology,-0.670495470378013,-0.8657659811877878,-0.48874979004851304
+nakuru,SW,2,180,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+nakuru,SW,2,180,catboost@holdout,rain>=1mm,bss,climatology,0.06633144736865038,0.01422102752020111,0.11781942038218933
+nakuru,SW,2,180,catboost@standard,rain>=1mm,bss,climatology,0.08215176471573182,0.02637682454446003,0.13627567011720496
+nakuru,SW,2,180,persistence,rain>=10mm,bss,climatology,-0.7424128420923475,-0.916852535266976,-0.5945028224295704
+nakuru,SW,2,180,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+nakuru,SW,2,180,catboost@holdout,rain>=10mm,bss,climatology,0.040266041765599114,0.010688231831073322,0.07064058936523865
+nakuru,SW,2,180,catboost@standard,rain>=10mm,bss,climatology,0.06216817830578947,0.025732888843825536,0.09336434553105513
+nakuru,SW,2,180,persistence,rain>=25mm,bss,climatology,-0.9058714514287491,-1.1431477419515759,-0.713350862171048
+nakuru,SW,2,180,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+nakuru,SW,2,180,catboost@holdout,rain>=25mm,bss,climatology,0.01708849855505057,0.0005196274609897272,0.03430824324293389
+nakuru,SW,2,180,catboost@standard,rain>=25mm,bss,climatology,0.024728829382890116,0.0039828089546212146,0.04357180328126496
+nakuru,SW,2,180,persistence,rain_mm_wet,rmse_skill,climatology,-0.42663112873834885,-0.6154124285636312,-0.21614170804843405
+nakuru,SW,2,180,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SW,2,180,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.1106510469557217,0.030628009440466775,0.19645274460647652
+nakuru,SW,2,180,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.10265764031871827,0.03250471433466277,0.17931959025203986
+nakuru,SW,2,180,persistence,rain_mm_all,rmse_skill,climatology,-0.3539537665963024,-0.44791572845616556,-0.27487224306175795
+nakuru,SW,2,180,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SW,2,180,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.02418724769146441,0.009283316609208244,0.03762999485981165
+nakuru,SW,2,180,catboost@standard,rain_mm_all,rmse_skill,climatology,0.02451175340907108,0.007818009037914053,0.039808168075474853
+nakuru,SW,2,180,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.02216350367918718,0.00661441212433535,0.036758884009991076
+nakuru,SW,2,180,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.0294292116590551,0.013543545656972711,0.04281228212933939
+nakuru,SW,2,180,persistence,rh_pct,rmse_skill,climatology,0.13906142797840604,0.018987320636183906,0.2461309825630763
+nakuru,SW,2,180,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SW,2,180,catboost@holdout,rh_pct,rmse_skill,climatology,0.23072820611237432,0.1440458409977742,0.3097326149187075
+nakuru,SW,2,180,catboost@standard,rh_pct,rmse_skill,climatology,0.24300159472207472,0.15766244508127536,0.32309372753054555
+nakuru,SE,2,180,persistence,rain>=1mm,bss,climatology,-0.5782501236108051,-0.8020990579992108,-0.37545135045115785
+nakuru,SE,2,180,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+nakuru,SE,2,180,catboost@holdout,rain>=1mm,bss,climatology,0.089324918431673,0.026891081925758037,0.1468374783057264
+nakuru,SE,2,180,catboost@standard,rain>=1mm,bss,climatology,0.0935715325571923,0.030921931983601995,0.1547390645891552
+nakuru,SE,2,180,persistence,rain>=10mm,bss,climatology,-0.5998264380881801,-0.8523667318168546,-0.3907304818059705
+nakuru,SE,2,180,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+nakuru,SE,2,180,catboost@holdout,rain>=10mm,bss,climatology,0.07436422319022185,0.02155856966685807,0.1164587563784187
+nakuru,SE,2,180,catboost@standard,rain>=10mm,bss,climatology,0.07352100911215598,0.02984104308772874,0.11115086546618635
+nakuru,SE,2,180,persistence,rain>=25mm,bss,climatology,-0.7352027095594198,-1.1439836394995553,-0.4540156533947266
+nakuru,SE,2,180,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+nakuru,SE,2,180,catboost@holdout,rain>=25mm,bss,climatology,0.026878483738239645,-0.006219552892970004,0.05631801181051961
+nakuru,SE,2,180,catboost@standard,rain>=25mm,bss,climatology,0.029168441450516447,0.004351080307321514,0.04995562780179105
+nakuru,SE,2,180,persistence,rain_mm_wet,rmse_skill,climatology,-0.3398793488519074,-0.48164463246052414,-0.21764234417209832
+nakuru,SE,2,180,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SE,2,180,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.0655963120998786,-0.008663766857153926,0.13180052444444462
+nakuru,SE,2,180,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.06885381997710904,-0.008016865243915395,0.1344742981032458
+nakuru,SE,2,180,persistence,rain_mm_all,rmse_skill,climatology,-0.29324916169406046,-0.45067685667257296,-0.17280882266918568
+nakuru,SE,2,180,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SE,2,180,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.03532188070007092,0.008648500532755088,0.05024509656850973
+nakuru,SE,2,180,catboost@standard,rain_mm_all,rmse_skill,climatology,0.029189449186983296,0.01121947814256939,0.04345146383155005
+nakuru,SE,2,180,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.0411031543499194,0.011954308630780845,0.06020343553897116
+nakuru,SE,2,180,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.03451757894241281,0.01257793326341756,0.05056287248513273
+nakuru,SE,2,180,persistence,rh_pct,rmse_skill,climatology,0.0662323766409626,-0.04711285956090542,0.16829146361838762
+nakuru,SE,2,180,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SE,2,180,catboost@holdout,rh_pct,rmse_skill,climatology,0.19740141097001684,0.10864021271301401,0.2757248219728054
+nakuru,SE,2,180,catboost@standard,rh_pct,rmse_skill,climatology,0.2050730650247372,0.11882772372936595,0.28299851330124853
+nakuru,NW,2,168,persistence,rain>=1mm,bss,climatology,-0.6253021505283918,-0.7975924902771926,-0.4516325235430891
+nakuru,NW,2,168,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+nakuru,NW,2,168,catboost@holdout,rain>=1mm,bss,climatology,0.07797393369054839,0.015559898558625385,0.13930105657107297
+nakuru,NW,2,168,catboost@standard,rain>=1mm,bss,climatology,0.08922840926647535,0.03309540481298385,0.14733923976017177
+nakuru,NW,2,168,persistence,rain>=10mm,bss,climatology,-0.7512978000981969,-0.9202434765506434,-0.5933330777775014
+nakuru,NW,2,168,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+nakuru,NW,2,168,catboost@holdout,rain>=10mm,bss,climatology,0.02388690175256114,-0.020947289399882895,0.06276985964230825
+nakuru,NW,2,168,catboost@standard,rain>=10mm,bss,climatology,0.04879783641842772,0.010742204807540137,0.08356300791524035
+nakuru,NW,2,168,persistence,rain>=25mm,bss,climatology,-0.8577047240780629,-1.148298243833777,-0.613963508444549
+nakuru,NW,2,168,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+nakuru,NW,2,168,catboost@holdout,rain>=25mm,bss,climatology,0.020006726700975808,-0.008964525256591976,0.04247069633990234
+nakuru,NW,2,168,catboost@standard,rain>=25mm,bss,climatology,0.022106477237252675,-0.0006295561907483982,0.042293159457188874
+nakuru,NW,2,168,persistence,rain_mm_wet,rmse_skill,climatology,-0.3855584556858276,-0.5475956372123413,-0.22742218337192785
+nakuru,NW,2,168,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NW,2,168,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.11341217280975369,0.05105810502698585,0.17566381910512818
+nakuru,NW,2,168,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.11174824093388558,0.05432132768363683,0.17660434922561535
+nakuru,NW,2,168,persistence,rain_mm_all,rmse_skill,climatology,-0.34137321515123786,-0.44375651521607506,-0.2506024332833869
+nakuru,NW,2,168,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NW,2,168,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.02353812865247351,0.0033980218852324136,0.03922546584980818
+nakuru,NW,2,168,catboost@standard,rain_mm_all,rmse_skill,climatology,0.015872459226341284,-0.008805545254067192,0.03431806758227265
+nakuru,NW,2,168,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.025597307665407687,0.005459510457662006,0.04276015314291818
+nakuru,NW,2,168,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.026035212955086262,0.0082196854693776,0.0411096917874169
+nakuru,NW,2,168,persistence,rh_pct,rmse_skill,climatology,0.16568800188706145,0.047289275628248854,0.2682740566289438
+nakuru,NW,2,168,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NW,2,168,catboost@holdout,rh_pct,rmse_skill,climatology,0.23768177251037037,0.15915191044608992,0.31162096622596447
+nakuru,NW,2,168,catboost@standard,rh_pct,rmse_skill,climatology,0.2522844107955995,0.17103660987436262,0.3256148921353835
+nakuru,NE,2,168,persistence,rain>=1mm,bss,climatology,-0.5654263791578047,-0.7924297954132548,-0.36701474143920354
+nakuru,NE,2,168,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+nakuru,NE,2,168,catboost@holdout,rain>=1mm,bss,climatology,0.11022045036770556,0.05038822545797828,0.17034359408035138
+nakuru,NE,2,168,catboost@standard,rain>=1mm,bss,climatology,0.1235644565432068,0.05865773089334709,0.18608221679827444
+nakuru,NE,2,168,persistence,rain>=10mm,bss,climatology,-0.6947220948411397,-0.9029915632675394,-0.5089970828175359
+nakuru,NE,2,168,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+nakuru,NE,2,168,catboost@holdout,rain>=10mm,bss,climatology,0.06643928412542088,0.02607319025256012,0.10769581489232523
+nakuru,NE,2,168,catboost@standard,rain>=10mm,bss,climatology,0.07736622718825681,0.02851239863400863,0.12687185147405516
+nakuru,NE,2,168,persistence,rain>=25mm,bss,climatology,-0.8096060737991879,-1.1642955583857102,-0.550371519706994
+nakuru,NE,2,168,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+nakuru,NE,2,168,catboost@holdout,rain>=25mm,bss,climatology,0.012697733271770706,-0.007049994352031913,0.028753519610295118
+nakuru,NE,2,168,catboost@standard,rain>=25mm,bss,climatology,0.026444114771934202,0.004113370175650369,0.04295939866973135
+nakuru,NE,2,168,persistence,rain_mm_wet,rmse_skill,climatology,-0.19995515851734091,-0.36859219510927954,-0.027621790335735034
+nakuru,NE,2,168,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NE,2,168,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.14215316637808872,0.06762218307865354,0.22980310693828476
+nakuru,NE,2,168,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.13965032139323252,0.06758807818021081,0.22171626162131505
+nakuru,NE,2,168,persistence,rain_mm_all,rmse_skill,climatology,-0.3341457479219574,-0.47559829483515953,-0.22061166984109237
+nakuru,NE,2,168,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NE,2,168,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.030283879158021776,0.007828121320982637,0.049883939971728394
+nakuru,NE,2,168,catboost@standard,rain_mm_all,rmse_skill,climatology,0.02838728977592564,0.008277070265973203,0.04446351648238038
+nakuru,NE,2,168,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.03219174930719715,0.012036572528885767,0.052320772324169096
+nakuru,NE,2,168,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.03584787789381849,0.016148089184119842,0.05477239856023524
+nakuru,NE,2,168,persistence,rh_pct,rmse_skill,climatology,0.11855174166310067,0.014103468561148982,0.21540557812534175
+nakuru,NE,2,168,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NE,2,168,catboost@holdout,rh_pct,rmse_skill,climatology,0.23238801921505092,0.15848916949603553,0.3027618406753146
+nakuru,NE,2,168,catboost@standard,rh_pct,rmse_skill,climatology,0.22979542525228025,0.1587590309177596,0.29700691977635774
+nakuru,all pixels,3,696,persistence,rain>=1mm,bss,climatology,-0.7815289529601361,-0.9729430137507242,-0.6074930278651687
+nakuru,all pixels,3,696,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+nakuru,all pixels,3,696,catboost@holdout,rain>=1mm,bss,climatology,0.04892997449689618,0.014197235344297315,0.08256497906685789
+nakuru,all pixels,3,696,catboost@standard,rain>=1mm,bss,climatology,0.04891498975766262,0.01233941233216283,0.08412366508386233
+nakuru,all pixels,3,696,persistence,rain>=10mm,bss,climatology,-0.8318123234984713,-1.0390101774784024,-0.6484596455033519
+nakuru,all pixels,3,696,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+nakuru,all pixels,3,696,catboost@holdout,rain>=10mm,bss,climatology,0.02213738944308763,-0.007836104621657052,0.05303610587728641
+nakuru,all pixels,3,696,catboost@standard,rain>=10mm,bss,climatology,0.02379612530803632,-0.011600992442736052,0.05851259346079046
+nakuru,all pixels,3,696,persistence,rain>=25mm,bss,climatology,-0.8697696892137365,-1.2224425012611244,-0.6207588310827546
+nakuru,all pixels,3,696,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+nakuru,all pixels,3,696,catboost@holdout,rain>=25mm,bss,climatology,0.019485232546759268,0.001307433353003071,0.033973190625754594
+nakuru,all pixels,3,696,catboost@standard,rain>=25mm,bss,climatology,0.024487636820894387,0.0021205073723628647,0.046070148493588925
+nakuru,all pixels,3,696,persistence,rain_mm_wet,rmse_skill,climatology,-0.34593807796556275,-0.48814494066676317,-0.19085148187825512
+nakuru,all pixels,3,696,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,all pixels,3,696,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.07647402975946549,0.02975304648506239,0.1209845110746757
+nakuru,all pixels,3,696,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.08161489410816214,0.031639508903680245,0.12676598257274682
+nakuru,all pixels,3,696,persistence,rain_mm_all,rmse_skill,climatology,-0.3626594019924554,-0.5052775611828441,-0.24724246058025395
+nakuru,all pixels,3,696,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,all pixels,3,696,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.013256200519970007,-0.0026840809010614973,0.02505641001414026
+nakuru,all pixels,3,696,catboost@standard,rain_mm_all,rmse_skill,climatology,0.009920573404383792,-0.003079697510979129,0.019709778225519635
+nakuru,all pixels,3,696,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.018756257383110486,0.003167167466116616,0.03209819320080825
+nakuru,all pixels,3,696,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.01984816421733926,0.0030727036386397483,0.03272563021026254
+nakuru,all pixels,3,696,persistence,rh_pct,rmse_skill,climatology,0.021393451834130217,-0.10082291856986887,0.1351674113369007
+nakuru,all pixels,3,696,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,all pixels,3,696,catboost@holdout,rh_pct,rmse_skill,climatology,0.1380907396277955,0.058594105989290275,0.21304486076833581
+nakuru,all pixels,3,696,catboost@standard,rh_pct,rmse_skill,climatology,0.14631375787374512,0.06820437137824215,0.2200859039218468
+nakuru,SW,3,180,persistence,rain>=1mm,bss,climatology,-0.8158733268284626,-1.0119950873671815,-0.6345071896010273
+nakuru,SW,3,180,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+nakuru,SW,3,180,catboost@holdout,rain>=1mm,bss,climatology,0.043581683576566,0.00647363876554484,0.07883563363801448
+nakuru,SW,3,180,catboost@standard,rain>=1mm,bss,climatology,0.04283123525235155,0.0076662847315313335,0.07603598049345059
+nakuru,SW,3,180,persistence,rain>=10mm,bss,climatology,-0.8735809014910727,-1.0810167974303655,-0.6988090737946374
+nakuru,SW,3,180,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+nakuru,SW,3,180,catboost@holdout,rain>=10mm,bss,climatology,0.01541162768773452,-0.015486619986448158,0.04619611968327836
+nakuru,SW,3,180,catboost@standard,rain>=10mm,bss,climatology,0.019781721823294518,-0.015110584069898476,0.05042033954180215
+nakuru,SW,3,180,persistence,rain>=25mm,bss,climatology,-0.9487468598033375,-1.2906431188985095,-0.6849385514762931
+nakuru,SW,3,180,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+nakuru,SW,3,180,catboost@holdout,rain>=25mm,bss,climatology,0.012431818731843847,-0.007495227907319058,0.03347764191963756
+nakuru,SW,3,180,catboost@standard,rain>=25mm,bss,climatology,0.01848983254419312,0.00011619957119032872,0.03914680116074944
+nakuru,SW,3,180,persistence,rain_mm_wet,rmse_skill,climatology,-0.41547390317505584,-0.6072394875666708,-0.21345366381345654
+nakuru,SW,3,180,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SW,3,180,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.0715435040259913,0.006631952211890138,0.13792673207839481
+nakuru,SW,3,180,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.07027325418056085,0.013492809151972178,0.12755227497858637
+nakuru,SW,3,180,persistence,rain_mm_all,rmse_skill,climatology,-0.39054708963471163,-0.5230257529138348,-0.27662499764369336
+nakuru,SW,3,180,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SW,3,180,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.012552442391232432,-0.004596251367515442,0.028201463114617555
+nakuru,SW,3,180,catboost@standard,rain_mm_all,rmse_skill,climatology,0.006502558821256166,-0.005851541639280855,0.01631181852631832
+nakuru,SW,3,180,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.01312161686926383,-0.0014159139075975101,0.026399558618728603
+nakuru,SW,3,180,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.01700010631661575,0.0015928151491634152,0.029587108832908108
+nakuru,SW,3,180,persistence,rh_pct,rmse_skill,climatology,0.03527795874630457,-0.10741179112528963,0.16555967046784073
+nakuru,SW,3,180,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SW,3,180,catboost@holdout,rh_pct,rmse_skill,climatology,0.1460763136805472,0.05120293606021774,0.2372491492807827
+nakuru,SW,3,180,catboost@standard,rh_pct,rmse_skill,climatology,0.15845978206263311,0.06527984275637493,0.24697495574434325
+nakuru,SE,3,180,persistence,rain>=1mm,bss,climatology,-0.7663250074048309,-1.0224149121614365,-0.5410119584874892
+nakuru,SE,3,180,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+nakuru,SE,3,180,catboost@holdout,rain>=1mm,bss,climatology,0.06530935168654328,0.02094093260790293,0.10721913481361767
+nakuru,SE,3,180,catboost@standard,rain>=1mm,bss,climatology,0.05336155096940154,0.011159249213192389,0.09446879647023676
+nakuru,SE,3,180,persistence,rain>=10mm,bss,climatology,-0.8472222790296513,-1.1594813728461382,-0.572406771074259
+nakuru,SE,3,180,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+nakuru,SE,3,180,catboost@holdout,rain>=10mm,bss,climatology,0.050155632071664624,-0.0005250965400098003,0.09804746933573566
+nakuru,SE,3,180,catboost@standard,rain>=10mm,bss,climatology,0.03885198947786628,-0.007698669961800386,0.08430598876835745
+nakuru,SE,3,180,persistence,rain>=25mm,bss,climatology,-0.8732519859000587,-1.3888168151116222,-0.5217356093870628
+nakuru,SE,3,180,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+nakuru,SE,3,180,catboost@holdout,rain>=25mm,bss,climatology,0.04458273468950302,0.003102236461443836,0.07403557002350739
+nakuru,SE,3,180,catboost@standard,rain>=25mm,bss,climatology,0.038004347478982736,0.00018937507128062307,0.06838470204598524
+nakuru,SE,3,180,persistence,rain_mm_wet,rmse_skill,climatology,-0.35713480238640827,-0.48641029018712095,-0.23532908925883864
+nakuru,SE,3,180,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SE,3,180,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.07051571962826653,0.006664346830092227,0.12191312263763697
+nakuru,SE,3,180,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.07018966809549132,0.0049977320161258085,0.12289187652557074
+nakuru,SE,3,180,persistence,rain_mm_all,rmse_skill,climatology,-0.36024284972829435,-0.5688750683938563,-0.19869364721939803
+nakuru,SE,3,180,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SE,3,180,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.01863118710269296,-0.0016670271858289843,0.032416764625396964
+nakuru,SE,3,180,catboost@standard,rain_mm_all,rmse_skill,climatology,0.012103816615826934,-0.002410698240675818,0.02160918370716096
+nakuru,SE,3,180,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.03180525810165857,0.0056843388975756585,0.050868499835141745
+nakuru,SE,3,180,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.02602834796412279,0.0031426271679506346,0.04209217080609345
+nakuru,SE,3,180,persistence,rh_pct,rmse_skill,climatology,-0.029289027744826557,-0.1631277804181698,0.09160407987545138
+nakuru,SE,3,180,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,SE,3,180,catboost@holdout,rh_pct,rmse_skill,climatology,0.11738148555698358,0.019949486556238245,0.20290846227932197
+nakuru,SE,3,180,catboost@standard,rh_pct,rmse_skill,climatology,0.12418298902361713,0.03219988986599455,0.20880151990101972
+nakuru,NW,3,168,persistence,rain>=1mm,bss,climatology,-0.8137217288473302,-1.0030434050062391,-0.627903245739394
+nakuru,NW,3,168,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+nakuru,NW,3,168,catboost@holdout,rain>=1mm,bss,climatology,0.02208171804613801,-0.012567087686623134,0.05723899555223901
+nakuru,NW,3,168,catboost@standard,rain>=1mm,bss,climatology,0.03634634788411428,-6.855600831179289e-05,0.07173988096832722
+nakuru,NW,3,168,persistence,rain>=10mm,bss,climatology,-0.8160293137220798,-1.0189701740144037,-0.635558338291414
+nakuru,NW,3,168,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+nakuru,NW,3,168,catboost@holdout,rain>=10mm,bss,climatology,-0.0009642098646756025,-0.027702197332168853,0.024324216736721686
+nakuru,NW,3,168,catboost@standard,rain>=10mm,bss,climatology,0.004312774922144991,-0.030906275720016495,0.03671706796253266
+nakuru,NW,3,168,persistence,rain>=25mm,bss,climatology,-0.8217407114683151,-1.172033728026824,-0.56454271394044
+nakuru,NW,3,168,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+nakuru,NW,3,168,catboost@holdout,rain>=25mm,bss,climatology,0.003406997060639516,-0.009305077083498208,0.018479762266341345
+nakuru,NW,3,168,catboost@standard,rain>=25mm,bss,climatology,0.0196225520766401,-0.0011879751461633613,0.04260350446746451
+nakuru,NW,3,168,persistence,rain_mm_wet,rmse_skill,climatology,-0.38892006478936314,-0.5486811995106698,-0.23097426937646356
+nakuru,NW,3,168,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NW,3,168,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.06720279766121773,0.025180341967445962,0.11576106127837746
+nakuru,NW,3,168,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.07801073784952228,0.029902524034069483,0.13006011078484425
+nakuru,NW,3,168,persistence,rain_mm_all,rmse_skill,climatology,-0.35776694472443404,-0.48976048458146765,-0.25261911560280836
+nakuru,NW,3,168,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NW,3,168,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.005264273058541602,-0.011968369825418618,0.018896233171061625
+nakuru,NW,3,168,catboost@standard,rain_mm_all,rmse_skill,climatology,0.005142652038132023,-0.008394887167432991,0.016688121104210443
+nakuru,NW,3,168,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.006069870022606061,-0.007527265764305175,0.01863693956423222
+nakuru,NW,3,168,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.013810453434478509,-0.0009375348503537495,0.026838390876335067
+nakuru,NW,3,168,persistence,rh_pct,rmse_skill,climatology,0.04842314476266396,-0.0950544058521146,0.17341784599456678
+nakuru,NW,3,168,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NW,3,168,catboost@holdout,rh_pct,rmse_skill,climatology,0.14029516437279244,0.05318651165520709,0.22430050542966076
+nakuru,NW,3,168,catboost@standard,rh_pct,rmse_skill,climatology,0.1527570193612543,0.06721953055178924,0.23236732600891438
+nakuru,NE,3,168,persistence,rain>=1mm,bss,climatology,-0.7223877104511045,-0.9509891633566758,-0.5206005678807355
+nakuru,NE,3,168,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+nakuru,NE,3,168,catboost@holdout,rain>=1mm,bss,climatology,0.06664952420488401,0.02483330062048105,0.10670587837918952
+nakuru,NE,3,168,catboost@standard,rain>=1mm,bss,climatology,0.06484815471754013,0.020903739805873893,0.10541356350061903
+nakuru,NE,3,168,persistence,rain>=10mm,bss,climatology,-0.7774147371717575,-1.04722341726148,-0.5500000946509438
+nakuru,NE,3,168,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+nakuru,NE,3,168,catboost@holdout,rain>=10mm,bss,climatology,0.029563563901902845,-0.007937687331191894,0.06515355766485482
+nakuru,NE,3,168,catboost@standard,rain>=10mm,bss,climatology,0.03721023554256364,-0.006744894474088686,0.08335480165916861
+nakuru,NE,3,168,persistence,rain>=25mm,bss,climatology,-0.8126971529882054,-1.272352601686775,-0.509879118527555
+nakuru,NE,3,168,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+nakuru,NE,3,168,catboost@holdout,rain>=25mm,bss,climatology,0.01698076337877108,0.002605961642114482,0.028650413415952664
+nakuru,NE,3,168,catboost@standard,rain>=25mm,bss,climatology,0.02127572795778665,3.2476081607574396e-05,0.04064259252698117
+nakuru,NE,3,168,persistence,rain_mm_wet,rmse_skill,climatology,-0.2200038359728227,-0.393863157831694,-0.04192526994725245
+nakuru,NE,3,168,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NE,3,168,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.09640671955482583,0.03293980939067862,0.15851250023999416
+nakuru,NE,3,168,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.1086193399833063,0.04492184407269203,0.17150201128461
+nakuru,NE,3,168,persistence,rain_mm_all,rmse_skill,climatology,-0.33625890607277453,-0.5141122031982716,-0.20712917447691004
+nakuru,NE,3,168,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NE,3,168,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.01585082444506869,-0.0002627959186801141,0.027356381160808414
+nakuru,NE,3,168,catboost@standard,rain_mm_all,rmse_skill,climatology,0.01663223703780292,0.0007616265805708762,0.02856125931513368
+nakuru,NE,3,168,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.022395443716634267,0.007559155208076448,0.035823898739010665
+nakuru,NE,3,168,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.02176953203703824,0.003417550389860166,0.03589386729098646
+nakuru,NE,3,168,persistence,rh_pct,rmse_skill,climatology,0.013694435241804137,-0.11443916424182793,0.13060939951889344
+nakuru,NE,3,168,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+nakuru,NE,3,168,catboost@holdout,rh_pct,rmse_skill,climatology,0.1424004838553099,0.06485441628592017,0.21707883115438353
+nakuru,NE,3,168,catboost@standard,rh_pct,rmse_skill,climatology,0.1414183596966242,0.06715810201020161,0.21087112323363535
+busia,all pixels,1,216,persistence,rain>=1mm,bss,climatology,-0.5111254396035139,-0.671180581869266,-0.3504360711313981
+busia,all pixels,1,216,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+busia,all pixels,1,216,catboost@holdout,rain>=1mm,bss,climatology,0.09690831113350717,0.018522217724766248,0.17371715324850925
+busia,all pixels,1,216,catboost@standard,rain>=1mm,bss,climatology,0.11021415806323387,0.03519633316927997,0.18663064477884736
+busia,all pixels,1,216,persistence,rain>=10mm,bss,climatology,-0.6131412030087284,-0.7834689109945521,-0.44088151313377716
+busia,all pixels,1,216,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+busia,all pixels,1,216,catboost@holdout,rain>=10mm,bss,climatology,0.04883583939773217,-0.02002738711023951,0.1264858040513774
+busia,all pixels,1,216,catboost@standard,rain>=10mm,bss,climatology,0.05417355297749504,-0.015184473208526584,0.13184172495796487
+busia,all pixels,1,216,persistence,rain>=25mm,bss,climatology,-0.8355603538168723,-1.297810103235267,-0.5327014695791278
+busia,all pixels,1,216,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+busia,all pixels,1,216,catboost@holdout,rain>=25mm,bss,climatology,0.028691742970609946,-0.02825540148816225,0.07972140794319271
+busia,all pixels,1,216,catboost@standard,rain>=25mm,bss,climatology,0.0686523146806075,-0.049722395169400455,0.1694057565514141
+busia,all pixels,1,216,persistence,rain_mm_wet,rmse_skill,climatology,-0.4156425471940608,-0.5661249552210426,-0.3007750445095243
+busia,all pixels,1,216,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+busia,all pixels,1,216,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.06574120271078421,-0.0010919913754942774,0.1150785971814083
+busia,all pixels,1,216,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.06935256331667461,0.0019006484336734886,0.12105887061341686
+busia,all pixels,1,216,persistence,rain_mm_all,rmse_skill,climatology,-0.24889919697459995,-0.3452421438410158,-0.1580910988419787
+busia,all pixels,1,216,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+busia,all pixels,1,216,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.04351696422280538,-0.01611895291193156,0.09786566634770069
+busia,all pixels,1,216,catboost@standard,rain_mm_all,rmse_skill,climatology,0.050620491249461996,-0.011673822469565748,0.10899362240280014
+busia,all pixels,1,216,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.04830936235196792,-0.003172542302469593,0.09373588500494086
+busia,all pixels,1,216,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.05341223615314372,0.001918057386496347,0.09847388732538899
+busia,all pixels,1,216,persistence,rh_pct,rmse_skill,climatology,0.1935498100213504,0.08112319241689483,0.289594193006778
+busia,all pixels,1,216,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+busia,all pixels,1,216,catboost@holdout,rh_pct,rmse_skill,climatology,0.32367276206926776,0.24684479860764644,0.38829759207186465
+busia,all pixels,1,216,catboost@standard,rh_pct,rmse_skill,climatology,0.3273131761266187,0.2489272788545625,0.3942192645597915
+busia,SW,1,54,persistence,rain>=1mm,bss,climatology,-0.4544100689388697,-0.6305259016574317,-0.2921791511208993
+busia,SW,1,54,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+busia,SW,1,54,catboost@holdout,rain>=1mm,bss,climatology,0.11996373174030306,0.037089976216705026,0.1986196536465981
+busia,SW,1,54,catboost@standard,rain>=1mm,bss,climatology,0.1268513065941833,0.04864437273871811,0.20290509802486273
+busia,SW,1,54,persistence,rain>=10mm,bss,climatology,-0.6757026658364005,-0.8857879458987289,-0.46126861251868684
+busia,SW,1,54,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+busia,SW,1,54,catboost@holdout,rain>=10mm,bss,climatology,0.036918816694704426,-0.04393772732909768,0.12147442248156373
+busia,SW,1,54,catboost@standard,rain>=10mm,bss,climatology,0.03674055395746201,-0.038709590335225016,0.11327481391872309
+busia,SW,1,54,persistence,rain>=25mm,bss,climatology,-0.9026390812302945,-1.3884842336970937,-0.5915177031850949
+busia,SW,1,54,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+busia,SW,1,54,catboost@holdout,rain>=25mm,bss,climatology,0.04319764911950319,-0.0194849112636457,0.10860051361082924
+busia,SW,1,54,catboost@standard,rain>=25mm,bss,climatology,0.04958470845903051,-0.040605770133851575,0.13463011679206172
+busia,SW,1,54,persistence,rain_mm_wet,rmse_skill,climatology,-0.4786798169240589,-0.6371746422485435,-0.3470234249929535
+busia,SW,1,54,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+busia,SW,1,54,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.04275843833346382,-0.02045507061355034,0.10077245325099878
+busia,SW,1,54,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.048554604433238446,-0.014491341428114923,0.10599643170319557
+busia,SW,1,54,persistence,rain_mm_all,rmse_skill,climatology,-0.2537705487917714,-0.35744981024528466,-0.15671143763143736
+busia,SW,1,54,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+busia,SW,1,54,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.01562589601117803,-0.05444056972754014,0.07959985421171825
+busia,SW,1,54,catboost@standard,rain_mm_all,rmse_skill,climatology,0.036373678474668325,-0.027916961596283513,0.09940234761417241
+busia,SW,1,54,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.043580786108101566,-0.012955345850417821,0.09833633474723909
+busia,SW,1,54,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.04675929096968068,-0.007840850233881109,0.0985874891890815
+busia,SW,1,54,persistence,rh_pct,rmse_skill,climatology,0.12942122382841026,0.01718599563344119,0.23190010322315316
+busia,SW,1,54,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+busia,SW,1,54,catboost@holdout,rh_pct,rmse_skill,climatology,0.26744676254352406,0.19540998265469142,0.3353182469950043
+busia,SW,1,54,catboost@standard,rh_pct,rmse_skill,climatology,0.27288925285876175,0.20064395375139993,0.3401990101026605
+busia,SE,1,54,persistence,rain>=1mm,bss,climatology,-0.5552170496127089,-0.7289738076889609,-0.38331934356335
+busia,SE,1,54,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+busia,SE,1,54,catboost@holdout,rain>=1mm,bss,climatology,0.0892128119865978,0.011902406982496111,0.1653451017741561
+busia,SE,1,54,catboost@standard,rain>=1mm,bss,climatology,0.11476944031412217,0.03767591316420016,0.1917819350818001
+busia,SE,1,54,persistence,rain>=10mm,bss,climatology,-0.573522236054129,-0.7668514372899905,-0.3910814062056638
+busia,SE,1,54,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+busia,SE,1,54,catboost@holdout,rain>=10mm,bss,climatology,0.06150446979900581,-0.01607854185853471,0.14864683580583682
+busia,SE,1,54,catboost@standard,rain>=10mm,bss,climatology,0.06757166674110171,-0.0059214032265704096,0.14725503995015704
+busia,SE,1,54,persistence,rain>=25mm,bss,climatology,-0.8363097750071475,-1.208112517437716,-0.558087731067206
+busia,SE,1,54,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+busia,SE,1,54,catboost@holdout,rain>=25mm,bss,climatology,0.027199105537024315,-0.049165143014864736,0.10139153321832263
+busia,SE,1,54,catboost@standard,rain>=25mm,bss,climatology,0.04700238193569395,-0.05337582050476048,0.13897337597785214
+busia,SE,1,54,persistence,rain_mm_wet,rmse_skill,climatology,-0.4356363625344246,-0.58091323794591,-0.3224507156177871
+busia,SE,1,54,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+busia,SE,1,54,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.06884166384740609,-0.007581804963801703,0.13480034969578894
+busia,SE,1,54,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.06854402972144524,0.00030328133397946103,0.12656235859053053
+busia,SE,1,54,persistence,rain_mm_all,rmse_skill,climatology,-0.23430532349316224,-0.32095454702134074,-0.1533490635756696
+busia,SE,1,54,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+busia,SE,1,54,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.06460306046742337,0.006479855376511703,0.1178652096156817
+busia,SE,1,54,catboost@standard,rain_mm_all,rmse_skill,climatology,0.04958557301174604,-0.011059009554124866,0.10790832131105246
+busia,SE,1,54,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.05932186397971195,0.003994426484058087,0.11206008255728916
+busia,SE,1,54,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.061615493334152505,0.011198171148019544,0.10724298507517656
+busia,SE,1,54,persistence,rh_pct,rmse_skill,climatology,0.17328810924972549,0.05313218707646799,0.27876785147083616
+busia,SE,1,54,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+busia,SE,1,54,catboost@holdout,rh_pct,rmse_skill,climatology,0.3077638682614904,0.22003877185330234,0.3802405311586456
+busia,SE,1,54,catboost@standard,rh_pct,rmse_skill,climatology,0.3123812508545134,0.22513223232969282,0.3845833139738401
+busia,NW,1,54,persistence,rain>=1mm,bss,climatology,-0.4867443894033081,-0.6602386944929771,-0.3140634708805481
+busia,NW,1,54,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+busia,NW,1,54,catboost@holdout,rain>=1mm,bss,climatology,0.11170207362262652,0.026842724943566144,0.19442747036501135
+busia,NW,1,54,catboost@standard,rain>=1mm,bss,climatology,0.11514675528929652,0.028281111490547302,0.19501539752960642
+busia,NW,1,54,persistence,rain>=10mm,bss,climatology,-0.639099312099846,-0.8352682436926469,-0.4526006863968512
+busia,NW,1,54,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+busia,NW,1,54,catboost@holdout,rain>=10mm,bss,climatology,0.029569612060530992,-0.03919058520197769,0.10831456455891311
+busia,NW,1,54,catboost@standard,rain>=10mm,bss,climatology,0.04649242702067857,-0.02575721331475505,0.12456078333574377
+busia,NW,1,54,persistence,rain>=25mm,bss,climatology,-0.7751655733908467,-1.4100827234845095,-0.38248507693765227
+busia,NW,1,54,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+busia,NW,1,54,catboost@holdout,rain>=25mm,bss,climatology,0.037409947223948525,-0.028804644810428635,0.0895747802697083
+busia,NW,1,54,catboost@standard,rain>=25mm,bss,climatology,0.09013629966331582,-0.046261815116574234,0.20062025168130962
+busia,NW,1,54,persistence,rain_mm_wet,rmse_skill,climatology,-0.34797086368309316,-0.5401058326654647,-0.21357204011866016
+busia,NW,1,54,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+busia,NW,1,54,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.06283921799080017,-0.00657473180374199,0.10607498190280013
+busia,NW,1,54,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.07726397933983309,-0.0021782587020121977,0.12776963853183154
+busia,NW,1,54,persistence,rain_mm_all,rmse_skill,climatology,-0.24418164409894838,-0.38976977678570424,-0.1276971403622369
+busia,NW,1,54,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+busia,NW,1,54,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.049576799560112406,-0.014058071158042312,0.10151972623476363
+busia,NW,1,54,catboost@standard,rain_mm_all,rmse_skill,climatology,0.0638337363479482,-0.007693147765663621,0.12150525594568214
+busia,NW,1,54,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.045789402012177405,-0.0038146219563738814,0.08385211560999124
+busia,NW,1,54,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.05742880340949397,7.096391090671878e-05,0.1009335164425769
+busia,NW,1,54,persistence,rh_pct,rmse_skill,climatology,0.18327033210841115,0.07236375839321123,0.2779075099444177
+busia,NW,1,54,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+busia,NW,1,54,catboost@holdout,rh_pct,rmse_skill,climatology,0.32252618010662515,0.24268325904870267,0.388619684559105
+busia,NW,1,54,catboost@standard,rh_pct,rmse_skill,climatology,0.32463427890549,0.24458453697315152,0.39116884644231903
+busia,NE,1,54,persistence,rain>=1mm,bss,climatology,-0.5474221139476458,-0.7284136380888432,-0.36633904785955784
+busia,NE,1,54,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+busia,NE,1,54,catboost@holdout,rain>=1mm,bss,climatology,0.06698454245798169,-0.021142246419113896,0.1515046811062652
+busia,NE,1,54,catboost@standard,rain>=1mm,bss,climatology,0.08404901814319643,0.0014078345885000676,0.1662543284834991
+busia,NE,1,54,persistence,rain>=10mm,bss,climatology,-0.579344190282455,-0.7528287919372749,-0.4069300365979984
+busia,NE,1,54,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+busia,NE,1,54,catboost@holdout,rain>=10mm,bss,climatology,0.06352411812574965,-0.0076084417859974,0.14105226133918908
+busia,NE,1,54,catboost@standard,rain>=10mm,bss,climatology,0.06178411871000922,-0.016185017859883376,0.1469810802524447
+busia,NE,1,54,persistence,rain>=25mm,bss,climatology,-0.8691530842639674,-1.345874276536971,-0.5441420530209828
+busia,NE,1,54,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+busia,NE,1,54,catboost@holdout,rain>=25mm,bss,climatology,0.009888273375175283,-0.03398004088289246,0.042222562683316686
+busia,NE,1,54,catboost@standard,rain>=25mm,bss,climatology,0.07302404023229558,-0.06674221703445066,0.18313322325927933
+busia,NE,1,54,persistence,rain_mm_wet,rmse_skill,climatology,-0.42994131076166453,-0.5736603791496073,-0.3218571467001243
+busia,NE,1,54,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+busia,NE,1,54,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.08241747160138857,0.010494301957013433,0.1346049739649124
+busia,NE,1,54,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.07539509147468093,0.0057813683394879085,0.1280680761968906
+busia,NE,1,54,persistence,rain_mm_all,rmse_skill,climatology,-0.26324926192560083,-0.3555622739455536,-0.18314666143419933
+busia,NE,1,54,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+busia,NE,1,54,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.03897974886834488,-0.021675096625060186,0.09558008385701669
+busia,NE,1,54,catboost@standard,rain_mm_all,rmse_skill,climatology,0.0480497886072665,-0.014144387220015441,0.10767261689403358
+busia,NE,1,54,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.04463053451696597,-0.008585994183981139,0.09336437291563737
+busia,NE,1,54,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.04672024261813823,-0.004820133380997749,0.09417483056749879
+busia,NE,1,54,persistence,rh_pct,rmse_skill,climatology,0.2544248284580599,0.14168066904701979,0.34515497390213357
+busia,NE,1,54,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+busia,NE,1,54,catboost@holdout,rh_pct,rmse_skill,climatology,0.369528395271701,0.2845320955821307,0.4361607882517404
+busia,NE,1,54,catboost@standard,rh_pct,rmse_skill,climatology,0.37245527656559996,0.2873978282603662,0.4395804115274315
+busia,all pixels,2,216,persistence,rain>=1mm,bss,climatology,-0.8240052350946179,-0.9987179891028286,-0.6566937399340315
+busia,all pixels,2,216,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+busia,all pixels,2,216,catboost@holdout,rain>=1mm,bss,climatology,0.03073113826320739,-0.018301417155152683,0.08188508608705213
+busia,all pixels,2,216,catboost@standard,rain>=1mm,bss,climatology,0.035826792222148574,-0.010540676737198756,0.08447789452960343
+busia,all pixels,2,216,persistence,rain>=10mm,bss,climatology,-0.8728898579421747,-1.0663695395405384,-0.6563177488885572
+busia,all pixels,2,216,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+busia,all pixels,2,216,catboost@holdout,rain>=10mm,bss,climatology,0.0017513835800222477,-0.04444458623840434,0.053606967310080446
+busia,all pixels,2,216,catboost@standard,rain>=10mm,bss,climatology,0.012582075948366911,-0.03570810769997126,0.06792763969210153
+busia,all pixels,2,216,persistence,rain>=25mm,bss,climatology,-0.8565522986637519,-1.3923632602565474,-0.5257413653052831
+busia,all pixels,2,216,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+busia,all pixels,2,216,catboost@holdout,rain>=25mm,bss,climatology,0.01253614731622954,-0.023256944679860347,0.044805919378944466
+busia,all pixels,2,216,catboost@standard,rain>=25mm,bss,climatology,0.014732312746729481,-0.02216887538082222,0.04810698298723553
+busia,all pixels,2,216,persistence,rain_mm_wet,rmse_skill,climatology,-0.5042035623656158,-0.6936480646284842,-0.3355047872252511
+busia,all pixels,2,216,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+busia,all pixels,2,216,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.011148932266527023,-0.029358545393672254,0.044408735610917925
+busia,all pixels,2,216,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.022121782780960664,-0.02097304059119745,0.05641312789835482
+busia,all pixels,2,216,persistence,rain_mm_all,rmse_skill,climatology,-0.34812144071037054,-0.47386468903437784,-0.2241477599474146
+busia,all pixels,2,216,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+busia,all pixels,2,216,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.004922219107398984,-0.03393838006332468,0.04117279677109378
+busia,all pixels,2,216,catboost@standard,rain_mm_all,rmse_skill,climatology,0.013940990886142202,-0.025310744366075007,0.051579896367182444
+busia,all pixels,2,216,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.008141799755143952,-0.02294736495266288,0.035891055477102356
+busia,all pixels,2,216,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.016931728623926667,-0.012628661369728738,0.044852323087400156
+busia,all pixels,2,216,persistence,rh_pct,rmse_skill,climatology,0.005938678529839092,-0.13023751884927012,0.12721749765927862
+busia,all pixels,2,216,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+busia,all pixels,2,216,catboost@holdout,rh_pct,rmse_skill,climatology,0.18955126806092604,0.09976875548451822,0.26593217915495715
+busia,all pixels,2,216,catboost@standard,rh_pct,rmse_skill,climatology,0.18853872608115974,0.09757427413587536,0.26539190867766765
+busia,SW,2,54,persistence,rain>=1mm,bss,climatology,-0.8767914587817416,-1.0791142959216788,-0.6750676515263769
+busia,SW,2,54,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+busia,SW,2,54,catboost@holdout,rain>=1mm,bss,climatology,0.030632218858189453,-0.02531713419358056,0.08919305112148805
+busia,SW,2,54,catboost@standard,rain>=1mm,bss,climatology,0.0489273959638169,-0.0030356440622272274,0.10113037350468754
+busia,SW,2,54,persistence,rain>=10mm,bss,climatology,-0.9688525233023939,-1.2138928380489944,-0.715112789994318
+busia,SW,2,54,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+busia,SW,2,54,catboost@holdout,rain>=10mm,bss,climatology,-0.020648088325854852,-0.08160084207975678,0.03626587283416443
+busia,SW,2,54,catboost@standard,rain>=10mm,bss,climatology,-0.0026767142068577776,-0.05927654353700852,0.05278395116177903
+busia,SW,2,54,persistence,rain>=25mm,bss,climatology,-0.932484400151554,-1.534570885706367,-0.5523811117264373
+busia,SW,2,54,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+busia,SW,2,54,catboost@holdout,rain>=25mm,bss,climatology,0.0027333990352563786,-0.04622847406373089,0.039245259093949394
+busia,SW,2,54,catboost@standard,rain>=25mm,bss,climatology,0.011166236740500768,-0.019806252430351157,0.0445593622908846
+busia,SW,2,54,persistence,rain_mm_wet,rmse_skill,climatology,-0.6020111817363527,-0.788021945686946,-0.43508151782534576
+busia,SW,2,54,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+busia,SW,2,54,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.0076168871202714206,-0.03853824652686038,0.04946295636400118
+busia,SW,2,54,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.02139029063443232,-0.021347092732133983,0.05940194914245761
+busia,SW,2,54,persistence,rain_mm_all,rmse_skill,climatology,-0.3770753596988823,-0.49609551768753435,-0.258789515725316
+busia,SW,2,54,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+busia,SW,2,54,catboost@holdout,rain_mm_all,rmse_skill,climatology,-0.00684276629646452,-0.05614781411405935,0.033795879313166036
+busia,SW,2,54,catboost@standard,rain_mm_all,rmse_skill,climatology,0.007772951054809796,-0.03509968183483682,0.04496717128226811
+busia,SW,2,54,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.004885338234824954,-0.03306971296764281,0.03713422583606104
+busia,SW,2,54,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.016324888990355224,-0.016289599423482026,0.04509791280130481
+busia,SW,2,54,persistence,rh_pct,rmse_skill,climatology,-0.06467504351510023,-0.20233002535320066,0.063177582764605
+busia,SW,2,54,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+busia,SW,2,54,catboost@holdout,rh_pct,rmse_skill,climatology,0.1434125935397912,0.06605907304769593,0.20965730366146698
+busia,SW,2,54,catboost@standard,rh_pct,rmse_skill,climatology,0.1389652714005487,0.06593319637735945,0.20393506713206475
+busia,SE,2,54,persistence,rain>=1mm,bss,climatology,-0.808026029545595,-1.0043920156406858,-0.6180798565315835
+busia,SE,2,54,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+busia,SE,2,54,catboost@holdout,rain>=1mm,bss,climatology,0.04259888402253997,-0.01025780085024362,0.09590600262543848
+busia,SE,2,54,catboost@standard,rain>=1mm,bss,climatology,0.04333119250234818,-0.008223516531145076,0.09522392423945987
+busia,SE,2,54,persistence,rain>=10mm,bss,climatology,-0.8222892106974795,-1.0405256494403683,-0.6017386548154754
+busia,SE,2,54,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+busia,SE,2,54,catboost@holdout,rain>=10mm,bss,climatology,0.01136863703131652,-0.04027820415477787,0.0644080020760035
+busia,SE,2,54,catboost@standard,rain>=10mm,bss,climatology,0.02504298241143721,-0.025292708836365703,0.07946260997489195
+busia,SE,2,54,persistence,rain>=25mm,bss,climatology,-0.8933702482418329,-1.356095607150579,-0.5891684038148779
+busia,SE,2,54,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+busia,SE,2,54,catboost@holdout,rain>=25mm,bss,climatology,0.0141791169032921,-0.029602193148631634,0.04838793898418997
+busia,SE,2,54,catboost@standard,rain>=25mm,bss,climatology,0.023954521114812666,-0.01967575045387584,0.05889644023702679
+busia,SE,2,54,persistence,rain_mm_wet,rmse_skill,climatology,-0.5413345487549663,-0.7270741725117017,-0.3778629534027298
+busia,SE,2,54,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+busia,SE,2,54,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.015926481536331694,-0.02818783637194224,0.052205246102921495
+busia,SE,2,54,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.021531948945768375,-0.027784795359060154,0.06131512073171107
+busia,SE,2,54,persistence,rain_mm_all,rmse_skill,climatology,-0.34992007366514555,-0.46636386133776825,-0.2340987625657502
+busia,SE,2,54,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+busia,SE,2,54,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.020039741702650993,-0.019455070822100295,0.0590469776034794
+busia,SE,2,54,catboost@standard,rain_mm_all,rmse_skill,climatology,0.01733147914281319,-0.021866595726292536,0.05592296389065361
+busia,SE,2,54,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.014919678254279867,-0.016945546842079336,0.045258197652898256
+busia,SE,2,54,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.022853874462269053,-0.008115892793718027,0.05381972873211631
+busia,SE,2,54,persistence,rh_pct,rmse_skill,climatology,-0.005842104817315397,-0.15521078956879136,0.12276448973900478
+busia,SE,2,54,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+busia,SE,2,54,catboost@holdout,rh_pct,rmse_skill,climatology,0.18130374494301038,0.08497942576245279,0.26500995350039136
+busia,SE,2,54,catboost@standard,rh_pct,rmse_skill,climatology,0.1800091414878564,0.08510477206538022,0.26114085616807275
+busia,NW,2,54,persistence,rain>=1mm,bss,climatology,-0.7930340939186666,-0.9856604685115854,-0.6049206189800621
+busia,NW,2,54,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+busia,NW,2,54,catboost@holdout,rain>=1mm,bss,climatology,0.03078397817233003,-0.01869294032655632,0.08378011738019175
+busia,NW,2,54,catboost@standard,rain>=1mm,bss,climatology,0.0287703562461894,-0.016820013594174444,0.0794588865792857
+busia,NW,2,54,persistence,rain>=10mm,bss,climatology,-0.8917693689511532,-1.1098495400042943,-0.6491975297702699
+busia,NW,2,54,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+busia,NW,2,54,catboost@holdout,rain>=10mm,bss,climatology,-0.00037913085493879173,-0.04462162286530495,0.051673014710361634
+busia,NW,2,54,catboost@standard,rain>=10mm,bss,climatology,0.004742880287228024,-0.045145159708604755,0.06525178773523752
+busia,NW,2,54,persistence,rain>=25mm,bss,climatology,-0.8270493271016437,-1.5282696845858854,-0.42753898694378245
+busia,NW,2,54,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+busia,NW,2,54,catboost@holdout,rain>=25mm,bss,climatology,0.01309618338924401,-0.0180646105843514,0.0394601884265599
+busia,NW,2,54,catboost@standard,rain>=25mm,bss,climatology,0.015584145138289318,-0.021794045990398393,0.051658773387269805
+busia,NW,2,54,persistence,rain_mm_wet,rmse_skill,climatology,-0.4295806461247045,-0.6644571620092505,-0.2409061306388752
+busia,NW,2,54,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+busia,NW,2,54,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.007048541141739362,-0.032948780163236185,0.03701509691344907
+busia,NW,2,54,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.020574734296143093,-0.023068250590237677,0.05204416783783219
+busia,NW,2,54,persistence,rain_mm_all,rmse_skill,climatology,-0.3167584088405766,-0.4845916569243884,-0.16579399700832545
+busia,NW,2,54,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+busia,NW,2,54,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.004487065633735132,-0.03539480221247979,0.036390751025526684
+busia,NW,2,54,catboost@standard,rain_mm_all,rmse_skill,climatology,0.020167202418858943,-0.02387706248268908,0.05598328745406103
+busia,NW,2,54,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.012012457729906889,-0.018780243503358652,0.035025756369358035
+busia,NW,2,54,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.018053929909078947,-0.013771566157903042,0.0433414501411167
+busia,NW,2,54,persistence,rh_pct,rmse_skill,climatology,-0.010620069464433168,-0.14865367788297412,0.11578988655815961
+busia,NW,2,54,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+busia,NW,2,54,catboost@holdout,rh_pct,rmse_skill,climatology,0.19104193008716674,0.1057599396954961,0.2644116607208892
+busia,NW,2,54,catboost@standard,rh_pct,rmse_skill,climatology,0.18731177000378574,0.09900966500294721,0.2651260855460107
+busia,NE,2,54,persistence,rain>=1mm,bss,climatology,-0.8177627793708175,-0.9946723248589717,-0.6309032216531809
+busia,NE,2,54,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+busia,NE,2,54,catboost@holdout,rain>=1mm,bss,climatology,0.01876355271230168,-0.03575123622205269,0.07350693542281035
+busia,NE,2,54,catboost@standard,rain>=1mm,bss,climatology,0.022044131855982307,-0.02621341088643034,0.07094020701060111
+busia,NE,2,54,persistence,rain>=10mm,bss,climatology,-0.8305899941521349,-1.0384591682574422,-0.6151646003635461
+busia,NE,2,54,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+busia,NE,2,54,catboost@holdout,rain>=10mm,bss,climatology,0.011609975708607112,-0.03478192218408192,0.06575428654424392
+busia,NE,2,54,catboost@standard,rain>=10mm,bss,climatology,0.01957199018947353,-0.029822254226677076,0.07471778467481914
+busia,NE,2,54,persistence,rain>=25mm,bss,climatology,-0.812867420496922,-1.4032154408854172,-0.4818092060086278
+busia,NE,2,54,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+busia,NE,2,54,catboost@holdout,rain>=25mm,bss,climatology,0.01650410883068909,-0.0262412621906932,0.05800129127073305
+busia,NE,2,54,catboost@standard,rain>=25mm,bss,climatology,0.007557060893137568,-0.031996538983894214,0.04204720150366778
+busia,NE,2,54,persistence,rain_mm_wet,rmse_skill,climatology,-0.48654381129728486,-0.6869340909412395,-0.31697730247415395
+busia,NE,2,54,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+busia,NE,2,54,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.014220970651331322,-0.03502825985444337,0.056988813194533285
+busia,NE,2,54,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.024882910256702195,-0.024473100289251308,0.06500600397970639
+busia,NE,2,54,persistence,rain_mm_all,rmse_skill,climatology,-0.35811077270730385,-0.4932518061040394,-0.23440610201567816
+busia,NE,2,54,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+busia,NE,2,54,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.0005482582870104391,-0.042820324793762105,0.04077649917481907
+busia,NE,2,54,catboost@standard,rain_mm_all,rmse_skill,climatology,0.008833731796975552,-0.03305962676384032,0.04902605769047253
+busia,NE,2,54,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.00039925429852150085,-0.03292651220737545,0.03133294528491172
+busia,NE,2,54,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.010919135645671485,-0.02102733293770732,0.04072049485946715
+busia,NE,2,54,persistence,rh_pct,rmse_skill,climatology,0.06812041682988978,-0.06954675072076279,0.18843140663499436
+busia,NE,2,54,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+busia,NE,2,54,catboost@holdout,rh_pct,rmse_skill,climatology,0.22079499917998135,0.1169637655033219,0.3106226932651732
+busia,NE,2,54,catboost@standard,rh_pct,rmse_skill,climatology,0.22409073669059243,0.1205963594872158,0.3124185397940696
+busia,all pixels,3,216,persistence,rain>=1mm,bss,climatology,-0.8719895885334765,-1.0439426096188094,-0.6953696751265094
+busia,all pixels,3,216,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+busia,all pixels,3,216,catboost@holdout,rain>=1mm,bss,climatology,0.02847542743152509,-0.01194742438250616,0.07102458852932379
+busia,all pixels,3,216,catboost@standard,rain>=1mm,bss,climatology,0.031479772403289696,-0.012510984082043668,0.0789625281617798
+busia,all pixels,3,216,persistence,rain>=10mm,bss,climatology,-0.8839184763709078,-1.0759481361435987,-0.6824338245481953
+busia,all pixels,3,216,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+busia,all pixels,3,216,catboost@holdout,rain>=10mm,bss,climatology,0.007674047881661483,-0.02455881240067521,0.045270453234359825
+busia,all pixels,3,216,catboost@standard,rain>=10mm,bss,climatology,0.007789388136782649,-0.027087845397394845,0.048512963353190386
+busia,all pixels,3,216,persistence,rain>=25mm,bss,climatology,-0.8614915798041944,-1.5138197284367578,-0.46575884253619887
+busia,all pixels,3,216,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+busia,all pixels,3,216,catboost@holdout,rain>=25mm,bss,climatology,-0.0017269115120333023,-0.01507025316852113,0.01281987092019455
+busia,all pixels,3,216,catboost@standard,rain>=25mm,bss,climatology,0.00035392783171517284,-0.019359547229773906,0.019560230140063604
+busia,all pixels,3,216,persistence,rain_mm_wet,rmse_skill,climatology,-0.5630456444917697,-0.7435603547796282,-0.4173257466938865
+busia,all pixels,3,216,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+busia,all pixels,3,216,catboost@holdout,rain_mm_wet,rmse_skill,climatology,-0.005769007562410833,-0.035317189338841884,0.019253069052567986
+busia,all pixels,3,216,catboost@standard,rain_mm_wet,rmse_skill,climatology,-0.0008594938265886753,-0.028237197084351146,0.021636643999082477
+busia,all pixels,3,216,persistence,rain_mm_all,rmse_skill,climatology,-0.3454992143244171,-0.45476369759267044,-0.23417991899057436
+busia,all pixels,3,216,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+busia,all pixels,3,216,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.006634187870837804,-0.020794580731709117,0.031132818052968442
+busia,all pixels,3,216,catboost@standard,rain_mm_all,rmse_skill,climatology,0.008533446379740295,-0.020321792904739296,0.03566935443589183
+busia,all pixels,3,216,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.008572521276734357,-0.011627666504646039,0.02822614283502008
+busia,all pixels,3,216,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.010988817271840534,-0.010091636034833063,0.029736938525104725
+busia,all pixels,3,216,persistence,rh_pct,rmse_skill,climatology,-0.08163957402376032,-0.23055006664913308,0.055848498235189996
+busia,all pixels,3,216,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+busia,all pixels,3,216,catboost@holdout,rh_pct,rmse_skill,climatology,0.13851673930576058,0.04838173540721842,0.21973040881365413
+busia,all pixels,3,216,catboost@standard,rh_pct,rmse_skill,climatology,0.14723425442979365,0.056164022060906434,0.22865479221171872
+busia,SW,3,54,persistence,rain>=1mm,bss,climatology,-0.9568307746736968,-1.1570225408557973,-0.7535234138316262
+busia,SW,3,54,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+busia,SW,3,54,catboost@holdout,rain>=1mm,bss,climatology,0.03312401840437118,-0.01080187353234324,0.07992892787091802
+busia,SW,3,54,catboost@standard,rain>=1mm,bss,climatology,0.0391123722825667,-0.005411984887948135,0.08504342366001297
+busia,SW,3,54,persistence,rain>=10mm,bss,climatology,-0.9107719625193054,-1.171365033472723,-0.660759814229844
+busia,SW,3,54,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+busia,SW,3,54,catboost@holdout,rain>=10mm,bss,climatology,-0.011910707068157222,-0.052666772303787544,0.027357760685398084
+busia,SW,3,54,catboost@standard,rain>=10mm,bss,climatology,-0.006930253590701652,-0.04616523008550293,0.03328739013952221
+busia,SW,3,54,persistence,rain>=25mm,bss,climatology,-0.8354871136574604,-1.578932079139632,-0.43887866290782523
+busia,SW,3,54,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+busia,SW,3,54,catboost@holdout,rain>=25mm,bss,climatology,-0.004073384803000346,-0.02239186234636295,0.011177233825396388
+busia,SW,3,54,catboost@standard,rain>=25mm,bss,climatology,0.0014269276910527928,-0.016012044871618066,0.020549384059502206
+busia,SW,3,54,persistence,rain_mm_wet,rmse_skill,climatology,-0.642153731252922,-0.8366400684074907,-0.49470328136566943
+busia,SW,3,54,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+busia,SW,3,54,catboost@holdout,rain_mm_wet,rmse_skill,climatology,-0.016434279965972243,-0.04786956727856585,0.008775178823593755
+busia,SW,3,54,catboost@standard,rain_mm_wet,rmse_skill,climatology,-0.009192447330101494,-0.03690316833580598,0.014042593894538002
+busia,SW,3,54,persistence,rain_mm_all,rmse_skill,climatology,-0.3596683560100984,-0.47238852488220484,-0.2584105824230085
+busia,SW,3,54,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+busia,SW,3,54,catboost@holdout,rain_mm_all,rmse_skill,climatology,-0.004691787168030537,-0.031524787022661364,0.01644030499680895
+busia,SW,3,54,catboost@standard,rain_mm_all,rmse_skill,climatology,0.006232079415778524,-0.02194775855621181,0.033346918565249864
+busia,SW,3,54,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.006336372855326178,-0.01536572054175565,0.026817816788542125
+busia,SW,3,54,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.01010868799674236,-0.011372187642193254,0.029806019175107265
+busia,SW,3,54,persistence,rh_pct,rmse_skill,climatology,-0.1592017960490386,-0.3113559321928269,-0.017719979314269697
+busia,SW,3,54,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+busia,SW,3,54,catboost@holdout,rh_pct,rmse_skill,climatology,0.09425053209006595,0.026457957105464745,0.15550976930192972
+busia,SW,3,54,catboost@standard,rh_pct,rmse_skill,climatology,0.09557317240278707,0.026189574683702456,0.15920504506274244
+busia,SE,3,54,persistence,rain>=1mm,bss,climatology,-0.8832437055870079,-1.0789036221951978,-0.6919007553685804
+busia,SE,3,54,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+busia,SE,3,54,catboost@holdout,rain>=1mm,bss,climatology,0.03097744338442532,-0.015224848798041994,0.07669725976103595
+busia,SE,3,54,catboost@standard,rain>=1mm,bss,climatology,0.044302281136693655,-0.004277401642753347,0.09118708702273964
+busia,SE,3,54,persistence,rain>=10mm,bss,climatology,-0.8930945503672516,-1.1008488970553258,-0.7002911714043558
+busia,SE,3,54,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+busia,SE,3,54,catboost@holdout,rain>=10mm,bss,climatology,0.018307927003319513,-0.01741576795502767,0.057444342986212336
+busia,SE,3,54,catboost@standard,rain>=10mm,bss,climatology,0.013602180363720517,-0.021681267223391133,0.05508292474828638
+busia,SE,3,54,persistence,rain>=25mm,bss,climatology,-0.8518717222529708,-1.5002344260223346,-0.47701784479744963
+busia,SE,3,54,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+busia,SE,3,54,catboost@holdout,rain>=25mm,bss,climatology,0.009824012465761478,-0.0077934307881634465,0.0321989555912393
+busia,SE,3,54,catboost@standard,rain>=25mm,bss,climatology,0.01368727325612129,-0.013183633408129851,0.040398863096668264
+busia,SE,3,54,persistence,rain_mm_wet,rmse_skill,climatology,-0.6174130906224606,-0.7974447981022823,-0.4813170533170625
+busia,SE,3,54,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+busia,SE,3,54,catboost@holdout,rain_mm_wet,rmse_skill,climatology,-0.005603236159992919,-0.036562948909344466,0.019548649156846013
+busia,SE,3,54,catboost@standard,rain_mm_wet,rmse_skill,climatology,-0.0026980227661295153,-0.03603867247533602,0.02337029454181125
+busia,SE,3,54,persistence,rain_mm_all,rmse_skill,climatology,-0.3397936415581302,-0.44374823301929633,-0.24501199232371837
+busia,SE,3,54,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+busia,SE,3,54,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.018603312970230435,-0.008407277679388675,0.04357851266032017
+busia,SE,3,54,catboost@standard,rain_mm_all,rmse_skill,climatology,0.014495723907242963,-0.013845419628366789,0.04477492369478993
+busia,SE,3,54,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.014406378551803156,-0.007669177177534642,0.036375320276630055
+busia,SE,3,54,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.018230024982461845,-0.005163477242443015,0.039912121645657245
+busia,SE,3,54,persistence,rh_pct,rmse_skill,climatology,-0.08978373515865767,-0.24948027556559066,0.053770497292208445
+busia,SE,3,54,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+busia,SE,3,54,catboost@holdout,rh_pct,rmse_skill,climatology,0.13039373308236402,0.037137925058169076,0.2104141820560376
+busia,SE,3,54,catboost@standard,rh_pct,rmse_skill,climatology,0.13657195113268494,0.04373668716383389,0.22003082563865536
+busia,NW,3,54,persistence,rain>=1mm,bss,climatology,-0.8538936811597964,-1.0341112749023924,-0.6681174899700104
+busia,NW,3,54,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+busia,NW,3,54,catboost@holdout,rain>=1mm,bss,climatology,0.02176855523543131,-0.014631019243550054,0.06165335962908964
+busia,NW,3,54,catboost@standard,rain>=1mm,bss,climatology,0.021043776158841898,-0.024249327319404036,0.07211702575637562
+busia,NW,3,54,persistence,rain>=10mm,bss,climatology,-0.936051750048805,-1.1694350545495595,-0.6988786729264638
+busia,NW,3,54,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+busia,NW,3,54,catboost@holdout,rain>=10mm,bss,climatology,0.002981688856537046,-0.037855923922917076,0.04652238913060137
+busia,NW,3,54,catboost@standard,rain>=10mm,bss,climatology,0.003129838904394666,-0.03904896377814293,0.046097209172763214
+busia,NW,3,54,persistence,rain>=25mm,bss,climatology,-0.9122869224836678,-1.6672094011673582,-0.46750624337119784
+busia,NW,3,54,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+busia,NW,3,54,catboost@holdout,rain>=25mm,bss,climatology,-0.009249384616296208,-0.022218536790188342,0.0036531825025733983
+busia,NW,3,54,catboost@standard,rain>=25mm,bss,climatology,-0.003039534546730227,-0.021330081577303733,0.012601717530067242
+busia,NW,3,54,persistence,rain_mm_wet,rmse_skill,climatology,-0.5093805187969835,-0.7513293139347447,-0.33093811708473947
+busia,NW,3,54,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+busia,NW,3,54,catboost@holdout,rain_mm_wet,rmse_skill,climatology,-0.004797765452873692,-0.034702063410578285,0.02381014289110139
+busia,NW,3,54,catboost@standard,rain_mm_wet,rmse_skill,climatology,-0.0016728699357553278,-0.027189520196503548,0.01815761056391637
+busia,NW,3,54,persistence,rain_mm_all,rmse_skill,climatology,-0.34873504550802203,-0.5085689051603375,-0.20930393539613545
+busia,NW,3,54,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+busia,NW,3,54,catboost@holdout,rain_mm_all,rmse_skill,climatology,0.011579480198865455,-0.020519825956916298,0.04007234400025121
+busia,NW,3,54,catboost@standard,rain_mm_all,rmse_skill,climatology,0.010536309767175012,-0.024408152923481242,0.03792134827936354
+busia,NW,3,54,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.007086553386304817,-0.01598932207351721,0.027295134139764424
+busia,NW,3,54,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.010620507935253931,-0.011970451143991877,0.028405206200432295
+busia,NW,3,54,persistence,rh_pct,rmse_skill,climatology,-0.09602207420076647,-0.24423640198189034,0.04738398229622461
+busia,NW,3,54,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+busia,NW,3,54,catboost@holdout,rh_pct,rmse_skill,climatology,0.1414670114037767,0.05548316061580233,0.2174896491217282
+busia,NW,3,54,catboost@standard,rh_pct,rmse_skill,climatology,0.15168896468068327,0.06134938245009208,0.22995104276906883
+busia,NE,3,54,persistence,rain>=1mm,bss,climatology,-0.7933252050952766,-0.973327344416983,-0.6106119041768162
+busia,NE,3,54,climatology,rain>=1mm,bss,climatology,0.0,0.0,0.0
+busia,NE,3,54,catboost@holdout,rain>=1mm,bss,climatology,0.02789146164033318,-0.019584246032014474,0.07601919955474024
+busia,NE,3,54,catboost@standard,rain>=1mm,bss,climatology,0.021130595865270663,-0.02756667287974324,0.07137659835430431
+busia,NE,3,54,persistence,rain>=10mm,bss,climatology,-0.8074254874123772,-1.0145670033236773,-0.5990202106613707
+busia,NE,3,54,climatology,rain>=10mm,bss,climatology,0.0,0.0,0.0
+busia,NE,3,54,catboost@holdout,rain>=10mm,bss,climatology,0.016784044877258264,-0.017884087951472494,0.05453573092418309
+busia,NE,3,54,catboost@standard,rain>=10mm,bss,climatology,0.017717280269618163,-0.01926878988665146,0.05852954884207806
+busia,NE,3,54,persistence,rain>=25mm,bss,climatology,-0.8222483644580962,-1.544632663088322,-0.3989670850860369
+busia,NE,3,54,climatology,rain>=25mm,bss,climatology,0.0,0.0,0.0
+busia,NE,3,54,catboost@holdout,rain>=25mm,bss,climatology,-0.00117559221623309,-0.02247489556576464,0.02311860415729443
+busia,NE,3,54,catboost@standard,rain>=25mm,bss,climatology,-0.00808193951252556,-0.03451199720368443,0.0152817309431756
+busia,NE,3,54,persistence,rain_mm_wet,rmse_skill,climatology,-0.5207078245818795,-0.6881351372915759,-0.3829550179816748
+busia,NE,3,54,climatology,rain_mm_wet,rmse_skill,climatology,0.0,0.0,0.0
+busia,NE,3,54,catboost@holdout,rain_mm_wet,rmse_skill,climatology,0.00029898261988248187,-0.03839994645467852,0.037936931991898334
+busia,NE,3,54,catboost@standard,rain_mm_wet,rmse_skill,climatology,0.0073437362697015285,-0.02483265317390515,0.03538667248816988
+busia,NE,3,54,persistence,rain_mm_all,rmse_skill,climatology,-0.33680788612114676,-0.45483115928254203,-0.22277509073251686
+busia,NE,3,54,climatology,rain_mm_all,rmse_skill,climatology,0.0,0.0,0.0
+busia,NE,3,54,catboost@holdout,rain_mm_all,rmse_skill,climatology,-0.0009522415695661923,-0.03491424004991048,0.030897835799091576
+busia,NE,3,54,catboost@standard,rain_mm_all,rmse_skill,climatology,0.00278158609003587,-0.026811377017915722,0.03139192350704124
+busia,NE,3,54,catboost@holdout,rain_mm_all_2stage,rmse_skill,climatology,0.006568907500874244,-0.01717139895053448,0.02864292234676679
+busia,NE,3,54,catboost@standard,rain_mm_all_2stage,rmse_skill,climatology,0.00557734778877117,-0.01640741733084189,0.0264894412765633
+busia,NE,3,54,persistence,rh_pct,rmse_skill,climatology,-0.020069731838521232,-0.17970427239587022,0.11955352841456733
+busia,NE,3,54,climatology,rh_pct,rmse_skill,climatology,0.0,0.0,0.0
+busia,NE,3,54,catboost@holdout,rh_pct,rmse_skill,climatology,0.16739219846625208,0.05023323319458488,0.2715724140163059
+busia,NE,3,54,catboost@standard,rh_pct,rmse_skill,climatology,0.1813425218098581,0.07200986650780979,0.2777451398915147

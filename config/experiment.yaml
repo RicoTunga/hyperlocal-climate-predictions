@@ -61,3 +61,11 @@ tuning:
   eval_years: [2021, 2022, 2023]
   n_trials: 20                    # per site x task (~100 s per trial); defaults are always trial 0
   seed: 0
+
+# Spatial hold-out (src/models/spatial_holdout.py): each site's grid is split into 2 x 2 blocks at
+# the middle grid row and column; each block is held out once. Training pixels must lie more than
+# buffer_pixels grid cells (Chebyshev distance) from the held-out block. Features are NOT rebuilt:
+# CHIRPS covers every pixel, so a "new" location still has its own rain history.
+spatial_holdout:
+  buffer_pixels: 2
+  horizons: [1, 2, 3]

@@ -49,14 +49,24 @@ ALGOS = ["lightgbm", "xgboost", "catboost"]
 
 
 # ---------------------------------------------------------------- data
-def dev_pixel_sample(site: str, n: int) -> list:
-    """n pixels evenly spaced in elevation (deterministic), so lowlands and highlands are both in."""
-    z = pd.read_parquet(PROCESSED / f"{site}_daily.parquet", columns=["pixel_id", "elev_mean_m"])
+def spread_by_elevation(z: pd.DataFrame, n: int) -> list:
+    """n pixels of `z` (columns pixel_id, elev_mean_m) evenly spaced by elevation rank (deterministic)."""
     z = z.drop_duplicates("pixel_id").sort_values(["elev_mean_m", "pixel_id"]).reset_index(drop=True)
     if n >= len(z):
         return sorted(z["pixel_id"])
     idx = np.unique(np.linspace(0, len(z) - 1, n).round().astype(int))
     return sorted(z.loc[idx, "pixel_id"])
+
+
+def site_pixels(site: str) -> pd.DataFrame:
+    """One row per pixel: pixel_id, lat, lon, elev_mean_m."""
+    z = pd.read_parquet(PROCESSED / f"{site}_daily.parquet", columns=["pixel_id", "lat", "lon", "elev_mean_m"])
+    return z.drop_duplicates("pixel_id").reset_index(drop=True)
+
+
+def dev_pixel_sample(site: str, n: int) -> list:
+    """n pixels evenly spaced in elevation (deterministic), so lowlands and highlands are both in."""
+    return spread_by_elevation(site_pixels(site), n)
 
 
 def load_features(site: str, pixels: list, until: pd.Timestamp, start: pd.Timestamp | None = None,
@@ -195,7 +205,8 @@ def fit_predict(algo, task, spec, tr, es, pred_rows, cols, params, mcfg, wet_mm)
     return model, n_iter, pred
 
 
-def run_site_horizon(site, feat, clim, h, exp, algos, max_h, tuned=None, score=None) -> list[dict]:
+def run_site_horizon(site, feat, clim, h, exp, algos, max_h, tuned=None, score=None,
+                     out_tag=None) -> list[dict]:
     """Train on the pixels in `feat`; score on them, or on `score` = (features, climatology) of
     another pixel set (only the validation period is needed for scoring)."""
     mcfg, wet_mm, exceed = exp["modelling"], exp["rain"]["wet_threshold_mm"], exp["rain"]["exceedance_mm"]
@@ -216,7 +227,8 @@ def run_site_horizon(site, feat, clim, h, exp, algos, max_h, tuned=None, score=N
 
     tasks = task_definitions(wet_mm, exceed)
     preds = baseline_preds(va, wet_mm, exceed)
-    out_dir = run_dir(site, n_train, n_score, h)
+    # out_tag gives an experiment its own folder (e.g. holdout_SW) instead of train<N>_score<M>
+    out_dir = MODELS / site / out_tag / f"h{h}" if out_tag else run_dir(site, n_train, n_score, h)
     out_dir.mkdir(parents=True, exist_ok=True)
     info = []
     for algo in algos:
