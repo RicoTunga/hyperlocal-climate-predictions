@@ -11,6 +11,10 @@ The only changes from config/experiment.yaml are: training period ends 2024-12-3
 stopping uses 2024 (targets 2024-01-08 .. 2024-12-31). The per-pixel climatology (input and
 baseline) is fitted on 2016-2024. Training data are loaded only up to 2024-12-31 (checked).
 CatBoost, LightGBM, XGBoost; 60 training pixels; every pixel scored; horizons 1-7; six tasks.
+Each model is trained once. Scored pixels are processed in batches of SCORE_BATCH (memory): the
+first batch through the normal training code, every batch through the saved models, and the
+first batch must match exactly before the batches are combined (Busia, 216 pixels, was scored
+before batching was added, in a single pass through the training code).
 
 Analysis: skill vs climatology and persistence with 95% moving-block bootstrap intervals, for the
 full test period, 2025, January-September 2026 and each season (JF, MAM, JJAS, OND pooled over
@@ -18,24 +22,26 @@ years); paired algorithm differences; two-stage vs direct; calibration of the ra
 Primary outcomes: CatBoost, full period, horizons 1-3, rain >= 1 mm BSS and humidity RMSE skill.
 
 Output: models/<site>/final_train60_score<N>/h<h>/ (models, test_predictions.parquet) and
-reports/test/ (skill.csv, differences.csv, calibration.csv, models_test.csv).
+reports/test/ (skill.csv, differences.csv, calibration.csv).
 """
 import argparse
 import copy
 from pathlib import Path
 
+import joblib
 import numpy as np
 import pandas as pd
 
 from src.models.baselines import fit_climatology
 from src.models.calibration import bootstrap_bias_and_bins, brier_decomposition, calibration_slope
-from src.models.evaluation import load_configs, split_bounds
+from src.models.evaluation import eval_target_dates, load_configs, split_bounds
 from src.models.train import ALGOS, MODELS, dev_pixel_sample, load_features, run_site_horizon
 from src.models.uncertainty import block_bootstrap_weights, bootstrap_site_horizon, paired_differences
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "reports" / "test"
 SEASONS = {"JF": [1, 2], "MAM": [3, 4, 5], "JJAS": [6, 7, 8, 9], "OND": [10, 11, 12]}
+SCORE_BATCH = 200  # scored pixels per batch: the full Nakuru test set does not fit in memory at once
 
 
 def final_config(exp: dict) -> dict:
@@ -67,24 +73,78 @@ def train(site: str, sites_cfg: dict, exp: dict) -> None:
     assert feat["date"].max() <= train_end
     clim = fit_climatology(feat[feat["date"] >= train_start], wet_mm, exceed, window)
     all_px = dev_pixel_sample(site, 10 ** 9)
-    hist = load_features(site, all_px, until=train_end, start=train_start,
-                         columns=["pixel_id", "date", "precip_mm", "rh_pct"])
-    score = (load_features(site, all_px, until=test_end, start=test_start),
-             fit_climatology(hist, wet_mm, exceed, window))
-    del hist
+    batches = [all_px[i:i + SCORE_BATCH] for i in range(0, len(all_px), SCORE_BATCH)]
+
+    def score_inputs(px):
+        """Test-period features and climatology (fitted on 2016-2024) for a batch of scored pixels."""
+        hist = load_features(site, px, until=train_end, start=train_start,
+                             columns=["pixel_id", "date", "precip_mm", "rh_pct"])
+        c = fit_climatology(hist, wet_mm, exceed, window)
+        del hist
+        return load_features(site, px, until=test_end, start=test_start), c
+
+    # 1. train every model once, scoring the first batch through the normal training code
     tag = run_tag(len(pixels), len(all_px))
-    rows = []
+    first = score_inputs(batches[0])
     for h in horizons:
-        rows += run_site_horizon(site, feat, clim, h, fexp, ALGOS, max(horizons), score=score,
-                                 out_tag=tag, score_split="test")
-    OUT.mkdir(parents=True, exist_ok=True)
-    res = pd.DataFrame(rows)
-    f = OUT / "models_test.csv"
-    if f.exists():
-        old = pd.read_csv(f)
-        res = pd.concat([old[old["site"] != site], res], ignore_index=True)
-    res.to_csv(f, index=False)
-    print(f"saved {f} and models/{site}/{tag}/")
+        run_site_horizon(site, feat, clim, h, fexp, ALGOS, max(horizons), score=first,
+                         out_tag=tag, score_split="test")
+    if len(batches) == 1:
+        print(f"saved models/{site}/{tag}/ ({len(all_px)} pixels in one batch)")
+        return
+
+    # 2. score every batch with the saved models; batch 1 must reproduce step 1 exactly
+    from src.models.train import baseline_preds, feature_columns, horizon_table, predict
+    from src.models.transfer import predict_all
+    es_start = pd.Timestamp(str(mcfg["early_stop_start"]))
+    targets = eval_target_dates(fexp, "test", max(horizons))
+    task_names = [f"occ{t:g}" for t in [wet_mm] + exceed] + ["wet", "direct", "rh"]
+    models, smear, cols = {}, {}, None
+    for h in horizons:
+        d = MODELS / site / tag / f"h{h}"
+        fit = horizon_table(feat, clim, h, pd.date_range(train_start + pd.Timedelta(days=h),
+                                                         es_start - pd.Timedelta(days=1)))
+        cols = feature_columns(fit)
+        wet_fit = fit[fit["y_rain"] >= wet_mm]
+        for algo in ALGOS:
+            models[(h, algo)] = {t: joblib.load(d / f"{algo}_{t}.joblib") for t in task_names}
+            smear[(h, algo)] = float(np.mean(np.exp(np.log1p(wet_fit["y_rain"])
+                                                    - predict(models[(h, algo)]["wet"], wet_fit[cols], False))))
+        del fit, wet_fit
+    for k, px in enumerate(batches):
+        fv, cv = first if k == 0 else score_inputs(px)
+        for h in horizons:
+            va = horizon_table(fv, cv, h, targets)
+            out = va[["pixel_id", "target_date", "y_rain", "y_rh"]].copy()
+            preds = baseline_preds(va, wet_mm, exceed)
+            preds.update({algo: predict_all(models[(h, algo)], smear[(h, algo)], va, cols, wet_mm) for algo in ALGOS})
+            for name, p in preds.items():
+                for key, arr in p.items():
+                    out[f"{name}__{key}"] = np.asarray(arr, dtype=float)
+            d = MODELS / site / tag / f"h{h}"
+            if k == 0:  # guard: the batch path reproduces the training code's own scoring
+                ref = pd.read_parquet(d / "test_predictions.parquet")
+                m = ref.merge(out, on=["pixel_id", "target_date"], suffixes=("", "_b"), validate="one_to_one")
+                err = max(float((m[c] - m[f"{c}_b"]).abs().max()) for c in out.columns if "__" in c)
+                if len(m) != len(ref) or err > 1e-6:
+                    raise SystemExit(f"h{h}: batch scoring does not reproduce the training scoring (max {err:.2g})")
+                print(f"  PASS  h{h}: batch scoring reproduces the training scoring "
+                      f"({len(m):,} rows, max difference {err:.1g})")
+            out.to_parquet(d / f"test_predictions_part{k}.parquet", index=False)
+            del va, out
+        del fv, cv
+        if k == 0:
+            del first
+        print(f"  batch {k + 1} of {len(batches)} scored ({len(px)} pixels)")
+    for h in horizons:  # combine the parts into the full file, then remove the parts
+        d = MODELS / site / tag / f"h{h}"
+        parts = sorted(d.glob("test_predictions_part*.parquet"))
+        full = pd.concat([pd.read_parquet(p) for p in parts], ignore_index=True)
+        assert full["pixel_id"].nunique() == len(all_px) and not full.duplicated(["pixel_id", "target_date"]).any()
+        full.to_parquet(d / "test_predictions.parquet", index=False)
+        for p in parts:
+            p.unlink()
+    print(f"saved models/{site}/{tag}/ ({len(all_px)} pixels scored in {len(batches)} batches)")
 
 
 def periods(dates: pd.Series) -> dict:
