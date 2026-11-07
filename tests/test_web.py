@@ -1,13 +1,8 @@
 """Tests for the dashboard server and colour-field rendering.
 
 Raster tests use synthetic data; server tests need app/data/ (python -m app.build_data) and are
-skipped without it. The server is started on a free port in a background thread.
+skipped without it. They run through a signed-in Starlette test client with a temporary user database.
 """
-import json
-import socket
-import threading
-import urllib.error
-import urllib.request
 from io import BytesIO
 from pathlib import Path
 
@@ -50,11 +45,24 @@ def test_cells_png_has_one_block_per_pixel_and_brighter_for_higher_values():
     assert (img[:s, :s] == img[0, 0]).all()  # a crisp block
 
 
+def test_colours_do_not_saturate_at_the_top_of_the_scale():
+    pos = raster.class_position(np.array([0.0, 0.7, 0.86, 0.99, 1.0]), C.PROB)
+    assert pos[0] == 0 and pos[-1] == pytest.approx(6.0, abs=1e-3)  # top edge is 1.0001
+    assert pos[2] < pos[3] < pos[4]  # 86%, 99% and 100% all get different colours
+    assert pos[1] == pytest.approx(6 * 6 / 7)  # the 70% class edge sits at its legend tick
+
+
 def test_dark_ramps_brighten_and_diverging_brightens_outward():
     for r in raster.RAMPS_DARK.values():
         assert all(np.diff(C.lightness(r)) > 0)
     L = C.lightness(raster.DIVERGING_DARK)
     assert all(np.diff(L[:4]) < 0) and all(np.diff(L[3:]) > 0)
+
+
+def test_raster_grid_index_matches_the_feature_code():
+    from src.features.build import grid_index as features_grid_index
+    v = np.array([0.025, 0.125, 0.075, 0.025, -0.025])
+    assert np.array_equal(raster.grid_index(v), features_grid_index(v))
 
 
 def test_bounds_cover_the_outer_pixel_edges():
@@ -63,68 +71,61 @@ def test_bounds_cover_the_outer_pixel_edges():
     assert (w, e) == pytest.approx((35.0, 35.1)) and (s, n) == pytest.approx((0.0, 0.15))
 
 
-# ---------------------------------------------------------------- server (real data)
-@pytest.fixture(scope="module")
-def base():
-    from web.server import make_server
-    with socket.socket() as s:
-        s.bind(("127.0.0.1", 0))
-        port = s.getsockname()[1]
-    httpd = make_server(port)
-    threading.Thread(target=httpd.serve_forever, daemon=True).start()
-    yield f"http://127.0.0.1:{port}"
-    httpd.shutdown()
-
-
-def get(url):
-    try:
-        with urllib.request.urlopen(url, timeout=60) as r:
-            return r.status, r.headers.get("Content-Type"), r.read()
-    except urllib.error.HTTPError as e:
-        return e.code, e.headers.get("Content-Type"), e.read()
-
-
+# ---------------------------------------------------------------- server (real data, signed in)
 pytestmark_data = pytest.mark.skipif(not DATA_READY, reason="app/data not built")
 
 
-@pytestmark_data
-def test_server_binds_to_localhost_only():
-    from web.server import make_server
-    httpd = make_server(0)
-    try:
-        assert httpd.server_address[0] == "127.0.0.1"
-    finally:
-        httpd.server_close()
+@pytest.fixture(scope="module")
+def client(tmp_path_factory):
+    from starlette.testclient import TestClient
+    from web.auth import AuthStore
+    from web.server import create_app
+    from web.settings import Settings
+    db = tmp_path_factory.mktemp("auth") / "users.db"
+    store = AuthStore(db)
+    store.add_user("tester", "correct horse battery", "viewer")
+    c = TestClient(create_app(Settings("127.0.0.1", 0, db, False), store))
+    r = c.post("/login", data={"username": "tester", "password": "correct horse battery"},
+               headers={"Origin": "http://testserver"}, follow_redirects=False)
+    assert r.status_code == 303
+    yield c
+    store.close()
+
+
+def test_default_settings_listen_on_localhost_only(monkeypatch):
+    from web.settings import settings
+    monkeypatch.delenv("HL_HOST", raising=False)
+    assert settings().host == "127.0.0.1"
 
 
 @pytestmark_data
-def test_meta_day_and_pixel_endpoints(base):
-    st, ct, body = get(f"{base}/api/meta")
-    meta = json.loads(body)
-    assert st == 200 and "application/json" in ct and set(meta["sites"]) == {"nakuru", "busia"}
+def test_meta_day_and_pixel_endpoints(client):
+    r = client.get("/api/meta")
+    meta = r.json()
+    assert r.status_code == 200 and "application/json" in r.headers["content-type"]
+    assert set(meta["sites"]) == {"nakuru", "busia"}
     issue = meta["sites"]["busia"]["issue_min"]
-    st, _, body = get(f"{base}/api/day/busia/{issue}")
-    day = json.loads(body)
-    assert st == 200 and len(day["pixels"]) == meta["sites"]["busia"]["n_pixels"] and set(day["horizons"]) == set("1234567")
-    # values equal the replay file for one pixel
+    day = client.get(f"/api/day/busia/{issue}").json()
+    assert len(day["pixels"]) == meta["sites"]["busia"]["n_pixels"] and set(day["horizons"]) == set("1234567")
     ref = C.issue_day("busia", issue).set_index(["pixel_id", "horizon"])
     k = 7
     pid = day["pixels"][k]
     assert day["horizons"]["3"]["p_rain1"][k] == pytest.approx(float(ref.loc[(pid, 3), "p_rain1"]), abs=1e-4)
-    st, _, body = get(f"{base}/api/pixel/busia/{pid}?h=2")
-    s = json.loads(body)
-    assert st == 200 and len(s["target"]) == len(s["rh"]) > 500
+    s = client.get(f"/api/pixel/busia/{pid}?h=2").json()
+    assert len(s["target"]) == len(s["rh"]) > 500
 
 
 @pytestmark_data
-def test_raster_and_tables(base):
-    meta = json.loads(get(f"{base}/api/meta")[2])
+def test_raster_and_tables(client):
+    meta = client.get("/api/meta").json()
     issue = meta["sites"]["nakuru"]["issue_min"]
-    st, ct, body = get(f"{base}/api/raster/nakuru/{issue}/1/rain1/forecast.png?mode=cells")
-    assert st == 200 and ct == "image/png" and Image.open(BytesIO(body)).size[0] > 0
+    r = client.get(f"/api/raster/nakuru/{issue}/1/rain1/forecast.png?mode=cells")
+    assert r.status_code == 200 and r.headers["content-type"] == "image/png"
+    assert Image.open(BytesIO(r.content)).size[0] > 0
+    assert r.headers["cache-control"].startswith("private")  # signed-in content is never cached by proxies
     for name in ("skill", "calibration", "blight_skill"):
-        st, _, body = get(f"{base}/api/{name}")
-        assert st == 200 and len(json.loads(body)) > 0
+        r = client.get(f"/api/{name}")
+        assert r.status_code == 200 and len(r.json()) > 0
 
 
 @pytestmark_data
@@ -133,21 +134,22 @@ def test_raster_and_tables(base):
     "/api/raster/busia/2025-04-15/9/rain1/forecast.png", "/api/raster/busia/2025-04-15/1/blight_hutton/forecast.png",
     "/api/raster/nakuru/2025-04-15/1/rain1/sideways.png", "/api/pixel/busia/nonexistent?h=1",
 ])
-def test_bad_inputs_are_rejected(base, path):
-    st, ct, body = get(base + path)
-    assert st == 400 and "error" in json.loads(body)
+def test_bad_inputs_are_rejected(client, path):
+    r = client.get(path)
+    assert r.status_code == 400 and "error" in r.json()
 
 
 @pytestmark_data
-@pytest.mark.parametrize("path", ["/../server.py", "/%2e%2e/server.py", "/..%2f..%2fREADME.md", "/nope.js"])
-def test_static_files_only_from_the_static_folder(base, path):
-    st, _, body = get(base + path)
-    assert st == 404 and b"def " not in body
+@pytest.mark.parametrize("path", ["/../server.py", "/%2e%2e/server.py", "/..%2f..%2fREADME.md", "/nope.js",
+                                  "/%2e%2e/%2e%2e/data/auth/users.db"])
+def test_static_files_only_from_the_static_folder(client, path):
+    r = client.get(path)
+    assert r.status_code == 404 and b"def " not in r.content and b"SQLite" not in r.content
 
 
 @pytestmark_data
-def test_front_end_files_are_served(base):
+def test_front_end_files_are_served(client):
     for path, kind in [("/", "text/html"), ("/app.js", "text/javascript"), ("/panels.js", "text/javascript"),
                        ("/app.css", "text/css")]:
-        st, ct, _ = get(base + path)
-        assert st == 200 and kind in ct, path
+        r = client.get(path)
+        assert r.status_code == 200 and kind in r.headers["content-type"], path

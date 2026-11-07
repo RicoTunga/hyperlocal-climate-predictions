@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Hyperlocal forecasts</title>
+  <link rel="stylesheet" href="/login.css">
+</head>
+<body>
+  <main class="card" aria-labelledby="title">
+    <div class="eyebrow">Hyperlocal forecast · 5 km</div>
+    <h1 id="title">Sign in</h1>
+    <p class="lead">Nakuru &amp; Busia rainfall, humidity and late-blight forecasts. Access is by invitation.</p>
+    <div class="error" id="error" role="alert" hidden></div>
+    <form method="post" action="/login" autocomplete="on">
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" autocomplete="username" required maxlength="32"
+             autocapitalize="none" spellcheck="false">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256">
+      <button type="submit">Sign in</button>
+    </form>
+    <p class="fine">Research prototype (Strathmore University) · replay of 2025–26 forecasts · not an official
+      forecast: the Kenya Meteorological Department is the authority.</p>
+  </main>
+  <script src="/login.js"></script>
+</body>
+</html>

@@ -139,7 +139,8 @@ DECIDED (Option B): train 2016-2023, validation 2024, final test Jan 2025 to 202
 - Late-blight risk forecast validated on the real data (section 15). `tests/test_late_blight.py` (5 tests). 48 tests in total.
 - Late-blight post-hoc test run once (section 15).
 - Dashboard built and reviewed through headless-browser screenshots (section 16). `tests/test_app.py` (5) and `tests/test_web.py` (19) cover the data layer, colour ramps, raster rendering, every API route, rejected inputs and path traversal. 72 tests in total.
-- Remaining: the write-up.
+- Sign-in and access control built (section 17); 98 tests in total, including 25 for authentication and access control.
+- Remaining: hosting (when a host is chosen; deploy/README.md) and the write-up.
 
 ## Confirmed findings to keep in mind
 - Both sites are bimodal: long rains Mar-May are about 37% of annual rain at each site; Nakuru also has a wet Jun-Sep (~31%) and dry Dec-Feb; Busia has no dry month.
@@ -209,3 +210,22 @@ Run: `python -m app.build_data` (once; compact per-site files in `app/data/`, cr
 Content: full-screen dark map (CARTO basemap, needs internet) with the forecast as a colour field (smooth display or true 5 km squares); layers: chance of rain >= 1 / 10 / 25 mm, expected rain, humidity, late-blight risk (Hutton and humidity-only, Nakuru); views: forecast, observed, forecast minus observed, normal for the date; timeline of issue days with +1..+7 day pills, play and keyboard shortcuts; hover readout; click a 5 km square for a meteogram (7-day rain chance, humidity and blight risk vs normal and observed, plus the whole test period); "How good is it?" (test skill by horizon with 95% intervals vs climatology or persistence, by period and season, late-blight skill, calibration table); About & caveats. The URL keeps the current view.
 
 Design: dark-mode steps of the validated palette; sequential ramps built in OKLab with monotonic lightness (rain blue, humidity aqua, late blight orange; low values dark and faded, high values bright and saturated), diverging blue/red for errors; site colours are categorical slots 1-2. Charts with Observable Plot, map with MapLibre GL (both from pinned CDN versions). Reviewed visually with headless Chromium (Playwright; `python -m web.screenshot`), which caught and fixed empty charts, colliding labels, washed-out colours and a dull default day.
+
+Later fix (dashboard): in "5 km squares" mode the map now draws thin vector grid lines on every cell, and colours run continuously across the whole scale (previously everything above about 85% shared the top colour, so a uniformly wet day at Busia, 88-95% everywhere, showed as one flat block).
+
+## 17. Users, sign-in and hosting readiness (November 2026)
+
+Decided with the user: the purpose is to **demonstrate secure authentication done properly**; accounts are **invite-only** (no sign-up; the prototype has no Kenya Met sign-off); the dashboard will be **hosted online**, host to be decided later. The original plan's `streamlit-authenticator` + PostgreSQL no longer fitted (no Streamlit; a database server is overkill for a few invited users).
+
+Implementation (standard library for everything security-related):
+- Server moved from the standard-library HTTP server to **Starlette on uvicorn** (production ASGI server); data/API code unchanged. Settings by environment variables (`web/settings.py`: HL_HOST, HL_PORT, HL_AUTH_DB, HL_SECURE_COOKIES).
+- Users in SQLite (`data/auth/users.db`, git-ignored; `.gitignore` was missing this and was fixed). Roles `admin` and `viewer`.
+- Passwords hashed with **scrypt** (n=2^14, r=8, p=1, 64-byte output, random 16-byte salt per user), constant-time comparison, minimum 12 characters, never stored or logged in plain text; unknown usernames cost the same time as real ones and get the same generic message.
+- Sessions: random 256-bit token in a cookie that is HttpOnly, SameSite=Strict, Path=/ (and Secure with the `__Host-` prefix over HTTPS); only the token's SHA-256 hash is stored; idle expiry 2 h, absolute 12 h; a new token at every login; logout, password reset and disabling end sessions server-side.
+- 5 failed logins lock an account for 15 minutes; login attempts rate-limited per IP (20 per 10 minutes); audit log of sign-ins, failures, lockouts and account changes.
+- Every page and API route requires a session except `/login`, its two assets and `/healthz` (API -> 401, pages -> redirect); POSTs must come from the same origin; logout needs the per-session CSRF token; `/api/admin/users` is admin-only (viewers 403).
+- Security headers on every response: Content-Security-Policy (only this site, the pinned CDNs and the CARTO basemap; no eval), X-Frame-Options DENY / frame-ancestors 'none', nosniff, Referrer-Policy, Permissions-Policy, COOP; HSTS over HTTPS.
+- Accounts managed by `python -m web.users add|list|disable|enable|reset-password|remove|audit`. Front end: login page in the dashboard's design; user name, role, Users (admins) and Sign out in the brand card.
+- Hosting readiness: `Dockerfile` (Python 3.13 slim, non-root user, minimal `requirements-web.txt`, app/data copied at build time, /data volume for users, healthcheck), `.dockerignore`, `deploy/README.md` (HTTPS via the platform or Caddy, first admin, post-deployment checks). The web server no longer imports the modelling libraries. **Docker is not installed on the development laptop: the image has not been built or tested, and nothing is deployed.**
+
+Verification: `tests/test_auth.py` (25 tests: hashing and salts, policy, plain-text never stored, generic failures, lockout and release with an injected clock, disabled users, token hashes only, idle and absolute expiry, logout and password reset, rate limiting, 401/redirects, hardened cookie flags, cross-site POST refused, CSRF, viewer 403 / admin 200, security headers, HTTPS cookie and HSTS, CLI); server tests in `tests/test_web.py` run signed in. The headless-browser check found that the first Content-Security-Policy blocked the CARTO style file (bare domain not covered by `*.`), which was fixed; it also confirmed the policy blocks eval.

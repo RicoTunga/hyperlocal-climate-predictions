@@ -1,5 +1,5 @@
 // Map-first forecast replay (Windy/Ventusky style). Data come from the local server (web/server.py).
-import { openDrawer, refreshDrawer, closeDrawer, openSkill, openAbout } from "./panels.js";
+import { openDrawer, refreshDrawer, closeDrawer, openSkill, openAbout, openUsers } from "./panels.js";
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
@@ -14,15 +14,32 @@ let lastUrl = null;
 
 export const state = {
   meta: null, pixels: {}, index: {}, dates: {},
-  site: "nakuru", issue: "2025-04-15", h: 1, layer: "rain1", view: "forecast", mode: "smooth",
+  user: null, site: "nakuru", issue: "2025-04-15", h: 1, layer: "rain1", view: "forecast", mode: "smooth",
   day: null, selected: null, playing: null, map: null,
 };
 const dayCache = new Map();
 
-export const api = (path) => fetch(path).then((r) => {
+export const api = (path) => fetch(path, { credentials: "same-origin" }).then((r) => {
+  if (r.status === 401) { location.href = "/login?error=expired"; throw new Error("signed out"); }
   if (!r.ok) throw new Error(`${path}: ${r.status}`);
   return r.json();
 });
+
+async function signOut() {
+  await fetch("/logout", { method: "POST", credentials: "same-origin", headers: { "X-CSRF-Token": state.user.csrf } });
+  location.href = "/login";
+}
+
+function renderUser() {
+  const u = state.user;
+  $("#user-name").innerHTML = `<b></b> <span class="pill ${u.role === "admin" ? "admin" : ""}">${u.role}</span>`;
+  $("#user-name").title = `Signed in as ${u.username}`;
+  $("#user-name b").textContent = u.username;  // text, never HTML
+  $("#open-users").hidden = u.role !== "admin";
+  $("#user-row").hidden = false;
+  $("#sign-out").addEventListener("click", signOut);
+  $("#open-users").addEventListener("click", openUsers);
+}
 
 // ---------------------------------------------------------------- dates and formatting
 const toDate = (s) => new Date(`${s}T00:00:00`);
@@ -89,6 +106,14 @@ export function pixelAt(lngLat) {
 }
 
 // ---------------------------------------------------------------- map
+/** Lines along every 5 km cell edge of the current site (shown in "5 km squares" mode). */
+function gridGeoJSON() {
+  const s = state.meta.sites[state.site], [[w, n], , [e, so]] = s.bounds, step = s.step, features = [];
+  for (let x = w; x <= e + 1e-9; x += step) features.push({ type: "Feature", geometry: { type: "LineString", coordinates: [[x, so], [x, n]] } });
+  for (let y = so; y <= n + 1e-9; y += step) features.push({ type: "Feature", geometry: { type: "LineString", coordinates: [[w, y], [e, y]] } });
+  return { type: "FeatureCollection", features };
+}
+
 function boxGeoJSON(b) { return { type: "Feature", geometry: { type: "Polygon", coordinates: [[...b, b[0]]] } }; }
 function cellGeoJSON(i) {
   if (i == null) return { type: "FeatureCollection", features: [] };
@@ -121,6 +146,10 @@ function initMap() {
     map.addSource("box", { type: "geojson", data: boxGeoJSON(site.bounds) });
     map.addLayer({ id: "box", type: "line", source: "box",
       paint: { "line-color": "#f0efec", "line-opacity": 0.16, "line-width": 1, "line-dasharray": [3, 3] } }, firstLabel);
+    map.addSource("grid", { type: "geojson", data: gridGeoJSON() });
+    map.addLayer({ id: "grid", type: "line", source: "grid",
+      layout: { visibility: state.mode === "cells" ? "visible" : "none" },
+      paint: { "line-color": "#0d0d0d", "line-opacity": 0.55, "line-width": 0.6 } }, firstLabel);
     map.addSource("selected", { type: "geojson", data: cellGeoJSON(null) });
     map.addLayer({ id: "selected", type: "line", source: "selected", paint: { "line-color": "#ffffff", "line-width": 2 } });
     fitSite(false);
@@ -140,6 +169,8 @@ function updateMapLayer() {
     map.getSource("field").updateImage({ url, coordinates: s.bounds });
   }
   map.getSource("box").setData(boxGeoJSON(s.bounds));
+  map.getSource("grid").setData(gridGeoJSON());
+  map.setLayoutProperty("grid", "visibility", state.mode === "cells" ? "visible" : "none");
   map.setPaintProperty("field", "raster-resampling", state.mode === "cells" ? "nearest" : "linear");
   map.once("idle", () => { document.body.dataset.ready = "1"; });
   map.triggerRepaint();
@@ -175,7 +206,8 @@ function readoutHTML(i) {
 // ---------------------------------------------------------------- legend, headline, controls
 function renderLegend() {
   const L = layerInfo(), V = L.views[state.view], ramp = V.ramp, br = V.breaks;
-  const stops = ramp.map((c, k) => `${c} ${((k + 0.5) / ramp.length) * 100}%`).join(", ");
+  // colours run continuously from the first to the last class edge (same mapping as web/raster.py)
+  const stops = ramp.map((c, k) => `${c} ${(k / (ramp.length - 1)) * 100}%`).join(", ");
   const label = (x, k) => {
     if (x == null) return "";
     let t = V.unit === "points" ? `${x > 0 ? "+" : ""}${Math.round(100 * x)}`
@@ -336,6 +368,8 @@ function readHash() {
 }
 
 async function main() {
+  state.user = await api("/api/me");
+  renderUser();
   state.meta = await api("/api/meta");
   for (const s of Object.keys(state.meta.sites)) {
     state.pixels[s] = await api(`/api/pixels/${s}`);
@@ -346,7 +380,7 @@ async function main() {
   wireControls();
   renderMonths();
   await setState({});
-  window.__app = { state, setState, selectPixel, openSkill, openAbout };  // used by the screenshot script
+  window.__app = { state, setState, selectPixel, openSkill, openAbout, openUsers };  // used by the screenshot script
 }
 
 main().catch((err) => {

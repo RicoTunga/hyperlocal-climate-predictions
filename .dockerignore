@@ -1,0 +1,15 @@
+# Keep the image small and free of secrets: only what the Dockerfile copies is needed.
+.git
+.venv
+.playwright
+.env
+*.key
+credentials*.json
+.cdsapirc
+data/
+models/
+notebooks/
+web/screenshots/
+**/__pycache__
+.pytest_cache
+catboost_info/

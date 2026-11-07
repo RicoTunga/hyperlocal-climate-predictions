@@ -23,13 +23,18 @@ python-dotenv
 ipykernel
 jupyter
 
-# Testing
-pytest
 
 # Added later (dashboard phase)
 # streamlit
 # streamlit-authenticator
 # psycopg2-binary
 
-# Dev tools (dashboard screenshots)
+# Dashboard server (see also requirements-web.txt for a minimal install)
+starlette
+uvicorn
+python-multipart
+
+# Dev tools (tests and dashboard screenshots)
+pytest
+httpx
 playwright

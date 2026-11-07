@@ -17,7 +17,19 @@ from PIL import Image
 from scipy.ndimage import zoom
 
 from app import components as C
-from src.features.build import grid_index
+
+
+def grid_index(values: np.ndarray) -> np.ndarray:
+    """Integer position of each coordinate on a regular grid (same as src.features.build.grid_index;
+    copied so the web server does not import the modelling code and its dependencies)."""
+    u = np.unique(values)
+    if len(u) == 1:
+        return np.zeros(len(values), dtype=int)
+    step = np.min(np.diff(u))
+    idx = np.rint((values - u.min()) / step).astype(int)
+    if not np.allclose(u.min() + idx * step, values, atol=1e-6):
+        raise ValueError("Pixel coordinates are not on a regular grid.")
+    return idx
 
 DARK_SURFACE = "#1a1a19"
 # dark-mode ramps: low = dark, high = bright (built in OKLab from the palette's own hues)
@@ -53,10 +65,13 @@ def finite_breaks(breaks: tuple) -> np.ndarray:
 
 
 def class_position(values: np.ndarray, breaks: tuple) -> np.ndarray:
-    """Continuous position 0..6 along the 7 classes: class k spans [k, k+1) around its centre k+0.5."""
+    """Continuous position 0..6 along the ramp, from the first class edge (0) to the last edge (6).
+
+    Every value inside the breaks gets its own colour (no flat top: 86% and 99% differ), and the
+    class edges fall at evenly spaced points, matching the legend's tick marks."""
     b = finite_breaks(breaks)
-    pos = np.interp(values, b, np.arange(len(b)))  # 0 at the first edge, 7 at the last
-    return np.clip(pos - 0.5, 0, len(b) - 2)
+    n_colours = len(b) - 1  # 7
+    return np.interp(values, b, np.linspace(0, n_colours - 1, len(b)))
 
 
 def colourise(pos: np.ndarray, ramp: list, alpha: np.ndarray) -> np.ndarray:

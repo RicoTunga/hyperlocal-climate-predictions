@@ -1,0 +1,10 @@
+# Minimal requirements for RUNNING the dashboard (web/server.py), e.g. inside the Docker image.
+# The full research environment (data ingestion, models, notebooks) is requirements.txt.
+numpy
+pandas
+pyarrow
+scipy
+pillow
+starlette
+uvicorn
+python-multipart

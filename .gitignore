@@ -33,3 +33,7 @@ app/data/
 # Playwright browsers and dashboard screenshots (dev only)
 .playwright/
 web/screenshots/
+
+# Dashboard accounts and sessions (password hashes): never commit
+data/auth/
+*.db

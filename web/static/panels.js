@@ -233,3 +233,25 @@ export function openAbout() {
     <p style="color:#898781">Basemap © OpenStreetMap contributors © CARTO. Methods and numbers: docs/PROJECT_CONTEXT.md in the project repository.</p>`;
   $("#about-modal").hidden = false;
 }
+
+// ---------------------------------------------------------------- users overlay (admins)
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+export async function openUsers() {
+  $("#users-modal").hidden = false;
+  $("#users-body").innerHTML = `<div class="section-note">Loading…</div>`;
+  const data = await api("/api/admin/users");
+  const when = (t) => new Date(t * 1000).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  $("#users-body").innerHTML = `
+    <p class="summary">Accounts are invite-only. Add, disable or reset them on the server with
+      <code>python -m web.users</code>. Only admins can see this list.</p>
+    <table class="data"><thead><tr><th>User</th><th>Role</th><th>Status</th><th>Created</th></tr></thead><tbody>
+      ${data.users.map((u) => `<tr><td>${esc(u.username)}</td><td><span class="pill ${u.role === "admin" ? "admin" : ""}">${esc(u.role)}</span></td>
+        <td>${u.disabled ? '<span class="pill warn">disabled</span>' : u.locked ? '<span class="pill warn">locked</span>' : "active"}</td>
+        <td>${when(u.created)}</td></tr>`).join("")}
+    </tbody></table>
+    <div class="section-title" style="margin-top:18px">Recent sign-in events</div>
+    <table class="data"><thead><tr><th>Event</th><th>User</th><th>From</th><th>When</th></tr></thead><tbody>
+      ${data.events.map((e) => `<tr><td>${esc(e.event.replace(/_/g, " "))}</td><td>${esc(e.username ?? "")}</td><td>${esc(e.ip ?? "")}</td><td>${when(e.at)}</td></tr>`).join("")}
+    </tbody></table>`;
+}

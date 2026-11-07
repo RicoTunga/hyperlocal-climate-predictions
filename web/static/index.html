@@ -22,6 +22,11 @@
     <div class="badge" title="Kenya Meteorological Department is the forecasting authority">
       Research replay · not an official forecast
     </div>
+    <div class="user-row" id="user-row" hidden>
+      <span class="user-name" id="user-name"></span>
+      <button class="user-link" id="open-users" hidden>Users</button>
+      <button class="user-link" id="sign-out">Sign out</button>
+    </div>
   </header>
 
   <!-- right: layers and views -->
@@ -97,6 +102,12 @@
     <div class="modal-card wide">
       <div class="modal-head"><h2 id="skill-title">How good is it?</h2><button class="icon close-modal" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
       <div class="modal-body" id="skill-body"></div>
+    </div>
+  </div>
+  <div class="modal" id="users-modal" hidden role="dialog" aria-modal="true" aria-labelledby="users-title">
+    <div class="modal-card">
+      <div class="modal-head"><h2 id="users-title">Users</h2><button class="icon close-modal" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div class="modal-body" id="users-body"></div>
     </div>
   </div>
   <div class="modal" id="about-modal" hidden role="dialog" aria-modal="true" aria-labelledby="about-title">
