@@ -23,12 +23,6 @@ python-dotenv
 ipykernel
 jupyter
 
-
-# Added later (dashboard phase)
-# streamlit
-# streamlit-authenticator
-# psycopg2-binary
-
 # Dashboard server (see also requirements-web.txt for a minimal install)
 starlette
 uvicorn

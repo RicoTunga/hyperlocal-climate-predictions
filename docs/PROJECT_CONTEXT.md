@@ -107,7 +107,7 @@ DECIDED (Option B): train 2016-2023, validation 2024, final test Jan 2025 to 202
 - Busia shows 50% wet days and rainfall up to about 2,398 mm/yr at some pixels (the county plan says 760 to 2,000 mm). Possibly a CHIRPS characteristic near Lake Victoria; check against station data.
 - Both boxes include land outside the county (and Uganda, for Busia) and lake pixels.
 - The CDS time-series dataset is labelled experimental and ERA5 has a reporting delay, so live inference for a deployed dashboard needs a different input (for example an NWP forecast feed). Not solved yet.
-- `notebooks/01_data_tour.ipynb` was tested on synthetic data and run by the user; sections 3 and 9 outputs were not yet reported back.
+- `notebooks/01_data_tour.ipynb` was run by the user on the real data; its findings (seasonality, pixel-vs-region correlation) are recorded under "Confirmed findings" at the end of this file.
 - Evaluation years are wetter than training. Nakuru wet-day share: train 2016-2023 20.1%, validation 2024 24.8%. During the extension data check (area-average monthly totals only, no model results), Jan-Sep 2026 had several months outside the 2016-2025 range (very wet Feb-Mar, dry Jan and Jun-Sep), and ERA5 humidity/cloud agree. Consequences: climatology is a weaker baseline in those years, and probability forecasts calibrated to the training base rate may be miscalibrated. Plan: report test results for 2025 and 2026 separately and by season, and show skill against both baselines. No feature or tuning choice may be based on this test-period check.
 
 ## 10. Gotchas
