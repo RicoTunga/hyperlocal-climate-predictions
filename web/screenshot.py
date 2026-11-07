@@ -109,6 +109,13 @@ def main() -> None:
         shot("08_about", setup=lambda: page.evaluate("window.__app.openAbout()"), wait=800)
         page.keyboard.press("Escape")
         shot("09_users_admin", setup=lambda: page.evaluate("window.__app.openUsers()"), wait=1000)
+        page.keyboard.press("Escape")
+        shot("10_why_overlay", setup=lambda: page.evaluate("window.__app.openWhy()"), wait=1500)
+        page.keyboard.press("Escape")
+        shot("11_drawer_blight_why", "site=nakuru&date=2025-04-15&h=2&layer=blight_hutton&view=forecast&mode=smooth")
+        page.evaluate("window.__app.selectPixel(Math.floor(window.__app.state.pixels.nakuru.ids.length * 0.4))")
+        page.wait_for_timeout(2500)
+        page.screenshot(path=str(OUT / "11_drawer_blight_why.png"))
         browser.close()
     server.should_exit = True
     store.close()

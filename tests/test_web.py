@@ -153,3 +153,41 @@ def test_front_end_files_are_served(client):
                        ("/app.css", "text/css")]:
         r = client.get(path)
         assert r.status_code == 200 and kind in r.headers["content-type"], path
+
+
+SHAP_READY = (Path(__file__).resolve().parents[1] / "app" / "data" / "shap_meta.json").exists()
+
+
+@pytest.mark.skipif(not (DATA_READY and SHAP_READY), reason="app/data SHAP files not built")
+def test_why_explanations_add_up_and_match_the_forecast(client):
+    meta = client.get("/api/meta").json()
+    issue = meta["sites"]["nakuru"]["issue_min"]
+    pid = client.get("/api/pixels/nakuru").json()["ids"][100]
+    why = client.get(f"/api/why/nakuru/{pid}/{issue}").json()
+    assert {g["key"] for g in why["groups"]} and set(why["targets"]) == {"rain1", "rh", "blight_hutton", "blight_humid"}
+    day = client.get(f"/api/day/nakuru/{issue}").json()
+    k = day["pixels"].index(pid)
+    for h in ("1", "4", "7"):
+        e = why["targets"]["rain1"][h]
+        assert sum(e["contributions"].values()) == pytest.approx(e["forecast"] - e["typical"], abs=0.5)  # tenths-of-a-point rounding
+        assert e["forecast"] == pytest.approx(100 * day["horizons"][h]["p_rain1"][k], abs=0.5)
+        r = why["targets"]["rh"][h]
+        assert r["forecast"] == pytest.approx(day["horizons"][h]["rh"][k], abs=0.5)
+
+
+@pytest.mark.skipif(not (DATA_READY and SHAP_READY), reason="app/data SHAP files not built")
+def test_why_rejects_bad_inputs_and_needs_sign_in(client):
+    meta = client.get("/api/meta").json()
+    issue = meta["sites"]["busia"]["issue_min"]
+    assert client.get(f"/api/why/busia/nonexistent/{issue}").status_code == 400
+    assert client.get("/api/why/busia/0.025_34.025/1999-01-01").status_code == 400
+    from starlette.testclient import TestClient
+    anon = TestClient(client.app)
+    assert anon.get(f"/api/why/busia/0.025_34.025/{issue}").status_code == 401
+
+
+@pytestmark_data
+def test_shap_summary_has_plain_labels(client):
+    s = client.get("/api/shap_summary").json()
+    assert s["labels"]["area-wide"] == "Rain and humidity across the area"
+    assert {"site", "horizon", "task", "group", "overall_share", "within_day_share"} <= set(s["groups"][0])

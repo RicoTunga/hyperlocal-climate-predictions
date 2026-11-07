@@ -46,6 +46,8 @@ export function refreshDrawer() {
   const rows = outlookRows(i), labels = rows.map((r) => r.label);
   const body = $("#drawer-body");
   body.innerHTML = `
+    <div class="section-title">Why this forecast?</div>
+    <div id="m-why"><div class="section-note">Loading…</div></div>
     <div class="section-title">Chance of rain (≥ 1 mm), issued ${fmtDate(state.issue, { day: "numeric", month: "short" })}</div>
     <div id="m-rain"></div>
     <div class="section-note">Bars: forecast · dashed line: normal for the date · dot: what happened (filled = rained)</div>
@@ -101,6 +103,7 @@ export function refreshDrawer() {
     }));
   }
   body.querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => { seriesH = Number(b.dataset.h); refreshDrawer(); }));
+  renderWhy(i, W);
   renderSeries(i, W);
 }
 
@@ -254,4 +257,118 @@ export async function openUsers() {
     <table class="data"><thead><tr><th>Event</th><th>User</th><th>From</th><th>When</th></tr></thead><tbody>
       ${data.events.map((e) => `<tr><td>${esc(e.event.replace(/_/g, " "))}</td><td>${esc(e.username ?? "")}</td><td>${esc(e.ip ?? "")}</td><td>${when(e.at)}</td></tr>`).join("")}
     </tbody></table>`;
+}
+
+// ---------------------------------------------------------------- "Why this forecast?" (drawer)
+const WHY_TARGET = { rain1: "rain1", rain10: "rain1", rain25: "rain1", rainmm: "rain1", rh: "rh",
+  blight_hutton: "blight_hutton", blight_humid: "blight_humid" };
+const WHY_NAME = { rain1: "chance of rain (≥ 1 mm)", rh: "humidity", blight_hutton: "late-blight risk (Hutton)",
+  blight_humid: "late-blight risk (humidity only)" };
+const whyCache = new Map();
+
+function addDaysIso(s, n) {
+  const d = new Date(`${s}T00:00:00`);
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+async function renderWhy(i, W) {
+  const site = state.site, id = state.pixels[site].ids[i], issue = state.issue, h = state.h, layer = state.layer;
+  const key = `${site}/${id}/${issue}`;
+  if (!whyCache.has(key)) whyCache.set(key, api(`/api/why/${site}/${encodeURIComponent(id)}/${issue}`));
+  const data = await whyCache.get(key);
+  if (state.selected !== i || state.site !== site || state.issue !== issue || state.h !== h || state.layer !== layer) return;
+  const target = WHY_TARGET[layer], e = data.targets[target]?.[String(h)];
+  const box = $("#m-why");
+  if (!e) { box.innerHTML = `<div class="section-note">No explanation available for this layer.</div>`; return; }
+  const prob = target !== "rh", unit = prob ? " pts" : "%";
+  const label = Object.fromEntries(data.groups.map((g) => [g.key, g.label]));
+  const parts = Object.entries(e.contributions).map(([k, v]) => ({ key: k, label: label[k], v }));
+  const big = parts.filter((p) => Math.abs(p.v) >= 0.5).sort((a, b) => Math.abs(b.v) - Math.abs(a.v));
+  const rest = parts.filter((p) => Math.abs(p.v) < 0.5).reduce((s, p) => s + p.v, 0);
+  if (Math.abs(rest) >= 0.05) big.push({ key: "other", label: "Everything else", v: rest });
+  const fmtv = (v) => `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}${unit}`;
+  const lvl = (v) => `${Math.round(v)}%`;
+  // waterfall rows: a typical forecast -> each push up or down -> this forecast
+  let x = e.typical;
+  const rows = [{ label: "A typical forecast", x1: null, x2: e.typical, kind: "total", t: lvl(e.typical) }];
+  for (const p of big) { rows.push({ label: p.label, x1: x, x2: x + p.v, kind: p.v >= 0 ? "up" : "down", t: fmtv(p.v) }); x += p.v; }
+  rows.push({ label: "This forecast", x1: null, x2: e.forecast, kind: "total", t: lvl(e.forecast) });
+  const ends = rows.flatMap((r) => [r.x1, r.x2]).filter((v) => v != null);
+  const lo = prob ? 0 : Math.floor(Math.min(...ends) - 3);
+  const hi = prob ? Math.min(100, Math.max(30, Math.ceil(Math.max(...ends) + 10))) : Math.ceil(Math.max(...ends) + 3);
+  rows.forEach((r) => { if (r.x1 == null) r.x1 = lo; });
+  const colour = { up: target.startsWith("blight") ? C.blight : C.rain, down: C.ink3, total: C.ink2 };
+  const top = big[0];
+  box.innerHTML = `<div class="section-note" style="margin-bottom:6px">Explaining the <b style="color:${C.ink}">${WHY_NAME[target]}</b>
+    for ${fmtDate(addDaysIso(issue, h), { weekday: "short", day: "numeric", month: "short" })} (${h} day${h > 1 ? "s" : ""} ahead):
+    from ${lvl(e.typical)} on a typical day to <b style="color:${C.ink}">${lvl(e.forecast)}</b> here.
+    ${top ? `The biggest ${top.v >= 0 ? "push up" : "push down"}: ${top.label.toLowerCase()} (${fmtv(top.v)}).` : ""}</div>`;
+  box.append(Plot.plot({
+    width: W, height: 34 + 26 * rows.length, style, marginLeft: 196, marginRight: 58, marginTop: 4,
+    x: { domain: [lo, hi], label: null, grid: true, ...axisDefaults, tickFormat: (v) => `${v}%` },
+    y: { domain: rows.map((r) => r.label), label: null, ...axisDefaults },
+    marks: [
+      Plot.gridX({ stroke: C.grid, strokeOpacity: 1 }),
+      Plot.barX(rows, { x1: "x1", x2: "x2", y: "label", fill: (d) => colour[d.kind], insetTop: 4, insetBottom: 4 }),
+      Plot.text(rows, { x: (d) => Math.max(d.x1, d.x2), y: "label", text: "t", dx: 6, textAnchor: "start", fill: C.ink, fontSize: 11 }),
+    ],
+  }));
+  box.insertAdjacentHTML("beforeend", `<div class="section-note">${target.startsWith("blight") ? "Orange" : "Blue"} bars push the forecast up,
+    grey bars push it down. This shows what the model used, not what causes the weather; related inputs share the credit.</div>`);
+}
+
+// ---------------------------------------------------------------- "Why these forecasts?" (overlay)
+let shapSummary = null;
+const whyPick = { site: null, task: "occ1", view: "overall_share" };
+const TASK_NAMES = { occ1: "Chance of rain (≥ 1 mm)", wet: "Rain amount on wet days", rh: "Humidity" };
+
+export async function openWhy() {
+  $("#why-modal").hidden = false;
+  if (!shapSummary) {
+    $("#why-body").innerHTML = `<div class="section-note">Loading…</div>`;
+    shapSummary = await api("/api/shap_summary");
+  }
+  if (!whyPick.site) whyPick.site = state.site;
+  renderWhyOverlay();
+}
+
+function renderWhyOverlay() {
+  const { labels, groups } = shapSummary;
+  const rows = groups.filter((d) => d.site === whyPick.site && d.task === whyPick.task)
+    .map((d) => ({ ...d, label: labels[d.group] ?? d.group, share: 100 * d[whyPick.view], day: `day ${d.horizon}` }));
+  const order = [...new Set(rows.filter((d) => d.horizon === 1).sort((a, b) => b.share - a.share).map((d) => d.label))];
+  const leader = (h) => rows.filter((d) => d.horizon === h).sort((a, b) => b.share - a.share)[0];
+  const l1 = leader(1), l7 = leader(7);
+  const opt = (obj, cur) => Object.entries(obj).map(([k, v]) => `<option value="${k}" ${k === cur ? "selected" : ""}>${v}</option>`).join("");
+  $("#why-body").innerHTML = `
+    <p class="summary">Each forecast is built from many inputs. This chart groups them into plain-language families and shows how much
+    each family <b>${whyPick.view === "overall_share" ? "moved the forecasts" : "made one square differ from its neighbours on the same day"}</b>
+    (share of the total, from a SHAP analysis of the 2024 forecasts). ${l1 && l7 ? `For 1 day ahead the biggest is <b>${l1.label.toLowerCase()}</b>
+    (${Math.round(l1.share)}%); for 7 days ahead it is <b>${l7.label.toLowerCase()}</b> (${Math.round(l7.share)}%).` : ""}</p>
+    <div class="controls">
+      <label>Site<select id="w-site">${opt({ nakuru: "Nakuru", busia: "Busia" }, whyPick.site)}</select></label>
+      <label>Forecast<select id="w-task">${opt(TASK_NAMES, whyPick.task)}</select></label>
+      <label>Show<select id="w-view">${opt({ overall_share: "what drives the forecasts", within_day_share: "what makes squares differ" }, whyPick.view)}</select></label>
+    </div>
+    <div id="w-chart"></div>
+    <p class="section-note" style="margin-top:10px">SHAP shows what the model uses, not what causes the weather. Related inputs (for example rain
+    here, rain nearby and rain across the area) share credit, so treat the sizes as approximate. Click any square on the map to see why
+    <i>that</i> forecast came out as it did.</p>`;
+  $("#w-chart").append(Plot.plot({
+    width: 1000, height: 50 + 46 * order.length, style, marginLeft: 240, marginRight: 40,
+    x: { label: "share of the total (%)", grid: true, ...axisDefaults },
+    y: { label: null, axis: null },
+    fy: { domain: order, label: null, ...axisDefaults },
+    color: { domain: ["day 1", "day 3", "day 7"], range: [C.rain, C.blight, C.humid], legend: true,
+      style: { background: "transparent", color: C.ink2, fontSize: "12px", marginLeft: "240px" } },
+    marks: [
+      Plot.gridX({ stroke: C.grid, strokeOpacity: 1 }),
+      Plot.barX(rows, { x: "share", y: "day", fy: "label", fill: "day", insetTop: 1, insetBottom: 1 }),
+      Plot.text(rows, { x: "share", y: "day", fy: "label", text: (d) => `${Math.round(d.share)}%`, dx: 4, textAnchor: "start", fill: C.ink2, fontSize: 10 }),
+    ],
+  }));
+  $("#w-site").addEventListener("change", (e) => { whyPick.site = e.target.value; renderWhyOverlay(); });
+  $("#w-task").addEventListener("change", (e) => { whyPick.task = e.target.value; renderWhyOverlay(); });
+  $("#w-view").addEventListener("change", (e) => { whyPick.view = e.target.value; renderWhyOverlay(); });
 }

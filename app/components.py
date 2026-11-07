@@ -191,3 +191,18 @@ def squares(df: pd.DataFrame, px: pd.DataFrame) -> pd.DataFrame:
 
 def hex_rgba(h: str, alpha: int = 175) -> list:
     return [int(h[1:3], 16), int(h[3:5], 16), int(h[5:7], 16), alpha]
+
+
+# ---------------------------------------------------------------- SHAP input groups (plain language)
+SHAP_GROUPS = ["area-wide", "own rain history", "neighbourhood rain", "own ERA5 weather", "climatology",
+               "calendar", "location & elevation", "blight conditions today"]
+SHAP_LABELS = {
+    "area-wide": "Rain and humidity across the area",
+    "own rain history": "Recent rain at this spot",
+    "neighbourhood rain": "Rain nearby",
+    "own ERA5 weather": "Weather here today",
+    "climatology": "Normal for this time of year",
+    "calendar": "Time of year",
+    "location & elevation": "Location and elevation",
+    "blight conditions today": "Blight conditions today",
+}

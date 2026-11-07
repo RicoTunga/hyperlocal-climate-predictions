@@ -24,6 +24,8 @@ API
     /api/day/<site>/<YYYY-MM-DD>                  every pixel x horizon for one issue day
     /api/raster/<site>/<date>/<h>/<layer>/<view>.png?mode=smooth|cells
     /api/pixel/<site>/<pixel_id>?h=<1-7>          one pixel's test-period series at one horizon
+    /api/why/<site>/<pixel_id>/<YYYY-MM-DD>       SHAP explanation of one square's forecasts (all horizons)
+    /api/shap_summary                             what drives the forecasts overall (validation SHAP)
     /api/skill, /api/calibration, /api/blight_skill   committed result tables
     /api/admin/users                              (admin) accounts and recent sign-in events
 """
@@ -215,6 +217,42 @@ def api_pixel(site, pixel_id, h):
     return {"target": [str(pd.Timestamp(t).date()) for t in s["target_date"]], **{c: [clean(v) for v in s[c]] for c in cols}}
 
 
+@lru_cache(maxsize=1)
+def shap_meta() -> dict:
+    return json.loads((C.DATA / "shap_meta.json").read_text(encoding="utf-8"))
+
+
+def api_why(site, pixel_id, issue):
+    """Plain-language SHAP explanation of every forecast for one square and issue day (all horizons).
+
+    Contributions are percentage points for chances (rain, late blight) and % for humidity; they add
+    up to forecast minus the typical forecast (see app/build_shap.py)."""
+    site = check_site(site)
+    issue = check_date(site, issue)
+    if pixel_id not in set(pixels(site)["pixel_id"]):
+        raise BadRequest(f"unknown pixel '{pixel_id}'")
+    m = shap_meta()
+    rows = pd.read_parquet(C.DATA / f"{site}_shap.parquet",
+                           filters=[("issue_date", "==", pd.Timestamp(issue)), ("pixel_id", "==", pixel_id)])
+    out = {"groups": [{"key": g, "label": m["labels"][g]} for g in m["groups"]], "targets": {}}
+    for target in m["sites"][site]["targets"]:
+        per_h = {}
+        for _, r in rows.iterrows():
+            h = int(r["horizon"])
+            contrib = {g: float(r[f"{target}|{g}"]) / 10 for g in m["groups"]}  # stored in tenths of a point
+            typical = m["sites"][site]["typical"][f"{target}|{h}"]
+            per_h[str(h)] = {"typical": round(typical, 2), "forecast": round(typical + sum(contrib.values()), 2),
+                             "contributions": contrib}
+        out["targets"][target] = per_h
+    return out
+
+
+def api_shap_summary():
+    g = pd.read_csv(C.REPORTS / "shap_groups_validation.csv")
+    g = g[["site", "horizon", "task", "group", "overall_share", "within_day_share"]]
+    return {"labels": C.SHAP_LABELS, "groups": json.loads(g.to_json(orient="records"))}
+
+
 def table(path, query=None):
     df = pd.read_csv(C.REPORTS / path)
     if query is not None:
@@ -293,6 +331,16 @@ def r_raster(request):
         raise BadRequest("mode must be smooth or cells")
     return Response(png(site, issue, h, layer_id, view, mode), media_type="image/png",
                     headers={"Cache-Control": "private, max-age=3600"})
+
+
+@guarded
+def r_why(request):
+    p = request.path_params
+    return json_ok(api_why(p["site"], p["pixel_id"], p["issue"]))
+
+
+def r_shap_summary(request):
+    return json_ok(api_shap_summary())
 
 
 def r_skill(request):
@@ -422,6 +470,8 @@ def create_app(cfg: Settings | None = None, store: AuthStore | None = None) -> S
         Route("/api/day/{site}/{issue}", r_day),
         Route("/api/raster/{site}/{issue}/{h}/{layer}/{viewfile}", r_raster),
         Route("/api/pixel/{site}/{pixel_id}", r_pixel),
+        Route("/api/why/{site}/{pixel_id}/{issue}", r_why),
+        Route("/api/shap_summary", r_shap_summary),
         Route("/api/skill", r_skill),
         Route("/api/calibration", r_calibration),
         Route("/api/blight_skill", r_blight_skill),

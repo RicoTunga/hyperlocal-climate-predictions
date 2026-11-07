@@ -1,5 +1,5 @@
 // Map-first forecast replay (Windy/Ventusky style). Data come from the local server (web/server.py).
-import { openDrawer, refreshDrawer, closeDrawer, openSkill, openAbout, openUsers } from "./panels.js";
+import { openDrawer, refreshDrawer, closeDrawer, openSkill, openAbout, openUsers, openWhy } from "./panels.js";
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
@@ -333,6 +333,7 @@ function wireControls() {
   $("#play").addEventListener("click", togglePlay);
   $("#open-skill").addEventListener("click", openSkill);
   $("#open-about").addEventListener("click", openAbout);
+  $("#open-why").addEventListener("click", openWhy);
   $("#close-drawer").addEventListener("click", () => {
     state.selected = null; state.map.getSource("selected").setData(cellGeoJSON(null)); closeDrawer();
   });
@@ -380,7 +381,7 @@ async function main() {
   wireControls();
   renderMonths();
   await setState({});
-  window.__app = { state, setState, selectPixel, openSkill, openAbout, openUsers };  // used by the screenshot script
+  window.__app = { state, setState, selectPixel, openSkill, openAbout, openUsers, openWhy };  // used by the screenshot script
 }
 
 main().catch((err) => {
