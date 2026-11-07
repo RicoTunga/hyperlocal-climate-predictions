@@ -30,3 +30,6 @@ pytest
 # streamlit
 # streamlit-authenticator
 # psycopg2-binary
+
+# Dev tools (dashboard screenshots)
+playwright

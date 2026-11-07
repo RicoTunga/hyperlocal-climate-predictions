@@ -26,3 +26,10 @@ Thumbs.db
 
 # CatBoost training logs
 catboost_info/
+
+# Dashboard data (rebuilt by python -m app.build_data)
+app/data/
+
+# Playwright browsers and dashboard screenshots (dev only)
+.playwright/
+web/screenshots/

@@ -24,7 +24,8 @@ src/ingestion/           chirps.py, era5.py, elevation.py   (data acquisition)
 src/features/            merge.py (joins sources), build.py (per-pixel features -> data/processed/features_<site>.parquet), humid_hours.py (hours at RH >= 90%, separate file)
 src/models/              evaluation.py (splits, horizon frames, metrics), baselines.py, train.py (models per horizon/task/algorithm), uncertainty.py (bootstrap intervals), tune.py (Optuna), calibration.py (reliability of rain probabilities), recalibrate.py (Platt test, not used), spatial_holdout.py (2 x 2 block hold-out), transfer.py (one site's models on the other), final_test.py (protocol test), fusion.py (ensemble and climatology blends, no gain), late_blight.py (Nakuru late-blight risk)
 src/explain/             shap_analysis.py (SHAP by input group: overall and within-day)
-app/                     (empty) Streamlit dashboard, built last
+app/                     build_data.py (dashboard data from the saved test forecasts -> app/data/, git-ignored), components.py (layers, class breaks, OKLab colour ramps)
+web/                     dashboard: server.py (local server, 127.0.0.1 only, JSON/PNG API), raster.py (colour fields), static/ (HTML/CSS/JS front end), screenshot.py (Playwright dev tool)
 notebooks/               01_data_tour.ipynb
 tests/                   pytest tests (run: python -m pytest -q)
 reports/                 small result tables (committed), e.g. baselines_validation.csv
@@ -40,7 +41,8 @@ To rebuild from scratch, in order:
 2. ERA5: `python test_timeseries.py --site <site> --start 2016-01-01 --end 2026-10-21`, move the downloaded file into `data/raw/era5_manual/<site>/`, then `python -m src.ingestion.era5 --local --site <site>`
 3. `python -m src.ingestion.elevation`
 4. `python -m src.features.merge`
-5. `python -m src.features.build` (72 features, settings in `config/experiment.yaml`; about 1 minute, builds in pixel batches because the laptop has ~8 GB RAM)
+5. `python -m src.features.build`
+6. Dashboard (after the final test and late-blight test): `python -m app.build_data`, then `python -m web.server` and open http://127.0.0.1:8765. Screenshots for review: `python -m web.screenshot` (needs Playwright; browsers live in the git-ignored `.playwright/`). (72 features, settings in `config/experiment.yaml`; about 1 minute, builds in pixel batches because the laptop has ~8 GB RAM)
 
 ## Evaluation harness (built)
 
