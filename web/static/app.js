@@ -1,5 +1,10 @@
 // Map-first forecast replay (Windy/Ventusky style). Data come from the local server (web/server.py).
+// This file owns the map and the shared state; the other modules add the user features:
+//   panels.js  drawer (one square), "How good is it?", "Why", "About"      user.js  menu, places, crops, account
+//   hud.js     at-a-glance panel        search.js  coordinate / town search, "use my location"
+//   tour.js    guided tour              fx.js      subtle weather animations on the map
 import { openDrawer, refreshDrawer, closeDrawer, openSkill, openAbout, openUsers, openWhy } from "./panels.js";
+import { initUser, placeAt } from "./user.js";
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
@@ -9,15 +14,21 @@ const VIEW_NAMES = { forecast: "forecast", observed: "observed", error: "forecas
 export const LABELS = { rain1: "Chance of rain ≥ 1 mm", rain10: "Chance of heavy rain ≥ 10 mm",
   rain25: "Chance of very heavy rain ≥ 25 mm", rainmm: "Expected rain", rh: "Humidity",
   blight_hutton: "Late-blight risk (Hutton)", blight_humid: "Late-blight risk (humidity only)" };
+export const SITE_NAMES = { nakuru: "Nakuru", busia: "Busia" };
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 let lastUrl = null;
 
 export const state = {
   meta: null, pixels: {}, index: {}, dates: {},
-  user: null, site: "nakuru", issue: "2025-04-15", h: 1, layer: "rain1", view: "forecast", mode: "smooth",
+  user: null, profile: null, places: [], crops: [], catalogue: [],
+  site: "nakuru", issue: "2025-04-15", h: 1, layer: "rain1", view: "forecast", mode: "smooth",
   day: null, selected: null, playing: null, map: null,
 };
 const dayCache = new Map();
+
+/** Other modules listen for "change" (state or data changed) and "places" (saved places changed). */
+export const bus = new EventTarget();
+export const emit = (name) => bus.dispatchEvent(new Event(name));
 
 export const api = (path) => fetch(path, { credentials: "same-origin" }).then((r) => {
   if (r.status === 401) { location.href = "/login?error=expired"; throw new Error("signed out"); }
@@ -25,28 +36,33 @@ export const api = (path) => fetch(path, { credentials: "same-origin" }).then((r
   return r.json();
 });
 
-async function signOut() {
+/** State-changing call: JSON body, CSRF token from /api/me; the server's error message is thrown as is. */
+export async function send(path, body = {}, method = "POST") {
+  const r = await fetch(path, { method, credentials: "same-origin",
+    headers: { "Content-Type": "application/json", "X-CSRF-Token": state.user.csrf }, body: JSON.stringify(body) });
+  if (r.status === 401) { location.href = "/login?error=expired"; throw new Error("signed out"); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || `request failed (${r.status})`);
+  return j;
+}
+
+export async function signOut() {
   await fetch("/logout", { method: "POST", credentials: "same-origin", headers: { "X-CSRF-Token": state.user.csrf } });
   location.href = "/login";
 }
 
-function renderUser() {
-  const u = state.user;
-  $("#user-name").innerHTML = `<b></b> <span class="pill ${u.role === "admin" ? "admin" : ""}">${u.role}</span>`;
-  $("#user-name").title = `Signed in as ${u.username}`;
-  $("#user-name b").textContent = u.username;  // text, never HTML
-  $("#open-users").hidden = u.role !== "admin";
-  $("#user-row").hidden = false;
-  $("#sign-out").addEventListener("click", signOut);
-  $("#open-users").addEventListener("click", openUsers);
-}
+export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 // ---------------------------------------------------------------- dates and formatting
 const toDate = (s) => new Date(`${s}T00:00:00`);
-const iso = (d) => d.toISOString().slice(0, 10);
-const addDays = (s, n) => { const d = toDate(s); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+export const addDays = (s, n) => { const d = toDate(s); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 export const fmtDate = (s, opts = { weekday: "short", day: "numeric", month: "short", year: "numeric" }) =>
   toDate(s).toLocaleDateString("en-GB", opts);
+
+/** "0.325° S, 35.925° E": coordinates people can paste into a map app. */
+export const fmtLatLon = (lat, lon, dp = 3) =>
+  `${Math.abs(lat).toFixed(dp)}° ${lat < 0 ? "S" : "N"}, ${Math.abs(lon).toFixed(dp)}° ${lon < 0 ? "W" : "E"}`;
+export const plainLatLon = (lat, lon) => `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
 
 export function layerInfo(lid = state.layer) { return state.meta.layers[lid]; }
 const isProb = (L) => L.forecast.startsWith("p_") || L.blight;
@@ -78,31 +94,49 @@ export function fmtValue(lid, view, v) {
 }
 
 // ---------------------------------------------------------------- data
-async function loadDay(site, issue) {
+export async function loadDay(site, issue) {
   const key = `${site}/${issue}`;
   if (!dayCache.has(key)) {
-    dayCache.set(key, api(`/api/day/${site}/${issue}`));
-    if (dayCache.size > 12) dayCache.delete(dayCache.keys().next().value);
+    dayCache.set(key, api(`/api/day/${site}/${issue}`).catch((e) => { dayCache.delete(key); throw e; }));
+    if (dayCache.size > 14) dayCache.delete(dayCache.keys().next().value);
   }
   return dayCache.get(key);
 }
 
 function buildIndex(site) {
-  const s = state.meta.sites[site], P = state.pixels[site], idx = new Map();
-  P.ids.forEach((_, k) => {
+  const s = state.meta.sites[site], P = state.pixels[site], idx = new Map(), byId = new Map();
+  P.ids.forEach((id, k) => {
     const gi = Math.round((P.lat[k] - s.lat0) / s.step), gj = Math.round((P.lon[k] - s.lon0) / s.step);
     idx.set(`${gi}_${gj}`, k);
+    byId.set(id, k);
   });
   state.index[site] = idx;
+  P.byId = byId;
   const dates = [];
   for (let d = s.issue_min; d <= s.issue_max; d = addDays(d, 1)) dates.push(d);
   state.dates[site] = dates;
 }
 
-export function pixelAt(lngLat) {
-  const s = state.meta.sites[state.site];
+/** Index of the square containing a point, for a site (default: the current one), or null. */
+export function pixelAt(lngLat, site = state.site) {
+  const s = state.meta.sites[site];
   const gi = Math.round((lngLat.lat - s.lat0) / s.step), gj = Math.round((lngLat.lng - s.lon0) / s.step);
-  return state.index[state.site].get(`${gi}_${gj}`) ?? null;
+  return state.index[site].get(`${gi}_${gj}`) ?? null;
+}
+
+/** The site and square nearest to a point: {site, i, km} (km = 0 when the point is inside a square). */
+export function nearestSquare(lat, lng) {
+  let best = null;
+  for (const site of Object.keys(state.meta.sites)) {
+    const i = pixelAt({ lat, lng }, site);
+    if (i != null) return { site, i, km: 0 };
+    const P = state.pixels[site], c = Math.cos((lat * Math.PI) / 180);
+    for (let k = 0; k < P.ids.length; k++) {
+      const d = Math.hypot(P.lat[k] - lat, (P.lon[k] - lng) * c) * 111.2;
+      if (!best || d < best.km) best = { site, i: k, km: d };
+    }
+  }
+  return best;
 }
 
 // ---------------------------------------------------------------- map
@@ -115,29 +149,41 @@ function gridGeoJSON() {
 }
 
 function boxGeoJSON(b) { return { type: "Feature", geometry: { type: "Polygon", coordinates: [[...b, b[0]]] } }; }
+/** Corner coordinates of square i: [west, south, east, north]. */
+export function cellBounds(i, site = state.site) {
+  const P = state.pixels[site], h = state.meta.sites[site].step / 2;
+  return [P.lon[i] - h, P.lat[i] - h, P.lon[i] + h, P.lat[i] + h];
+}
 function cellGeoJSON(i) {
   if (i == null) return { type: "FeatureCollection", features: [] };
-  const P = state.pixels[state.site], h = state.meta.sites[state.site].step / 2;
-  const lo = P.lon[i], la = P.lat[i];
-  return boxGeoJSON([[lo - h, la + h], [lo + h, la + h], [lo + h, la - h], [lo - h, la - h]]);
+  const [w, s, e, n] = cellBounds(i);
+  return boxGeoJSON([[w, n], [e, n], [e, s], [w, s]]);
 }
 const rasterUrl = () =>
   `/api/raster/${state.site}/${state.issue}/${state.h}/${state.layer}/${state.view}.png?mode=${state.mode}`;
 
+const isMobile = () => matchMedia("(max-width: 760px)").matches;
+function mapPadding() {
+  return isMobile() ? { top: 190, bottom: 150, left: 20, right: 20 } : { top: 40, bottom: 130, left: 370, right: 250 };
+}
+
 function fitSite(animate = true) {
   const b = state.meta.sites[state.site].bounds;
-  state.map.fitBounds([b[3], b[1]], { padding: { top: 40, bottom: 130, left: 370, right: 250 }, duration: animate ? 900 : 0 });
+  state.map.fitBounds([b[3], b[1]], { padding: mapPadding(), duration: animate ? 900 : 0 });
 }
 
 function initMap() {
   const site = state.meta.sites[state.site];
   const map = new maplibregl.Map({
-    container: "map", style: BASEMAP, center: site.center, zoom: 8.4, minZoom: 5, maxZoom: 12,
+    container: "map", style: BASEMAP, center: site.center, zoom: 8.4, minZoom: 5, maxZoom: 13,
     attributionControl: { compact: true }, dragRotate: false, pitchWithRotate: false,
   });
   state.map = map;
+  map.touchZoomRotate.disableRotation();
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
-  return new Promise((resolve) => map.on("load", () => {
+  // start as soon as the basemap style is known ("style.load"), not after every basemap tile has drawn ("load"):
+  // the forecast overlay and the panels do not need the tiles, which stream in behind them
+  return new Promise((resolve) => map.once("style.load", () => {
     const firstLabel = map.getStyle().layers.find((l) => l.type === "symbol")?.id;
     lastUrl = rasterUrl();
     map.addSource("field", { type: "image", url: lastUrl, coordinates: site.bounds });
@@ -150,11 +196,13 @@ function initMap() {
     map.addLayer({ id: "grid", type: "line", source: "grid",
       layout: { visibility: state.mode === "cells" ? "visible" : "none" },
       paint: { "line-color": "#0d0d0d", "line-opacity": 0.55, "line-width": 0.6 } }, firstLabel);
+    map.addSource("hover", { type: "geojson", data: cellGeoJSON(null) });
+    map.addLayer({ id: "hover", type: "line", source: "hover", paint: { "line-color": "#ffffff", "line-opacity": 0.55, "line-width": 1 } });
     map.addSource("selected", { type: "geojson", data: cellGeoJSON(null) });
     map.addLayer({ id: "selected", type: "line", source: "selected", paint: { "line-color": "#ffffff", "line-width": 2 } });
     fitSite(false);
     map.on("mousemove", onHover);
-    map.on("mouseout", () => { $("#readout").hidden = true; map.getCanvas().style.cursor = ""; });
+    map.on("mouseout", hideHover);
     map.on("click", (e) => { const i = pixelAt(e.lngLat); if (i != null) selectPixel(i); });
     resolve();
   }));
@@ -177,11 +225,19 @@ function updateMapLayer() {
 }
 
 // ---------------------------------------------------------------- hover readout
+let hovered = null;
+function hideHover() {
+  $("#readout").hidden = true;
+  state.map.getCanvas().style.cursor = "";
+  if (hovered != null) { hovered = null; state.map.getSource("hover").setData(cellGeoJSON(null)); }
+}
+
 function onHover(e) {
   const i = pixelAt(e.lngLat), box = $("#readout");
-  if (i == null || !state.day) { box.hidden = true; state.map.getCanvas().style.cursor = ""; return; }
+  if (i == null || !state.day) { hideHover(); return; }
   state.map.getCanvas().style.cursor = "crosshair";
-  box.innerHTML = readoutHTML(i);
+  if (i !== hovered) { hovered = i; state.map.getSource("hover").setData(cellGeoJSON(i)); }
+  box.innerHTML = readoutHTML(i, e.lngLat);
   box.hidden = false;
   const pad = 16, w = box.offsetWidth, h = box.offsetHeight;
   let x = e.originalEvent.clientX + pad, y = e.originalEvent.clientY + pad;
@@ -190,17 +246,26 @@ function onHover(e) {
   box.style.left = `${x}px`; box.style.top = `${y}px`;
 }
 
-function readoutHTML(i) {
-  const H = state.day.horizons[state.h], L = layerInfo(), P = state.pixels[state.site];
+function readoutHTML(i, cursor) {
+  const H = state.day.horizons[state.h], P = state.pixels[state.site];
   const v = valueOf(state.layer, state.view, H, i);
   const f = valueOf(state.layer, "forecast", H, i), n = valueOf(state.layer, "normal", H, i);
   const o = valueOf(state.layer, "observed", H, i);
-  return `<div>${LABELS[state.layer]} · ${VIEW_NAMES[state.view]}</div>
+  const [w, s, e, no] = cellBounds(i);
+  const place = placeAt(state.site, P.ids[i]);
+  return `${place ? `<div class="readout-place">★ ${esc(place.name)}</div>` : ""}
+    <div>${LABELS[state.layer]} · ${VIEW_NAMES[state.view]}</div>
     <div class="big">${fmtValue(state.layer, state.view, v)}</div>
     <div class="row"><span>Forecast</span><b>${fmtValue(state.layer, "forecast", f)}</b></div>
     <div class="row"><span>Normal for the date</span><b>${fmtValue(state.layer, "normal", n)}</b></div>
     <div class="row"><span>Observed</span><b>${fmtValue(state.layer, "observed", o)}</b></div>
-    <div class="where">${P.lat[i].toFixed(3)}°, ${P.lon[i].toFixed(3)}° · ${P.elev[i].toLocaleString()} m · click for 7-day detail</div>`;
+    <div class="coords">
+      <div class="row"><span>Square centre</span><b>${fmtLatLon(P.lat[i], P.lon[i])}</b></div>
+      <div class="row"><span>Covers lat</span><b>${s.toFixed(3)} to ${no.toFixed(3)}</b></div>
+      <div class="row"><span>Covers lon</span><b>${w.toFixed(3)} to ${e.toFixed(3)}</b></div>
+      <div class="row"><span>Pointer</span><b>${cursor.lat.toFixed(4)}, ${cursor.lng.toFixed(4)}</b></div>
+    </div>
+    <div class="where">${P.elev[i].toLocaleString()} m above sea level · click for 7-day detail</div>`;
 }
 
 // ---------------------------------------------------------------- legend, headline, controls
@@ -274,28 +339,50 @@ export async function setState(patch) {
     const dates = state.dates[state.site];
     if (!dates.includes(state.issue)) state.issue = state.issue < dates[0] ? dates[0] : dates[dates.length - 1];
     if (!state.meta.sites[state.site].has_blight && state.layer.startsWith("blight")) state.layer = "rain1";
-    state.selected = null;
-    state.map.getSource("selected").setData(cellGeoJSON(null));
-    closeDrawer();
-    fitSite();
+    if (!("selected" in patch)) state.selected = null;
+    state.map.getSource("selected").setData(cellGeoJSON(state.selected));
+    if (state.selected == null) closeDrawer();
+    if (!patch.noFit) fitSite();
     renderMonths();
   }
+  delete state.noFit;
   renderControls();
   renderLegend();
   updateHash();
   updateMapLayer();
+  emit("change");
   state.day = await loadDay(state.site, state.issue);
   renderHeadline();
   if (state.selected != null) refreshDrawer();
+  emit("change");
   // warm the cache for the neighbouring issue days
   const dates = state.dates[state.site], k = dates.indexOf(state.issue);
-  [k - 1, k + 1].filter((j) => j >= 0 && j < dates.length).forEach((j) => loadDay(state.site, dates[j]));
+  [k - 1, k + 1].filter((j) => j >= 0 && j < dates.length).forEach((j) => loadDay(state.site, dates[j]).catch(() => {}));
 }
 
-function selectPixel(i) {
+export function selectPixel(i) {
   state.selected = i;
   state.map.getSource("selected").setData(cellGeoJSON(i));
   openDrawer();
+  emit("change");
+}
+
+export function clearSelection() {
+  state.selected = null;
+  state.map.getSource("selected").setData(cellGeoJSON(null));
+  closeDrawer();
+  emit("change");
+}
+
+/** Switch to a site if needed, fly to a square and open its detail. */
+export async function goToSquare(site, i, { zoom = 10.5, open = true } = {}) {
+  if (site !== state.site) await setState({ site, selected: open ? i : null, noFit: true });
+  const P = state.pixels[site];
+  const pad = mapPadding();
+  if (!isMobile() && open) pad.right = 480;
+  state.map.flyTo({ center: [P.lon[i], P.lat[i]], zoom: Math.max(state.map.getZoom(), zoom), padding: pad,
+    duration: matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 1100, essential: true });
+  if (open) selectPixel(i);
 }
 
 function stepIssue(delta) {
@@ -317,10 +404,17 @@ function togglePlay() {
   state.playing = setInterval(() => setState({ h: state.h % 7 + 1 }), 1200);
 }
 
+function toggleRail(open) {
+  const rail = $("#rail"), btn = $("#layers-btn");
+  const on = open ?? !rail.classList.contains("open");
+  rail.classList.toggle("open", on);
+  btn.setAttribute("aria-expanded", String(on));
+}
+
 function wireControls() {
   $$("#site-seg button").forEach((b) => b.addEventListener("click", () => setState({ site: b.dataset.site })));
   $$("#view-seg button").forEach((b) => b.addEventListener("click", () => setState({ view: b.dataset.view })));
-  $$(".layer").forEach((b) => b.addEventListener("click", () => setState({ layer: b.dataset.layer })));
+  $$(".layer").forEach((b) => b.addEventListener("click", () => { setState({ layer: b.dataset.layer }); if (isMobile()) toggleRail(false); }));
   $("#cells-toggle").addEventListener("change", (e) => setState({ mode: e.target.checked ? "cells" : "smooth" }));
   $("#issue-range").addEventListener("input", (e) => {
     const d = state.dates[state.site][Number(e.target.value)];
@@ -331,32 +425,36 @@ function wireControls() {
   $("#prev-day").addEventListener("click", () => stepIssue(-1));
   $("#next-day").addEventListener("click", () => stepIssue(1));
   $("#play").addEventListener("click", togglePlay);
-  $("#open-skill").addEventListener("click", openSkill);
-  $("#open-about").addEventListener("click", openAbout);
-  $("#open-why").addEventListener("click", openWhy);
-  $("#close-drawer").addEventListener("click", () => {
-    state.selected = null; state.map.getSource("selected").setData(cellGeoJSON(null)); closeDrawer();
-  });
+  $("#layers-btn").addEventListener("click", () => toggleRail());
+  $("#close-drawer").addEventListener("click", clearSelection);
   $$(".modal").forEach((m) => {
-    m.addEventListener("click", (e) => { if (e.target === m || e.target.closest(".close-modal")) m.hidden = true; });
+    m.addEventListener("click", (e) => { if (e.target === m || e.target.closest(".close-modal")) { m.hidden = true; m.dispatchEvent(new Event("close")); } });
   });
   document.addEventListener("keydown", (e) => {
-    if (e.target.matches("input, select")) return;
-    if (e.key === "Escape") { $$(".modal").forEach((m) => (m.hidden = true)); return; }
+    if (e.target.matches("input, select, textarea") || !$("#tour").hidden) return;
+    if (e.key === "Escape") {
+      $$(".modal").forEach((m) => { if (!m.hidden) { m.hidden = true; m.dispatchEvent(new Event("close")); } });
+      return;
+    }
+    if ($$(".modal").some((m) => !m.hidden) || document.body.classList.contains("menu-open")) return;
     if (e.key === "ArrowLeft") stepIssue(-1);
     else if (e.key === "ArrowRight") stepIssue(1);
     else if (e.key === "ArrowUp") setState({ h: Math.min(7, state.h + 1) });
     else if (e.key === "ArrowDown") setState({ h: Math.max(1, state.h - 1) });
     else if (e.key === " ") { e.preventDefault(); togglePlay(); }
+    else if (e.key === "/") { e.preventDefault(); $("#search-input").focus(); }
     else return;
     e.preventDefault();
   });
+  let resizeTimer = null;
+  addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => emit("resize"), 150); });
 }
 
 function readHash() {
   const p = new URLSearchParams(location.hash.slice(1));
   const patch = {};
   if (["nakuru", "busia"].includes(p.get("site"))) patch.site = p.get("site");
+  else if (state.profile?.home_site) patch.site = state.profile.home_site;
   if (p.get("date")) patch.issue = p.get("date");
   if (p.get("h")) patch.h = Math.min(7, Math.max(1, Number(p.get("h")) || 1));
   if (p.get("layer") && state.meta.layers[p.get("layer")]) patch.layer = p.get("layer");
@@ -369,22 +467,23 @@ function readHash() {
 }
 
 async function main() {
-  state.user = await api("/api/me");
-  renderUser();
-  state.meta = await api("/api/meta");
-  for (const s of Object.keys(state.meta.sites)) {
-    state.pixels[s] = await api(`/api/pixels/${s}`);
-    buildIndex(s);
-  }
+  const [me, meta, user, cat] = await Promise.all([api("/api/me"), api("/api/meta"), api("/api/user"), api("/api/crops")]);
+  state.user = me; state.meta = meta;
+  state.profile = user.profile; state.places = user.places; state.crops = user.crops; state.catalogue = cat.crops;
+  await Promise.all(Object.keys(state.meta.sites).map(async (s) => { state.pixels[s] = await api(`/api/pixels/${s}`); buildIndex(s); }));
   readHash();
   await initMap();
   wireControls();
   renderMonths();
   await setState({});
-  window.__app = { state, setState, selectPixel, openSkill, openAbout, openUsers, openWhy };  // used by the screenshot script
+  await initUser();
+  document.getElementById("boot")?.classList.add("done");
+  setTimeout(() => document.getElementById("boot")?.remove(), 400);
+  window.__app ={ state, setState, selectPixel, goToSquare, openSkill, openAbout, openUsers, openWhy };  // used by the screenshot script
 }
 
 main().catch((err) => {
   console.error(err);
-  document.body.insertAdjacentHTML("beforeend", `<div class="panel" style="top:40%;left:50%;transform:translate(-50%,-50%);padding:16px">Could not load the dashboard data: ${err.message}</div>`);
+  document.getElementById("boot")?.remove();
+  document.body.insertAdjacentHTML("beforeend", `<div class="panel" style="top:40%;left:50%;transform:translate(-50%,-50%);padding:16px">Could not load the dashboard data: ${esc(err.message)}</div>`);
 });

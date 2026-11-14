@@ -1,6 +1,7 @@
 // Drawer (meteogram for one location), "How good is it?" and "About" overlays.
 import * as Plot from "https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6.16/+esm";
-import { state, api, fmtDate } from "./app.js";
+import { state, api, fmtDate, esc, fmtLatLon, plainLatLon, cellBounds, SITE_NAMES } from "./app.js";
+import { placeAt, savePlaceDialog, renamePlaceDialog, setHome, getAdvice, cropsDialog, ICON, toast } from "./user.js";
 
 const $ = (s) => document.querySelector(s);
 const C = {  // dark-mode tokens and series colours (validated palette)
@@ -38,14 +39,70 @@ function outlookRows(i) {
   });
 }
 
+function drawerHead(i) {
+  const P = state.pixels[state.site], id = P.ids[i], place = placeAt(state.site, id);
+  const [w, so, e, n] = cellBounds(i);
+  $("#drawer-eyebrow").textContent = place ? (place.id === state.profile.home_place ? "Home place" : "Saved place") : `${SITE_NAMES[state.site]} · 5 km square`;
+  $("#drawer-title").textContent = place ? place.name : fmtLatLon(P.lat[i], P.lon[i]);
+  $("#drawer-sub").textContent = `${place ? `${fmtLatLon(P.lat[i], P.lon[i])} · ` : ""}${P.elev[i].toLocaleString()} m · covers ${so.toFixed(3)} to ${n.toFixed(3)} lat, ${w.toFixed(3)} to ${e.toFixed(3)} lon`;
+  const maps = `https://www.google.com/maps/search/?api=1&query=${P.lat[i].toFixed(5)},${P.lon[i].toFixed(5)}`;
+  const actions = $("#drawer-actions");
+  actions.innerHTML = `
+    ${place ? `<button class="btn small" data-d="edit">${ICON.edit}<span>Edit</span></button>
+      ${place.id === state.profile.home_place ? "" : `<button class="btn small" data-d="home">${ICON.star}<span>Make home</span></button>`}`
+      : `<button class="btn small primary" data-d="save">${ICON.star}<span>Save place</span></button>`}
+    <button class="btn small" data-d="copy" title="Copy the square's centre coordinates">${ICON.pin}<span>Copy coordinates</span></button>
+    <a class="btn small" href="${maps}" target="_blank" rel="noopener noreferrer" title="Opens Google Maps in a new tab">${ICON.search}<span>Google Maps</span></a>`;
+  actions.onclick = async (ev) => {
+    const b = ev.target.closest("[data-d]");
+    if (!b) return;
+    if (b.dataset.d === "save") savePlaceDialog(state.site, i);
+    else if (b.dataset.d === "edit") renamePlaceDialog(place);
+    else if (b.dataset.d === "home") setHome(place);
+    else if (b.dataset.d === "copy") {
+      const text = plainLatLon(P.lat[i], P.lon[i]);
+      try { await navigator.clipboard.writeText(text); toast(`Copied ${text}`, { kind: "good", timeout: 2500 }); }
+      catch { toast(`Coordinates: ${text}`, { timeout: 8000 }); }
+    }
+  };
+}
+
+async function renderCrops(i) {
+  const box = $("#m-crops");
+  if (!box) return;
+  if (!state.crops.length) {
+    box.innerHTML = `<div class="crop-empty">${ICON.leaf}<span>Choose your crops to see late-blight risk, planting, spraying and harvest advice here.</span>
+      <button class="btn small" id="m-pick-crops">Choose crops</button></div>`;
+    box.querySelector("#m-pick-crops").addEventListener("click", () => cropsDialog());
+    return;
+  }
+  const site = state.site, id = state.pixels[site].ids[i], issue = state.issue;
+  box.innerHTML = `<div class="section-note">Loading crop advice…</div>`;
+  let adv;
+  try { adv = await getAdvice(site, id, issue); } catch (err) { box.innerHTML = `<div class="section-note">Could not load crop advice: ${esc(err.message)}</div>`; return; }
+  if (state.selected !== i || state.site !== site || state.issue !== issue) return;
+  const status = { act: "Act now", watch: "Watch", ok: "OK" };
+  box.innerHTML = `<p class="section-note">${esc(adv.outlook.summary)}</p>` + adv.crops.map((a) => `
+    <details class="crop-adv ${a.status}" ${a.status !== "ok" ? "open" : ""}>
+      <summary><span class="dot"></span><b>${esc(a.name)}</b><em>${esc(a.local)}</em><span class="st">${status[a.status]}</span>
+        <span class="hl">${esc(a.headline)}</span></summary>
+      <div class="adv-days">${a.days.map((d) => `<span class="adv-day ${d.tag} ${d.confidence}" title="${esc(d.label)}: ${d.p1 == null ? "–" : Math.round(100 * d.p1) + "%"} chance of rain${d.blight != null && a.basis === "tested" ? `, blight ${Math.round(100 * d.blight)}%` : ""}">
+        <b>${esc(d.label.split(" ")[0])}</b><i style="--p:${a.basis === "tested" && d.blight != null ? d.blight : d.p1 ?? 0}"></i></span>`).join("")}</div>
+      <ul>${a.actions.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+      <div class="adv-basis"><span class="basis ${a.basis}">${a.basis === "tested" ? "Tested model" : "Guidance rule"}</span>
+        ${a.caveats.map((c) => `<span>${esc(c)}</span>`).join(" ")}</div>
+    </details>`).join("");
+}
+
 export function refreshDrawer() {
   const i = state.selected;
   if (i == null || !state.day) return;
-  const P = state.pixels[state.site];
-  $("#drawer-title").textContent = `${P.lat[i].toFixed(3)}°, ${P.lon[i].toFixed(3)}° · ${P.elev[i].toLocaleString()} m`;
+  drawerHead(i);
   const rows = outlookRows(i), labels = rows.map((r) => r.label);
   const body = $("#drawer-body");
   body.innerHTML = `
+    <div class="section-title">Crop insights · ${fmtDate(state.issue, { day: "numeric", month: "short" })}</div>
+    <div id="m-crops"></div>
     <div class="section-title">Why this forecast?</div>
     <div id="m-why"><div class="section-note">Loading…</div></div>
     <div class="section-title">Chance of rain (≥ 1 mm), issued ${fmtDate(state.issue, { day: "numeric", month: "short" })}</div>
@@ -103,6 +160,7 @@ export function refreshDrawer() {
     }));
   }
   body.querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => { seriesH = Number(b.dataset.h); refreshDrawer(); }));
+  renderCrops(i);
   renderWhy(i, W);
   renderSeries(i, W);
 }
@@ -231,14 +289,21 @@ export function openAbout() {
       <li>Models trained on one site did not transfer well to the other: a new area needs local training data.</li>
       <li>2026 had unusual months (wet February–March, dry June–September), which makes the normal a weaker reference that year.</li>
     </ul>
+    <h3>Crop advice</h3>
+    <p>Late-blight risk (Irish potato, and tomato, which gets the same disease) comes from a model that was scored on the unseen
+    test period. Advice for maize, beans and wheat is a set of simple, visible rules built on the tested rain and humidity forecasts
+    (for example: a dry day is one with less than a 30% chance of rain). The rules themselves were not checked against field
+    outcomes. Always follow your extension officer and the product label.</p>
+    <h3>Your data</h3>
+    <p>Saved places (a 5 km square, a name and an optional note), chosen crops and settings are stored with your account and are
+    visible only to you. Deleting your account deletes them. Location is used only when you press “use my location” and is not stored.</p>
     <h3>Keyboard</h3>
-    <p>← → previous / next issue day · ↑ ↓ days ahead · space play · Esc close.</p>
+    <p>← → previous / next issue day · ↑ ↓ days ahead · space play · / search · Esc close.</p>
     <p style="color:#898781">Basemap © OpenStreetMap contributors © CARTO. Methods and numbers: docs/PROJECT_CONTEXT.md in the project repository.</p>`;
   $("#about-modal").hidden = false;
 }
 
 // ---------------------------------------------------------------- users overlay (admins)
-const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 export async function openUsers() {
   $("#users-modal").hidden = false;
@@ -246,8 +311,8 @@ export async function openUsers() {
   const data = await api("/api/admin/users");
   const when = (t) => new Date(t * 1000).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   $("#users-body").innerHTML = `
-    <p class="summary">Accounts are invite-only. Add, disable or reset them on the server with
-      <code>python -m web.users</code>. Only admins can see this list.</p>
+    <p class="summary">People can create their own accounts on the sign-up page (role: viewer). Admins are made, and any
+      account disabled or reset, on the server with <code>python -m web.users</code>. Only admins can see this list.</p>
     <table class="data"><thead><tr><th>User</th><th>Role</th><th>Status</th><th>Created</th></tr></thead><tbody>
       ${data.users.map((u) => `<tr><td>${esc(u.username)}</td><td><span class="pill ${u.role === "admin" ? "admin" : ""}">${esc(u.role)}</span></td>
         <td>${u.disabled ? '<span class="pill warn">disabled</span>' : u.locked ? '<span class="pill warn">locked</span>' : "active"}</td>
