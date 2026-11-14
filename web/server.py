@@ -75,7 +75,7 @@ LAYER_IDS = {  # url id -> components.LAYERS key
     "rain1": "Chance of rain (>= 1 mm)", "rain10": "Chance of heavy rain (>= 10 mm)",
     "rain25": "Chance of very heavy rain (>= 25 mm)", "rainmm": "Expected rain (mm)",
     "rh": "Humidity (%)", "blight_hutton": "Late-blight risk (Hutton)",
-    "blight_humid": "Late-blight risk (humidity only)",
+    "blight_humid": "Late-blight risk (humidity only)", "blight_tomato": "Tomato late-blight risk (potato model)",
 }
 DAY_COLUMNS = ["p_rain1", "p_rain10", "p_rain25", "rain_mm", "rh", "clim_rain1", "clim_rain10", "clim_rain25",
                "clim_rain_mm", "clim_rh", "obs_rain_mm", "obs_rh"]
@@ -191,7 +191,7 @@ def api_meta():
             views[v] = {"breaks": [clean(b) for b in raster.finite_breaks(breaks)], "unit": unit,
                         "ramp": raster.ramp_for(layer, v)}
         layers[lid] = {"label": layer.label, "forecast": layer.forecast, "clim": layer.clim,
-                       "observed": layer.observed, "unit": layer.unit, "blight": layer.blight,
+                       "observed": layer.observed, "unit": layer.unit, "blight": layer.blight, "crop": layer.crop,
                        "observed_label": layer.observed_label, "views": views}
     sites = {}
     for s in SITES:

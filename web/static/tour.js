@@ -12,7 +12,7 @@ function steps() {
   return [
     { title: `Welcome${first ? `, ${first}` : ""}!`, text: "A one-minute tour of the forecast map. Use the arrow keys or the buttons; you can leave at any time." },
     { el: "#map", area: "map", title: "The map", text: "Colours show the forecast for every ~5 km square. Hover over a square to see its coordinates, the square's edges and the values; click it for a 7-day detail." },
-    { el: "#rail", mobileEl: "#layers-btn", title: "Choose what to see", text: "Chance of rain, heavy rain, expected amount, humidity and (in Nakuru) potato late-blight risk. Switch between the forecast, what was observed, the error and the normal for the date." },
+    { el: "#rail", mobileEl: "#layers-btn", title: "Choose what to see", text: "Chance of rain, heavy rain, expected amount, humidity and (in Nakuru) late-blight risk for potato and tomato. Switch between the forecast, what was observed, the error and the normal for the date." },
     { el: "#timeline", title: "Replay through time", text: "This is a replay of 2025–26 forecasts the models never saw, so you can compare each one with what happened. Pick the issue date, then 1 to 7 days ahead. Space plays, ← → change the day." },
     { el: "#search", title: farmer ? "Find your farm" : "Find a place", text: "Type coordinates (like -0.33, 35.94, or 0°19′S 35°56′E), a town such as Njoro or Busia, or tap the target button to use your location." },
     { el: "#hud", title: "At a glance", text: farmer ? "Your saved farm's next days: rain chance, humidity, a one-line summary of the week and alerts for your crops. Faded bars are less certain."

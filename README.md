@@ -64,7 +64,7 @@ Credentials: `GEE_PROJECT` in `.env` (see `.env.example`) and a Copernicus key i
 | Late blight | `python -m src.features.humid_hours --site nakuru`, then `python -m src.models.late_blight validate` / `test` |
 
 Splits: train 2016-2023, validation 2024, test 2025-01-08 to 2026-09-30 (settings in `config/experiment.yaml`;
-sites in `config/sites.yaml`). Tests: `python -m pytest -q` (146 tests).
+sites in `config/sites.yaml`). Tests: `python -m pytest -q` (148 tests).
 
 ## Dashboard
 
@@ -72,7 +72,8 @@ A Windy-style map: forecast layers (rain chances, expected rain, humidity, late-
 squares, a timeline of issue days and days ahead, a per-square 7-day outlook with a plain-language
 **"Why this forecast?"** SHAP breakdown and verification charts. Accounts: sign-up (or invite-only with
 `HL_SIGNUP=0`), email confirmation and password reset, saved places (5 km squares) with an "At a glance"
-panel, crop insights (late-blight risk for potato and tomato from the tested model; guidance rules for maize,
+panel, a tomato late-blight map layer (the potato model, shown for tomato growers), crop insights (late-blight
+risk for potato and tomato from the tested model; guidance rules for maize,
 beans and wheat), search by coordinates or town, "use my location", a guided tour and subtle map animations.
 
 ```bash

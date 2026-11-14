@@ -1,13 +1,14 @@
 // Subtle weather animations over the map. Not decoration only: particles are spawned in proportion to the
 // value shown on the map, so busier areas mean a higher forecast. Kept sparse and faint on purpose.
 //   rain layers -> thin blue streaks falling     humidity -> slow green wisps drifting
-//   late blight -> faint orange spores rising     "error" view -> off (a difference is not weather)
+//   late blight -> faint orange spores rising     tomato blight -> soft red rings swelling and fading
+//   ("dew" on leaves: long leaf wetness is what lets the disease spread)   "error" view -> off
 // Off when the user turns it off (menu), when the device asks for reduced motion, while the map moves,
 // and while the tab is hidden. Capped at 30 frames per second and a few hundred particles.
 import { state, bus, valueOf } from "./app.js";
 
-const MAX = { rain: 190, air: 46, spores: 70 };
-const SPAWN_TRIES = { rain: 22, air: 3, spores: 5 };
+const MAX = { rain: 190, air: 46, spores: 70, dew: 55 };
+const SPAWN_TRIES = { rain: 22, air: 3, spores: 5, dew: 3 };
 let canvas, ctx, dpr = 1, parts = [], raf = null, last = 0, moving = false;
 const reduced = matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -15,6 +16,7 @@ function kind() {
   if (state.view === "error") return null;
   if (state.layer.startsWith("rain")) return "rain";
   if (state.layer === "rh") return "air";
+  if (state.layer === "blight_tomato") return "dew";
   if (state.layer.startsWith("blight")) return "spores";
   return null;
 }
@@ -66,6 +68,9 @@ function spawn(k) {
     } else if (k === "air") {
       parts.push({ k, x: pt.x, y: pt.y, vx: 0.35 + Math.random() * 0.35, age: 0, life: 150 + Math.random() * 110,
         len: 28 + Math.random() * 26, ph: Math.random() * 6.28, a: 0.20 + 0.24 * w });
+    } else if (k === "dew") {
+      parts.push({ k, x: pt.x, y: pt.y, vx: 0, vy: 0, age: 0, life: 70 + Math.random() * 60,
+        r: 3 + Math.random() * 4, a: 0.40 + 0.34 * w });
     } else {
       parts.push({ k, x: pt.x, y: pt.y, vx: 0, vy: -(0.18 + Math.random() * 0.3), age: 0, life: 110 + Math.random() * 90,
         r: 0.9 + Math.random() * 1.2, ph: Math.random() * 6.28, a: 0.32 + 0.33 * w });
@@ -94,6 +99,18 @@ function draw() {
         s ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
       }
       ctx.stroke();
+    } else if (p.k === "dew") {
+      // a small bead that swells into a ring and fades
+      const t = p.age / p.life, rr = 1 + p.r * t;
+      ctx.strokeStyle = `rgba(255, 222, 212, ${p.a * (1 - t)})`;  // near-white pink: readable on the red field
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, rr, 0, 6.283);
+      ctx.stroke();
+      ctx.fillStyle = `rgba(255, 196, 182, ${p.a * f * 0.9})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 1.1, 0, 6.283);
+      ctx.fill();
     } else {
       ctx.fillStyle = `rgba(255, 200, 150, ${p.a * f})`;
       ctx.beginPath();

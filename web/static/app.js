@@ -13,7 +13,8 @@ const EVENT_MM = { p_rain1: 1, p_rain10: 10, p_rain25: 25 };
 const VIEW_NAMES = { forecast: "forecast", observed: "observed", error: "forecast minus observed", normal: "normal for the date" };
 export const LABELS = { rain1: "Chance of rain ≥ 1 mm", rain10: "Chance of heavy rain ≥ 10 mm",
   rain25: "Chance of very heavy rain ≥ 25 mm", rainmm: "Expected rain", rh: "Humidity",
-  blight_hutton: "Late-blight risk (Hutton)", blight_humid: "Late-blight risk (humidity only)" };
+  blight_hutton: "Potato late-blight risk (Hutton)", blight_humid: "Late-blight risk (humidity only)",
+  blight_tomato: "Tomato late-blight risk (potato model)" };
 export const SITE_NAMES = { nakuru: "Nakuru", busia: "Busia" };
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 let lastUrl = null;

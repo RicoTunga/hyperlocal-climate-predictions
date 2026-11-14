@@ -191,3 +191,29 @@ def test_shap_summary_has_plain_labels(client):
     s = client.get("/api/shap_summary").json()
     assert s["labels"]["area-wide"] == "Rain and humidity across the area"
     assert {"site", "horizon", "task", "group", "overall_share", "within_day_share"} <= set(s["groups"][0])
+
+
+# ---------------------------------------------------------------- tomato late-blight layer
+def test_tomato_layer_is_the_potato_forecast_in_its_own_colours():
+    potato, tomato = C.LAYERS["Late-blight risk (Hutton)"], C.LAYERS["Tomato late-blight risk (potato model)"]
+    # same columns: no tomato-specific model exists, so the values must be identical
+    assert (tomato.forecast, tomato.observed, tomato.clim) == (potato.forecast, potato.observed, potato.clim)
+    assert tomato.crop == "tomato" and tomato.blight
+    assert raster.ramp_for(tomato, "forecast") != raster.ramp_for(potato, "forecast")
+    assert raster.ramp_for(tomato, "error") == raster.ramp_for(potato, "error")
+    lum = C.lightness(raster.RAMPS_DARK["tomato"])
+    assert lum == sorted(lum)  # dark-mode ramp brightens with the value, like the others
+
+
+@pytestmark_data
+def test_tomato_layer_served_for_nakuru_only(client):
+    meta = client.get("/api/meta").json()
+    assert meta["layers"]["blight_tomato"]["crop"] == "tomato"
+    assert meta["layers"]["blight_tomato"]["forecast"] == meta["layers"]["blight_hutton"]["forecast"]
+    issue = meta["sites"]["nakuru"]["issue_min"]
+    t = client.get(f"/api/raster/nakuru/{issue}/2/blight_tomato/forecast.png?mode=cells")
+    p = client.get(f"/api/raster/nakuru/{issue}/2/blight_hutton/forecast.png?mode=cells")
+    assert t.status_code == 200 and t.content != p.content  # different colours ...
+    ta, pa = (np.array(Image.open(BytesIO(r.content)))[..., 3] for r in (t, p))
+    assert (ta == pa).all()  # ... over exactly the same values (opacity follows the value)
+    assert client.get(f"/api/raster/busia/{issue}/2/blight_tomato/forecast.png").status_code == 400

@@ -289,6 +289,10 @@ export function openAbout() {
       <li>Models trained on one site did not transfer well to the other: a new area needs local training data.</li>
       <li>2026 had unusual months (wet February–March, dry June–September), which makes the normal a weaker reference that year.</li>
     </ul>
+    <h3>Tomato late blight on the map</h3>
+    <p>Tomato gets the same disease as potato (late blight, <i>Phytophthora infestans</i>). There is no separate tomato model:
+    the “Tomato blight” layer shows the potato model’s forecast unchanged, in its own colours, for tomato growers. The
+    thresholds were developed and tested for potato, not tomato.</p>
     <h3>Crop advice</h3>
     <p>Late-blight risk (Irish potato, and tomato, which gets the same disease) comes from a model that was scored on the unseen
     test period. Advice for maize, beans and wheat is a set of simple, visible rules built on the tested rain and humidity forecasts
@@ -326,7 +330,7 @@ export async function openUsers() {
 
 // ---------------------------------------------------------------- "Why this forecast?" (drawer)
 const WHY_TARGET = { rain1: "rain1", rain10: "rain1", rain25: "rain1", rainmm: "rain1", rh: "rh",
-  blight_hutton: "blight_hutton", blight_humid: "blight_humid" };
+  blight_hutton: "blight_hutton", blight_humid: "blight_humid", blight_tomato: "blight_hutton" };
 const WHY_NAME = { rain1: "chance of rain (≥ 1 mm)", rh: "humidity", blight_hutton: "late-blight risk (Hutton)",
   blight_humid: "late-blight risk (humidity only)" };
 const whyCache = new Map();

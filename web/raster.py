@@ -37,6 +37,7 @@ RAMPS_DARK = {  # tops stay saturated (not near-white), so high values read as i
     "blue": C.oklab_ramp(["#0f2a4d", "#2a78d6", "#7cc0ff"], 7),
     "aqua": C.oklab_ramp(["#0b3326", "#1baf7a", "#7ff0c3"], 7),
     "orange": C.oklab_ramp(["#3d1607", "#eb6834", "#ffb07a"], 7),
+    "tomato": C.oklab_ramp(["#3a0b09", "#e0402e", "#ff9e8c"], 7),
 }
 # diverging for errors: dark neutral midpoint, arms brighten outward (blue = too low, red = too high)
 DIVERGING_DARK = ["#cde2fb", "#3987e5", "#1c5cab", "#383835", "#a9302f", "#e66767", "#f8d3d2"]
@@ -48,7 +49,7 @@ def ramp_for(layer: C.Layer, view: str) -> list:
     if view == "error":
         return DIVERGING_DARK
     if layer.blight and view != "observed":
-        return RAMPS_DARK["orange"]
+        return RAMPS_DARK["tomato" if layer.crop == "tomato" else "orange"]
     if layer.forecast == "rh":
         return RAMPS_DARK["aqua"]
     return RAMPS_DARK["blue"]
