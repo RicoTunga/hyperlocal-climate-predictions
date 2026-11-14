@@ -79,6 +79,8 @@ def oklab_ramp(stops: list, n: int) -> list:
 BLUE = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"]
 # orange: second sequential context = categorical slot 2 (#eb6834), light -> dark in OKLab
 ORANGE = oklab_ramp(["#fde6da", "#eb6834", "#7a2a0b"], 7)
+# tomato red: the tomato late-blight layer (same values as potato, own colour so the two layers are told apart)
+TOMATO = oklab_ramp(["#fde0dc", "#d93b2b", "#6e1410"], 7)
 # diverging blue <-> red with the palette's neutral grey midpoint (#f0efec)
 DIVERGING = ["#184f95", "#3987e5", "#9ec5f4", "#f0efec"] + oklab_ramp(["#f6c9c8", "#e34948", "#8f1d1c"], 3)
 INK = {"primary": "#0b0b0b", "secondary": "#52514e", "muted": "#898781"}
@@ -102,6 +104,7 @@ class Layer:
     err_breaks: tuple      # 8 edges for forecast minus observed
     observed_label: str
     blight: bool = False
+    crop: str = ""         # "tomato": the potato late-blight model shown for tomato growers (own colours)
 
 
 PROB = (0, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0001)
@@ -124,6 +127,11 @@ LAYERS = {
     "Late-blight risk (humidity only)": Layer("Late-blight risk (humidity only)", "blight_humid", "obs_blight_humid",
                                               "clim_blight_humid", PROB, "%", tuple(ORANGE), PROB_ERR,
                                               "rule met (1) or not (0)", blight=True),
+    # Tomato gets the same disease (Phytophthora infestans). There is no tomato-specific model: this layer shows the
+    # potato model's Hutton forecast unchanged, with its own colours, and says so wherever it is shown.
+    "Tomato late-blight risk (potato model)": Layer("Tomato late-blight risk (potato model)", "blight_hutton",
+                                                    "obs_blight_hutton", "clim_blight_hutton", PROB, "%", tuple(TOMATO),
+                                                    PROB_ERR, "rule met (1) or not (0)", blight=True, crop="tomato"),
 }
 RAIN_EVENT = {"p_rain1": 1.0, "p_rain10": 10.0, "p_rain25": 25.0}
 

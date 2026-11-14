@@ -2,35 +2,56 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0d0d">
   <title>Hyperlocal forecasts · Nakuru &amp; Busia</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
   <link rel="stylesheet" href="/app.css">
+  <link rel="stylesheet" href="/journey.css">
 </head>
-<body>
+<body data-ready="0">
+  <div class="boot" id="boot" role="status"><span class="boot-spin" aria-hidden="true"></span><span>Loading the forecast map…</span></div>
   <div id="map" role="region" aria-label="Forecast map"></div>
+  <canvas id="fx" aria-hidden="true"></canvas>
 
-  <!-- top-left: what you are looking at -->
+  <!-- top-left: what you are looking at, menu and search -->
   <header class="panel brand" id="brand">
-    <div class="eyebrow">Hyperlocal forecast · 5 km</div>
+    <div class="brand-top">
+      <button class="icon menu-btn" id="menu-btn" aria-label="Open menu" aria-controls="menu" aria-expanded="false" title="Menu">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <div class="eyebrow">Hyperlocal forecast · 5 km</div>
+      <button class="avatar" id="avatar-btn" aria-label="Account menu" title="Account"></button>
+    </div>
     <div class="seg" role="radiogroup" aria-label="Site" id="site-seg">
       <button role="radio" data-site="nakuru">Nakuru</button>
       <button role="radio" data-site="busia">Busia</button>
     </div>
     <div class="headline" id="headline">&nbsp;</div>
     <div class="subline" id="subline">&nbsp;</div>
+    <div class="search" id="search" role="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      <input id="search-input" type="text" placeholder="Coordinates or a town, e.g. -0.33, 35.94" autocomplete="off"
+             spellcheck="false" aria-label="Search by coordinates or place name" aria-controls="search-results" aria-expanded="false">
+      <button class="locate" id="locate-btn" title="Use my location" aria-label="Use my location">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/><circle cx="12" cy="12" r="7"/></svg>
+      </button>
+      <ul class="search-results" id="search-results" role="listbox" hidden></ul>
+    </div>
     <div class="badge" title="Kenya Meteorological Department is the forecasting authority">
       Research replay · not an official forecast
     </div>
-    <div class="user-row" id="user-row" hidden>
-      <span class="user-name" id="user-name"></span>
-      <button class="user-link" id="open-users" hidden>Users</button>
-      <button class="user-link" id="sign-out">Sign out</button>
-    </div>
   </header>
 
+  <!-- left: at-a-glance (HUD) for the user's place -->
+  <section class="panel hud" id="hud" aria-label="At a glance" hidden></section>
+
   <!-- right: layers and views -->
-  <nav class="panel rail" aria-label="Layers">
+  <button class="icon layers-btn" id="layers-btn" aria-label="Layers" aria-controls="rail" aria-expanded="false">
+    <svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5M3 17.5l9 5 9-5"/></svg>
+  </button>
+  <nav class="panel rail" id="rail" aria-label="Layers">
     <div class="rail-group">
       <div class="rail-title">Rain</div>
       <button class="layer" data-layer="rain1"><svg viewBox="0 0 24 24"><path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"/></svg><span>Chance ≥ 1 mm</span></button>
@@ -44,7 +65,8 @@
     </div>
     <div class="rail-group" id="crop-group">
       <div class="rail-title">Crops</div>
-      <button class="layer" data-layer="blight_hutton"><svg viewBox="0 0 24 24"><path d="M5 19c0-8 6-14 15-14 0 9-6 15-14 15M5 19l8-8"/></svg><span>Late blight</span></button>
+      <button class="layer" data-layer="blight_hutton"><svg viewBox="0 0 24 24"><path d="M5 19c0-8 6-14 15-14 0 9-6 15-14 15M5 19l8-8"/></svg><span>Potato blight</span></button>
+      <button class="layer" data-layer="blight_tomato" title="Same forecast as potato late blight: tomato gets the same disease"><svg viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="6.5"/><path d="M12 7V4.5M9 6.5c1-1 2-1.3 3-1.3s2 .3 3 1.3"/></svg><span>Tomato blight</span></button>
       <button class="layer" data-layer="blight_humid"><svg viewBox="0 0 24 24"><path d="M5 19c0-8 6-14 15-14 0 9-6 15-14 15M9 15c2-1 4-3 5-5"/></svg><span>Blight · humidity only</span></button>
     </div>
     <div class="rail-group">
@@ -57,18 +79,13 @@
       </div>
       <label class="toggle"><input type="checkbox" id="cells-toggle"><span>5 km squares</span></label>
     </div>
-    <div class="rail-group rail-links">
-      <button class="link" id="open-skill">How good is it?</button>
-      <button class="link" id="open-why">Why these forecasts?</button>
-      <button class="link" id="open-about">About &amp; caveats</button>
-    </div>
   </nav>
 
   <!-- bottom-left: legend -->
   <div class="panel legend" id="legend" aria-live="polite"></div>
 
   <!-- bottom: timeline -->
-  <footer class="panel timeline" aria-label="Timeline">
+  <footer class="panel timeline" id="timeline" aria-label="Timeline">
     <div class="tl-controls">
       <button class="icon" id="prev-day" aria-label="Previous issue day" title="Previous issue day ( ← )"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
       <button class="icon play" id="play" aria-label="Play through days ahead" title="Play (space)"><svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg></button>
@@ -87,17 +104,23 @@
 
   <div class="readout" id="readout" hidden></div>
 
-  <!-- right drawer: one pixel (meteogram) -->
+  <!-- right drawer: one square (meteogram) -->
   <aside class="drawer" id="drawer" aria-hidden="true" aria-label="Location detail">
     <div class="drawer-head">
       <div>
-        <div class="eyebrow">Selected location</div>
+        <div class="eyebrow" id="drawer-eyebrow">Selected square</div>
         <div class="drawer-title" id="drawer-title"></div>
+        <div class="drawer-sub" id="drawer-sub"></div>
       </div>
       <button class="icon" id="close-drawer" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
+    <div class="drawer-actions" id="drawer-actions"></div>
     <div class="drawer-body" id="drawer-body"></div>
   </aside>
+
+  <!-- left: menu -->
+  <div class="scrim" id="scrim" hidden></div>
+  <aside class="menu" id="menu" aria-hidden="true" aria-label="Menu" tabindex="-1"></aside>
 
   <div class="modal" id="skill-modal" hidden role="dialog" aria-modal="true" aria-labelledby="skill-title">
     <div class="modal-card wide">
@@ -123,6 +146,21 @@
       <div class="modal-body prose" id="about-body"></div>
     </div>
   </div>
+  <!-- generic dialog (save place, crops, account, settings, onboarding, confirmations) -->
+  <div class="modal" id="dialog" hidden role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+    <div class="modal-card" id="dialog-card">
+      <div class="modal-head"><h2 id="dialog-title"></h2><button class="icon close-modal" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div class="modal-body" id="dialog-body"></div>
+    </div>
+  </div>
+
+  <!-- guided tour -->
+  <div class="tour" id="tour" hidden>
+    <div class="tour-spot" id="tour-spot"></div>
+    <div class="tour-card" id="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title" aria-describedby="tour-text"></div>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script type="module" src="/app.js"></script>

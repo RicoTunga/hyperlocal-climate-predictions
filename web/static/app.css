@@ -29,7 +29,7 @@ button > svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stro
 .eyebrow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
 
 /* ---------- brand card ---------- */
-.brand { top: 16px; left: 16px; width: 330px; padding: 14px 16px 12px; }
+.brand { top: 16px; left: 16px; width: 330px; padding: 12px 14px 12px; }
 .headline { font-size: 22px; font-weight: 650; letter-spacing: -.01em; margin-top: 10px; }
 .subline { color: var(--ink-2); margin-top: 2px; }
 .badge {
@@ -172,5 +172,3 @@ svg[class^="plot"] { overflow: visible; }
 .maplibregl-ctrl-group button span { filter: invert(1); }
 .maplibregl-ctrl-bottom-right { bottom: 104px; right: 8px; }
 
-@media (prefers-reduced-motion: reduce) { .drawer { transition: none; } }
-@media (max-width: 1100px) { .tl-days button small { display: none; } .tl-days button { min-width: 40px; } .brand, .legend { width: 290px; } }

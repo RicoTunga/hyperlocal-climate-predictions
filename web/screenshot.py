@@ -3,9 +3,11 @@
     python -m web.screenshot            # writes web/screenshots/*.png (git-ignored)
 
 Starts the real server (uvicorn, 127.0.0.1 only) on a free port with a TEMPORARY user database and a
-throw-away admin account, signs in through the login form, steps through the views and reports any
-browser console errors (including Content-Security-Policy violations). The browser lives in the
-project's .playwright/ folder. Nothing touches the real data/auth/users.db.
+throw-away admin account (already set up: a saved place, two crops, tour off), signs in through the login
+form, steps through the views, then signs up a second throw-away user through the sign-up page to capture
+the first-run onboarding and tour, and finally a phone-sized view. Reports any browser console errors
+(including Content-Security-Policy violations). The browser lives in the project's .playwright/ folder.
+Nothing touches the real data/auth/users.db.
 """
 import os
 import secrets
@@ -22,9 +24,11 @@ from playwright.sync_api import sync_playwright  # noqa: E402
 
 import uvicorn  # noqa: E402
 
+from app import components as C  # noqa: E402
 from web.auth import AuthStore  # noqa: E402
 from web.server import create_app  # noqa: E402
 from web.settings import Settings  # noqa: E402
+from web.userdata import UserData  # noqa: E402
 
 OUT = ROOT / "web" / "screenshots"
 VIEWPORT = {"width": 1440, "height": 900}
@@ -56,6 +60,12 @@ def main() -> None:
     store = AuthStore(db)
     password = secrets.token_urlsafe(16)
     store.add_user("demo.admin", password, "admin")
+    uid = store.authenticate("demo.admin", password).id
+    ud = UserData(db, ("nakuru", "busia"), ("potato", "tomato", "maize", "beans", "wheat"))
+    px = C.pixels("nakuru")
+    ud.add_place(uid, "nakuru", px["pixel_id"].iloc[int(len(px) * 0.55)], "Demo farm", "potatoes and maize")
+    ud.set_crops(uid, ["potato", "maize"])
+    ud.update_profile(uid, {"user_type": "farmer", "onboarded": True, "tour_on_login": False})
     server = uvicorn.Server(uvicorn.Config(create_app(Settings("127.0.0.1", port, db, False), store),
                                            host="127.0.0.1", port=port, log_level="warning"))
     threading.Thread(target=server.run, daemon=True).start()
@@ -80,6 +90,10 @@ def main() -> None:
             page.screenshot(path=str(OUT / f"{name}.png"))
             print(f"  saved {name}.png")
 
+        page.goto(f"{base}signup")
+        page.wait_for_timeout(500)
+        page.screenshot(path=str(OUT / "00c_signup.png"))
+        print("  saved 00c_signup.png")
         page.goto(f"{base}login")
         page.wait_for_timeout(400)
         page.screenshot(path=str(OUT / "00a_login.png"))
@@ -116,8 +130,64 @@ def main() -> None:
         page.evaluate("window.__app.selectPixel(Math.floor(window.__app.state.pixels.nakuru.ids.length * 0.4))")
         page.wait_for_timeout(2500)
         page.screenshot(path=str(OUT / "11_drawer_blight_why.png"))
+        print("  saved 11_drawer_blight_why.png")
+        page.keyboard.press("Escape")
+        shot("12_menu", "site=nakuru&date=2025-04-15&h=1&layer=rain1&view=forecast&mode=smooth",
+             setup=lambda: page.click("#menu-btn"), wait=800)
+        page.keyboard.press("Escape")
+        shot("13_crops_dialog", setup=lambda: page.evaluate("import('/user.js').then(m => m.cropsDialog())"), wait=800)
+        page.keyboard.press("Escape")
+        shot("14_search", setup=lambda: (page.click("#search-input"), page.keyboard.type("njo")), wait=600)
+        page.keyboard.press("Enter")
+        page.wait_for_timeout(2500)
+        page.screenshot(path=str(OUT / "15_search_result.png"))
+        print("  saved 15_search_result.png")
+
+        # a brand-new user: sign-up page -> onboarding -> tour
+        ctx2 = browser.new_context(viewport=VIEWPORT)
+        p2 = ctx2.new_page()
+        p2.on("pageerror", lambda e: errors.append(f"pageerror (new user): {e}"))
+        p2.goto(f"{base}signup")
+        p2.fill("#display_name", "Demo Farmer")
+        p2.fill("#username", "demo.farmer")
+        p2.fill("#email", "demo.farmer@example.org")
+        new_pw = secrets.token_urlsafe(16)
+        p2.fill("#password", new_pw)
+        p2.fill("#password2", new_pw)
+        p2.check("#agree")
+        p2.click("#submit")
+        p2.wait_for_url(base)
+        wait_ready(p2, 1500)
+        p2.screenshot(path=str(OUT / "16_onboarding.png"))
+        print("  saved 16_onboarding.png")
+        p2.click("[data-act=next]")
+        p2.wait_for_timeout(500)
+        p2.click(".crop-card >> nth=0")
+        p2.click("[data-act=next]")
+        p2.wait_for_timeout(500)
+        p2.click("[data-act=later]")
+        p2.wait_for_timeout(900)
+        p2.screenshot(path=str(OUT / "17_tour_start.png"))
+        print("  saved 17_tour_start.png")
+        p2.click("[data-t=next]")
+        p2.wait_for_timeout(900)
+        p2.screenshot(path=str(OUT / "18_tour_map.png"))
+        print("  saved 18_tour_map.png")
+        ctx2.close()
+
+        # phone size
+        ctx3 = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True)
+        ctx3.add_cookies(page.context.cookies())
+        p3 = ctx3.new_page()
+        p3.on("pageerror", lambda e: errors.append(f"pageerror (phone): {e}"))
+        p3.goto(f"{base}#site=nakuru&date=2025-04-15&h=1&layer=rain1&view=forecast&mode=smooth")
+        wait_ready(p3, 2000)
+        p3.screenshot(path=str(OUT / "19_phone.png"))
+        print("  saved 19_phone.png")
+        ctx3.close()
         browser.close()
     server.should_exit = True
+    ud.close()
     store.close()
     tmp.cleanup()
     print(f"console errors/warnings: {len(errors)}")

@@ -64,19 +64,23 @@ Credentials: `GEE_PROJECT` in `.env` (see `.env.example`) and a Copernicus key i
 | Late blight | `python -m src.features.humid_hours --site nakuru`, then `python -m src.models.late_blight validate` / `test` |
 
 Splits: train 2016-2023, validation 2024, test 2025-01-08 to 2026-09-30 (settings in `config/experiment.yaml`;
-sites in `config/sites.yaml`). Tests: `python -m pytest -q` (105 tests).
+sites in `config/sites.yaml`). Tests: `python -m pytest -q` (148 tests).
 
 ## Dashboard
 
 A Windy-style map: forecast layers (rain chances, expected rain, humidity, late-blight risk) over 5 km
 squares, a timeline of issue days and days ahead, a per-square 7-day outlook with a plain-language
-**"Why this forecast?"** SHAP breakdown, verification charts, and sign-in with invite-only accounts.
+**"Why this forecast?"** SHAP breakdown and verification charts. Accounts: sign-up (or invite-only with
+`HL_SIGNUP=0`), email confirmation and password reset, saved places (5 km squares) with an "At a glance"
+panel, a tomato late-blight map layer (the potato model, shown for tomato growers), crop insights (late-blight
+risk for potato and tomato from the tested model; guidance rules for maize,
+beans and wheat), search by coordinates or town, "use my location", a guided tour and subtle map animations.
 
 ```bash
 python -m app.build_data                      # dashboard data from the saved test forecasts
 python -m app.build_shap                      # per-forecast explanations (~10 min, memory-heavy)
-python -m web.users add <name> --role admin   # create an account (password typed at a hidden prompt)
-python -m web.server                          # open http://127.0.0.1:8765 and sign in
+python -m web.users add <name> --role admin   # create an admin (password typed at a hidden prompt)
+python -m web.server                          # open http://127.0.0.1:8765, sign in or create an account
 ```
 
 Hosting (HTTPS, Docker, first admin, checks): [`deploy/README.md`](deploy/README.md). The image has not

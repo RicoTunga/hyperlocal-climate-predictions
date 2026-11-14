@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dashboard-dev",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": ["-m", "web.server"],
+      "port": 8766,
+      "env": { "HL_PORT": "8766", "HL_AUTH_DB": "data/auth/dev_test.db" }
+    }
+  ]
+}
