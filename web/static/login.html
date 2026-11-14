@@ -4,22 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sign in · Hyperlocal forecasts</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/login.css">
 </head>
 <body>
   <main class="card" aria-labelledby="title">
     <div class="eyebrow">Hyperlocal forecast · 5 km</div>
     <h1 id="title">Sign in</h1>
-    <p class="lead">Nakuru &amp; Busia rainfall, humidity and late-blight forecasts. Access is by invitation.</p>
+    <p class="lead">Rain, humidity and crop-risk forecasts for every 5 km square of Nakuru and Busia.</p>
     <div class="error" id="error" role="alert" hidden></div>
+    <div class="ok" id="ok" role="status" hidden></div>
     <form method="post" action="/login" autocomplete="on">
-      <label for="username">Username</label>
-      <input id="username" name="username" type="text" autocomplete="username" required maxlength="32"
+      <label for="username">Username or email</label>
+      <input id="username" name="username" type="text" autocomplete="username" required maxlength="254"
              autocapitalize="none" spellcheck="false">
-      <label for="password">Password</label>
+      <div class="label-row"><label for="password">Password</label><a href="/forgot" class="small-link">Forgot password?</a></div>
       <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256">
       <button type="submit">Sign in</button>
     </form>
+    <p class="switch" id="signup-link" hidden>New here? <a href="/signup">Create an account</a></p>
     <p class="fine">Research prototype (Strathmore University) · replay of 2025–26 forecasts · not an official
       forecast: the Kenya Meteorological Department is the authority.</p>
   </main>

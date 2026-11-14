@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create account · Hyperlocal forecasts</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/login.css">
+</head>
+<body>
+  <main class="card wide" aria-labelledby="title">
+    <div class="eyebrow">Hyperlocal forecast · 5 km</div>
+    <h1 id="title">Create your account</h1>
+    <p class="lead">Save your farm, pick your crops and get a 7-day picture of rain, humidity and crop risks for your
+      5 km square.</p>
+    <div class="error" id="error" role="alert" hidden></div>
+    <form id="signup-form" novalidate>
+      <div class="two">
+        <div class="field">
+          <label for="display_name">Your name</label>
+          <input id="display_name" name="display_name" type="text" autocomplete="name" maxlength="60" required>
+        </div>
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" name="username" type="text" autocomplete="username" required maxlength="32"
+                 autocapitalize="none" spellcheck="false" pattern="[A-Za-z0-9_.\-]{3,32}" aria-describedby="username-hint">
+          <small id="username-hint">3–32 letters, digits, . _ or -</small>
+        </div>
+      </div>
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="email" required maxlength="254" spellcheck="false"
+             aria-describedby="email-hint">
+      <small id="email-hint">Used to confirm your account and to reset your password. Never shared.</small>
+      <div class="two">
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="new-password" required minlength="12"
+                 maxlength="256" aria-describedby="pw-hint">
+        </div>
+        <div class="field">
+          <label for="password2">Repeat password</label>
+          <input id="password2" name="password2" type="password" autocomplete="new-password" required maxlength="256">
+        </div>
+      </div>
+      <div class="meter" aria-hidden="true"><span id="meter-bar"></span></div>
+      <small id="pw-hint">At least 12 characters. A short sentence is easy to remember and hard to guess.</small>
+      <fieldset>
+        <legend>What describes you best?</legend>
+        <div class="choices" role="radiogroup">
+          <label class="choice"><input type="radio" name="user_type" value="farmer" checked><span><b>Farmer</b><em>I grow crops</em></span></label>
+          <label class="choice"><input type="radio" name="user_type" value="extension"><span><b>Extension officer</b><em>I advise farmers</em></span></label>
+          <label class="choice"><input type="radio" name="user_type" value="researcher"><span><b>Researcher</b><em>I study the forecasts</em></span></label>
+          <label class="choice"><input type="radio" name="user_type" value="other"><span><b>Other</b><em>Just curious</em></span></label>
+        </div>
+      </fieldset>
+      <!-- people never see this field; automated sign-up bots tend to fill it in -->
+      <div class="hp" aria-hidden="true"><label for="website">Website</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+      <label class="check"><input type="checkbox" id="agree" required>
+        <span>I understand this is a <b>research prototype</b> that replays past forecasts (2025–26). It is not an official
+        forecast; the Kenya Meteorological Department is the authority.</span></label>
+      <button type="submit" id="submit">Create account</button>
+    </form>
+    <p class="switch">Already have an account? <a href="/login">Sign in</a></p>
+  </main>
+  <script src="/signup.js"></script>
+</body>
+</html>

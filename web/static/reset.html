@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Choose a new password · Hyperlocal forecasts</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/login.css">
+</head>
+<body>
+  <main class="card" aria-labelledby="title">
+    <div class="eyebrow">Hyperlocal forecast · 5 km</div>
+    <h1 id="title">Choose a new password</h1>
+    <p class="lead">This signs you out on every device. Then sign in with the new password.</p>
+    <div class="error" id="error" role="alert" hidden></div>
+    <form id="reset-form" data-mode="reset" novalidate>
+      <label for="password">New password</label>
+      <input id="password" name="password" type="password" autocomplete="new-password" required minlength="12" maxlength="256">
+      <label for="password2">Repeat new password</label>
+      <input id="password2" name="password2" type="password" autocomplete="new-password" required maxlength="256">
+      <small>At least 12 characters. A short sentence works well.</small>
+      <button type="submit" id="submit">Save new password</button>
+    </form>
+    <p class="switch"><a href="/forgot">Ask for a new link</a> · <a href="/login">Sign in</a></p>
+  </main>
+  <script src="/recover.js"></script>
+</body>
+</html>

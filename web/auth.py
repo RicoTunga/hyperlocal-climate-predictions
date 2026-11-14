@@ -8,7 +8,9 @@ Standard library only for everything security-related:
 - a per-session CSRF token for state-changing requests;
 - 5 failed logins lock an account for 15 minutes; failures and lockouts go to an audit table.
 
-Accounts are invite-only: they are created by an admin with `python -m web.users` (no sign-up).
+Accounts: anyone can sign up (role 'viewer', the only role sign-up can give); admins are made with
+`python -m web.users`. Sign-in is by username or email. One-time tokens (email verification, password
+reset) are random, stored only as SHA-256 hashes, expire, and are deleted when used.
 Storage is a single SQLite file (default data/auth/users.db, git-ignored with the rest of data/).
 """
 import hashlib
@@ -29,6 +31,12 @@ IDLE_SECONDS = 2 * 3600
 ABSOLUTE_SECONDS = 12 * 3600
 ROLES = ("admin", "viewer")
 USERNAME = re.compile(r"^[A-Za-z0-9_.-]{3,32}$")
+EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$")
+TOKEN_TTL = {"verify": 3 * 24 * 3600, "reset": 30 * 60}  # seconds a one-time link stays valid
+# a few passwords that pass the length rule but are guessed first; a full breached-password check
+# (e.g. against a downloaded list) is future work
+COMMON = {"password1234", "123456789012", "qwertyuiop12", "passwordpassword", "iloveyou1234", "abcdefghijkl",
+          "nakurunakuru", "kenya1234567", "welcome12345", "letmein12345"}
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
@@ -49,6 +57,12 @@ CREATE TABLE IF NOT EXISTS sessions (
     csrf TEXT NOT NULL,
     created REAL NOT NULL,
     last_seen REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS tokens (
+    token_hash TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL CHECK (kind IN ('verify', 'reset')),
+    expires REAL NOT NULL
 );
 CREATE TABLE IF NOT EXISTS audit (
     at REAL NOT NULL,
@@ -110,14 +124,21 @@ def verify_password(password: str, salt: bytes, expected: bytes, params: str) ->
     return hmac.compare_digest(digest, expected)
 
 
-def check_policy(username: str, password: str | None, role: str | None = None) -> None:
+def check_policy(username: str, password: str | None, role: str | None = None, email: str | None = None) -> None:
     if not USERNAME.match(username or ""):
         raise PolicyError("username: 3-32 characters, letters, digits, '.', '_' or '-'")
+    if email is not None and (len(email) > 254 or not EMAIL.match(email)):
+        raise PolicyError("email: enter a valid address, like name@example.com")
     if password is not None:
         if len(password) < MIN_PASSWORD:
             raise PolicyError(f"password: at least {MIN_PASSWORD} characters")
-        if password.lower() == username.lower():
-            raise PolicyError("password must differ from the username")
+        if len(password) > 256:
+            raise PolicyError("password: at most 256 characters")
+        low = password.lower()
+        if low == username.lower() or (email and low == email.lower()):
+            raise PolicyError("password must differ from the username and email")
+        if low in COMMON or len(set(low)) < 4:
+            raise PolicyError("password is too easy to guess; a short sentence works well")
     if role is not None and role not in ROLES:
         raise PolicyError(f"role must be one of {', '.join(ROLES)}")
 
@@ -140,11 +161,20 @@ class AuthStore:
         with self._lock, self._db:
             self._db.execute("PRAGMA foreign_keys = ON")
             self._db.executescript(SCHEMA)
+            self._migrate()
         # a fixed dummy hash, so a login for an unknown user costs the same time as a real one
         self._dummy = hash_password("not-a-real-password", salt=b"\x00" * 16)
 
     def close(self) -> None:
         self._db.close()
+
+    def _migrate(self) -> None:
+        """Add the sign-up columns to a database made before sign-up existed (keeps existing accounts)."""
+        have = {r["name"] for r in self._db.execute("PRAGMA table_info(users)")}
+        for col, decl in (("email", "TEXT"), ("display_name", "TEXT"), ("email_verified", "INTEGER NOT NULL DEFAULT 0")):
+            if col not in have:
+                self._db.execute(f"ALTER TABLE users ADD COLUMN {col} {decl}")
+        self._db.execute("CREATE UNIQUE INDEX IF NOT EXISTS users_email ON users(email COLLATE NOCASE)")
 
     # ------------------------------------------------ user management (CLI)
     def add_user(self, username: str, password: str, role: str = "viewer") -> None:
@@ -198,7 +228,8 @@ class AuthStore:
     def authenticate(self, username: str, password: str, ip: str = "") -> User:
         now = self.clock()
         with self._lock:
-            row = self._db.execute("SELECT * FROM users WHERE username=?", (username or "",)).fetchone()
+            row = self._db.execute("SELECT * FROM users WHERE username=? OR (email IS NOT NULL AND email=? COLLATE NOCASE)",
+                                   (username or "", username or "")).fetchone()
         if row is None:
             verify_password(password or "", *self._dummy)  # same cost as a real check
             self.audit("login_failed", username, ip)
@@ -262,6 +293,133 @@ class AuthStore:
         with self._lock, self._db:
             return self._db.execute("DELETE FROM sessions WHERE ? - last_seen > ? OR ? - created > ?",
                                     (now, IDLE_SECONDS, now, ABSOLUTE_SECONDS)).rowcount
+
+    # ------------------------------------------------ self-service accounts
+    def register(self, username: str, email: str, password: str, display_name: str = "", ip: str = "") -> User:
+        """Create a viewer account from the sign-up page. Raises PolicyError (safe to show) on bad input."""
+        username, email = (username or "").strip(), (email or "").strip()
+        display_name = " ".join((display_name or "").split())[:60] or username
+        check_policy(username, password, "viewer", email)
+        salt, digest, params = hash_password(password)
+        with self._lock, self._db:
+            if self._db.execute("SELECT 1 FROM users WHERE username=?", (username,)).fetchone():
+                raise PolicyError("that username is taken; try another")
+            if self._db.execute("SELECT 1 FROM users WHERE email=? COLLATE NOCASE", (email,)).fetchone():
+                raise PolicyError("an account with that email already exists; sign in or reset the password")
+            cur = self._db.execute(
+                "INSERT INTO users (username, role, pw_salt, pw_hash, pw_params, created, email, display_name) "
+                "VALUES (?, 'viewer', ?, ?, ?, ?, ?, ?)", (username, salt, digest, params, self.clock(), email, display_name))
+        self.audit("signup", username, ip)
+        return User(cur.lastrowid, username, "viewer")
+
+    def account(self, user_id: int) -> dict:
+        with self._lock:
+            r = self._db.execute("SELECT username, role, email, display_name, email_verified, created FROM users WHERE id=?",
+                                 (user_id,)).fetchone()
+        if r is None:
+            raise PolicyError("no such account")
+        return {"username": r["username"], "role": r["role"], "email": r["email"],
+                "display_name": r["display_name"] or r["username"], "email_verified": bool(r["email_verified"]),
+                "created": r["created"]}
+
+    def update_account(self, user_id: int, display_name: str | None = None) -> None:
+        if display_name is not None:
+            name = " ".join(display_name.split())[:60]
+            if not name:
+                raise PolicyError("name cannot be empty")
+            with self._lock, self._db:
+                self._db.execute("UPDATE users SET display_name=? WHERE id=?", (name, user_id))
+
+    def create_token(self, user_id: int, kind: str) -> str:
+        """A one-time link token; earlier tokens of the same kind for this user stop working."""
+        token, now = secrets.token_urlsafe(32), self.clock()
+        with self._lock, self._db:
+            self._db.execute("DELETE FROM tokens WHERE user_id=? AND kind=?", (user_id, kind))
+            self._db.execute("INSERT INTO tokens (token_hash, user_id, kind, expires) VALUES (?, ?, ?, ?)",
+                             (token_hash(token), user_id, kind, now + TOKEN_TTL[kind]))
+        return token
+
+    def _take_token(self, token: str, kind: str, consume: bool = True) -> int | None:
+        """The token's user id if it is valid (deleted when consumed or expired), else None."""
+        if not token or len(token) > 100:
+            return None
+        now, th = self.clock(), token_hash(token)
+        with self._lock, self._db:
+            row = self._db.execute("SELECT user_id, expires FROM tokens WHERE token_hash=? AND kind=?", (th, kind)).fetchone()
+            if row is None:
+                return None
+            if consume or row["expires"] < now:
+                self._db.execute("DELETE FROM tokens WHERE token_hash=?", (th,))
+            return row["user_id"] if row["expires"] >= now else None
+
+    def token_valid(self, token: str, kind: str) -> bool:
+        return self._take_token(token, kind, consume=False) is not None
+
+    def verify_email(self, token: str) -> bool:
+        uid = self._take_token(token, "verify")
+        if uid is None:
+            return False
+        with self._lock, self._db:
+            self._db.execute("UPDATE users SET email_verified=1 WHERE id=?", (uid,))
+        self.audit("email_verified", self.account(uid)["username"])
+        return True
+
+    def reset_request(self, email: str, ip: str = "") -> tuple[str, str, str] | None:
+        """(email, display name, reset token) if an enabled account has this email, else None.
+        The caller must answer the same way in both cases, so the page does not reveal who has an account."""
+        with self._lock:
+            r = self._db.execute("SELECT id, username, email, display_name FROM users "
+                                 "WHERE email=? COLLATE NOCASE AND disabled=0", ((email or "").strip(),)).fetchone()
+        self.audit("reset_requested", r["username"] if r else None, ip)
+        if r is None:
+            return None
+        return r["email"], r["display_name"] or r["username"], self.create_token(r["id"], "reset")
+
+    def reset_password(self, token: str, password: str) -> str:
+        """Set a new password from a reset link; ends every session. Returns the username."""
+        if not self.token_valid(token, "reset"):
+            raise PolicyError("this reset link has expired or was already used; ask for a new one")
+        with self._lock:
+            uid = self._db.execute("SELECT user_id FROM tokens WHERE token_hash=?", (token_hash(token),)).fetchone()["user_id"]
+            r = self._db.execute("SELECT username, email FROM users WHERE id=?", (uid,)).fetchone()
+        check_policy(r["username"], password, email=r["email"])  # a weak password keeps the link usable
+        self._take_token(token, "reset")
+        self.set_password(r["username"], password)
+        with self._lock, self._db:  # a reset link also proves the person controls the email
+            self._db.execute("UPDATE users SET email_verified=1 WHERE id=?", (uid,))
+        return r["username"]
+
+    def change_password(self, user_id: int, current: str, new: str, keep_token: str | None = None) -> None:
+        """Change the password (current one required); signs out every other session."""
+        with self._lock:
+            r = self._db.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+        if r is None or not verify_password(current or "", r["pw_salt"], r["pw_hash"], r["pw_params"]):
+            raise PolicyError("the current password is wrong")
+        check_policy(r["username"], new, email=r["email"])
+        salt, digest, params = hash_password(new)
+        with self._lock, self._db:
+            self._db.execute("UPDATE users SET pw_salt=?, pw_hash=?, pw_params=? WHERE id=?", (salt, digest, params, user_id))
+        self.end_other_sessions(user_id, keep_token)
+        self.audit("password_changed", r["username"])
+
+    def end_other_sessions(self, user_id: int, keep_token: str | None = None) -> int:
+        """Sign out every session of this user except the one with keep_token."""
+        keep = token_hash(keep_token) if keep_token else ""
+        with self._lock, self._db:
+            return self._db.execute("DELETE FROM sessions WHERE user_id=? AND token_hash<>?", (user_id, keep)).rowcount
+
+    def delete_account(self, user_id: int, password: str, ip: str = "") -> None:
+        """Delete the account and everything linked to it (sessions, tokens and, via ON DELETE CASCADE, saved
+        places, crops and settings). Needs the password. Admin accounts are removed with the command line."""
+        with self._lock:
+            r = self._db.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+        if r is None or not verify_password(password or "", r["pw_salt"], r["pw_hash"], r["pw_params"]):
+            raise PolicyError("the password is wrong")
+        if r["role"] == "admin":
+            raise PolicyError("admin accounts are removed on the server with python -m web.users remove")
+        with self._lock, self._db:
+            self._db.execute("DELETE FROM users WHERE id=?", (user_id,))
+        self.audit("account_deleted", r["username"], ip)
 
     def audit(self, event: str, username: str | None = None, ip: str = "") -> None:
         with self._lock, self._db:

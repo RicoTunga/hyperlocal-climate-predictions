@@ -1,4 +1,4 @@
-"""Manage dashboard accounts (invite-only: there is no sign-up page).
+"""Manage dashboard accounts from the server (admins; and every account when sign-up is off, HL_SIGNUP=0).
 
     python -m web.users add <username> --role admin|viewer    # asks for the password twice
     python -m web.users list

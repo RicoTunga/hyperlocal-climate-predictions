@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Forgot password · Hyperlocal forecasts</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/login.css">
+</head>
+<body>
+  <main class="card" aria-labelledby="title">
+    <div class="eyebrow">Hyperlocal forecast · 5 km</div>
+    <h1 id="title">Forgot your password?</h1>
+    <p class="lead">Enter the email you signed up with. We will send a link to choose a new password.</p>
+    <div class="error" id="error" role="alert" hidden></div>
+    <div class="ok" id="ok" role="status" hidden></div>
+    <form id="forgot-form" data-mode="forgot" novalidate>
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="email" required maxlength="254" spellcheck="false">
+      <button type="submit" id="submit">Send reset link</button>
+    </form>
+    <p class="fine">Accounts made by an administrator without an email: ask the administrator to reset the password.</p>
+    <p class="switch"><a href="/login">Back to sign in</a></p>
+  </main>
+  <script src="/recover.js"></script>
+</body>
+</html>
