@@ -1,10 +1,12 @@
+# Versions pinned 2026-11-09 to the environment that produced the reported results
+# (Python 3.13.3, Windows). Upgrade deliberately and re-run the tests.
 # Minimal requirements for RUNNING the dashboard (web/server.py), e.g. inside the Docker image.
 # The full research environment (data ingestion, models, notebooks) is requirements.txt.
-numpy
-pandas
-pyarrow
-scipy
-pillow
-starlette
-uvicorn
-python-multipart
+numpy==2.5.4
+pandas==3.1.0
+pyarrow==26.0.0
+scipy==1.18.1
+pillow==13.0.0
+starlette==1.10.0
+uvicorn==0.54.0
+python-multipart==0.0.33

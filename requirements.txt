@@ -1,34 +1,36 @@
+# Versions pinned 2026-11-09 to the environment that produced the reported results
+# (Python 3.13.3, Windows). Upgrade deliberately and re-run the tests.
 # Core data + ML
-pandas
-numpy
-pyarrow
-scikit-learn
-xgboost
-lightgbm
-catboost
-optuna
-shap
-matplotlib
+pandas==3.1.0
+numpy==2.5.4
+pyarrow==26.0.0
+scikit-learn==1.9.1
+xgboost==3.4.1
+lightgbm==4.7.0
+catboost==1.2.10
+optuna==5.0.0
+shap==0.54.1
+matplotlib==3.11.2
 
 # Data acquisition
-xarray
-netCDF4
-cdsapi
-earthengine-api
-requests
-pyyaml
-python-dotenv
+xarray==2026.9.0
+netCDF4==1.7.5.1.post1
+cdsapi==0.7.7
+earthengine-api==1.7.49
+requests==2.34.2
+pyyaml==6.0.3
+python-dotenv==1.2.4
 
 # Notebooks
-ipykernel
-jupyter
+ipykernel==7.4.0
+jupyter==1.1.1
 
 # Dashboard server (see also requirements-web.txt for a minimal install)
-starlette
-uvicorn
-python-multipart
+starlette==1.10.0
+uvicorn==0.54.0
+python-multipart==0.0.33
 
 # Dev tools (tests and dashboard screenshots)
-pytest
-httpx
-playwright
+pytest==9.2.0
+httpx==0.28.1
+playwright==1.64.1

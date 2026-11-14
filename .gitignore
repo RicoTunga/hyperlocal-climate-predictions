@@ -37,3 +37,8 @@ web/screenshots/
 # Dashboard accounts and sessions (password hashes): never commit
 data/auth/
 *.db
+
+docs/report/
+
+# Developer tools downloaded locally (e.g. plantuml.jar for docs/report/diagrams)
+.tools/
