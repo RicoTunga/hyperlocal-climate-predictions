@@ -21,7 +21,12 @@ deployment.
   the cookie, so sign-in will appear to fail. This is deliberate.
 - uvicorn runs with `--proxy-headers --forwarded-allow-ips *` so the app sees the real scheme (https) and client
   IP from the proxy. That trusts any proxy, so **never expose port 8765 directly to the internet**.
-- Accounts are invite-only, created by an admin on the server (below). There is no sign-up page.
+- Sign-up is open by default (`HL_SIGNUP=1`; new accounts are always `viewer`). For a public host without Kenya Met
+  sign-off, consider `HL_SIGNUP=0` (invite-only: accounts made by an admin on the server, below).
+- Emailed links (confirm email, reset password) need `HL_BASE_URL=https://your.domain` and an SMTP account:
+  `HL_SMTP_HOST`, `HL_SMTP_PORT` (587), `HL_SMTP_USER`, `HL_SMTP_PASSWORD`, `HL_MAIL_FROM`, passed as secrets by the
+  platform (never baked into the image). Without SMTP the emails are only printed to the container log.
+- "Use my location" works only over HTTPS (browsers refuse it on plain HTTP except on localhost).
 
 ## Steps
 
