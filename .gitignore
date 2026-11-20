@@ -42,3 +42,9 @@ docs/report/
 
 # Developer tools downloaded locally (e.g. plantuml.jar for docs/report/diagrams)
 .tools/
+
+# Local data backups (parquet) - never commit
+data/backup_*/
+
+# Private demo script and defence Q&A (personal notes, not part of the system)
+docs/DEMO_SCRIPT_AND_DEFENCE_PREP.pdf

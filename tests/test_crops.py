@@ -85,3 +85,14 @@ def test_outlook_and_confidence():
 def test_unknown_crop():
     with pytest.raises(KeyError):
         C.advise("coffee", week(), "nakuru", False)
+
+
+def test_chance_in_words_rounds_to_tenths_and_names_the_extremes():
+    from web.crops import chance_words
+    assert chance_words(None) == ""
+    assert chance_words(0.02).startswith("Very unlikely")
+    assert chance_words(0.18) == "Unlikely (2 in 10)"
+    assert chance_words(0.41) == "Possible (4 in 10)"
+    assert chance_words(0.66) == "Likely (7 in 10)"
+    assert chance_words(0.83) == "Very likely (8 in 10)"
+    assert chance_words(0.97).startswith("Almost certain")

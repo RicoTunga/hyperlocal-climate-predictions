@@ -9,7 +9,11 @@
 
 period:
   start: 2016-01-01
-  end: 2026-09-30
+  # Extended from 2026-09-30 on 20 Nov 2026 (approved) for the post-test period (experiment.yaml).
+  # On that day CHIRPS v2 final reached 2026-10-31, CHIRPS preliminary 2026-11-15 and ERA5T 2026-11-14
+  # (the common end). Run chirps with --allow-prelim for the preliminary days. Data up to
+  # 2026-09-30 must stay identical (python -m src.features.extension_check).
+  end: 2026-11-14
 
 sites:
   nakuru:

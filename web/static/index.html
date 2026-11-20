@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
   <link rel="stylesheet" href="/app.css">
   <link rel="stylesheet" href="/journey.css">
+  <link rel="stylesheet" href="/farm.css">
 </head>
 <body data-ready="0">
   <div class="boot" id="boot" role="status"><span class="boot-spin" aria-hidden="true"></span><span>Loading the forecast map…</span></div>
@@ -39,10 +40,16 @@
       </button>
       <ul class="search-results" id="search-results" role="listbox" hidden></ul>
     </div>
-    <div class="badge" title="Kenya Meteorological Department is the forecasting authority">
-      Research replay · not an official forecast
+    <div class="brand-foot">
+      <div class="badge" title="Kenya Meteorological Department is the forecasting authority">
+        Research replay · not an official forecast
+      </div>
+      <button class="btn small farm-btn" id="farm-btn" aria-pressed="false" aria-controls="farm">7 days at my farm</button>
     </div>
   </header>
+
+  <!-- the farmer's view: will it rain at my farm over the next 7 days? (farm.js) -->
+  <section class="farm" id="farm" hidden aria-label="My farm, next 7 days"></section>
 
   <!-- left: at-a-glance (HUD) for the user's place -->
   <section class="panel hud" id="hud" aria-label="At a glance" hidden></section>
