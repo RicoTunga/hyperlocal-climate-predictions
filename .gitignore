@@ -42,3 +42,6 @@ docs/report/
 
 # Developer tools downloaded locally (e.g. plantuml.jar for docs/report/diagrams)
 .tools/
+
+# Local data backups (parquet) - never commit
+data/backup_*/

@@ -36,7 +36,8 @@ API
     /api/pixel/<site>/<pixel_id>?h=<1-7>          one pixel's test-period series at one horizon
     /api/why/<site>/<pixel_id>/<YYYY-MM-DD>       SHAP explanation of one square's forecasts (all horizons)
     /api/shap_summary                             what drives the forecasts overall (validation SHAP)
-    /api/skill, /api/calibration, /api/blight_skill   committed result tables
+    /api/skill, /api/calibration, /api/blight_skill   committed result tables (reported test period)
+    /api/posttest_skill, /api/posttest_blight_skill   post-test period (after the reported test; [] if not run)
     /api/admin/users                              (admin) accounts and recent sign-in events
 """
 import hmac
@@ -214,9 +215,12 @@ def api_day(site, issue):
     order = list(pixels(site)["pixel_id"])
     cols = DAY_COLUMNS + (BLIGHT_COLUMNS if meta()[site]["has_blight"] else [])
     out = {"issue": issue, "pixels": order, "horizons": {}}
+    status = meta()[site].get("status")
     for h, g in d.groupby("horizon"):
         g = g.set_index("pixel_id").reindex(order)
-        out["horizons"][str(int(h))] = {"target": str(pd.Timestamp(g["target_date"].iloc[0]).date()),
+        target = pd.Timestamp(g["target_date"].iloc[0])
+        out["horizons"][str(int(h))] = {"target": str(target.date()),
+                                        "status": C.data_label(target, status) if status else None,
                                         **{c: [clean(v) for v in g[c]] for c in cols}}
     return out
 
@@ -228,8 +232,11 @@ def api_pixel(site, pixel_id, h):
     cols = ["p_rain1", "obs_rain_mm", "clim_rain1", "rh", "obs_rh", "clim_rh"]
     if meta()[site]["has_blight"]:
         cols += ["blight_hutton", "obs_blight_hutton"]
-    s = C.pixel_series(site, pixel_id, h, cols).sort_values("target_date")
-    return {"target": [str(pd.Timestamp(t).date()) for t in s["target_date"]], **{c: [clean(v) for v in s[c]] for c in cols}}
+    s = C.pixel_series(site, pixel_id, h, cols + ["period"]).sort_values("target_date")
+    status = meta()[site].get("status") or {}
+    return {"target": [str(pd.Timestamp(t).date()) for t in s["target_date"]],
+            "test_end": status.get("test_end"), "observed_through": status.get("observed_through"),
+            **{c: [clean(v) for v in s[c]] for c in cols}}
 
 
 @lru_cache(maxsize=1)
@@ -283,7 +290,7 @@ def api_advice(site, pixel_id, issue, crops_param):
     for c in wanted:
         if c not in crops_mod.CROPS:
             raise BadRequest(f"unknown crop '{c}'")
-    days = crops_mod.pixel_days(day(site, issue), pixel_id)
+    days = crops_mod.pixel_days(day(site, issue), pixel_id, meta()[site].get("status"))
     has_blight = meta()[site]["has_blight"]
     return {"issue": issue, "site": site, "pixel_id": pixel_id, "outlook": crops_mod.outlook(days, site),
             "crops": [crops_mod.advise(c, days, site, has_blight) for c in wanted]}
@@ -425,6 +432,18 @@ def r_calibration(request):
 
 def r_blight_skill(request):
     return json_ok(table("late_blight/test_skill.csv"))
+
+
+def r_posttest_skill(request):
+    if not (C.REPORTS / "posttest" / "skill.csv").exists():
+        return json_ok([])
+    return json_ok(table("posttest/skill.csv", "model == 'catboost' and metric in ['bss', 'rmse_skill']"))
+
+
+def r_posttest_blight_skill(request):
+    if not (C.REPORTS / "posttest" / "late_blight_skill.csv").exists():
+        return json_ok([])
+    return json_ok(table("posttest/late_blight_skill.csv"))
 
 
 @guarded
@@ -785,6 +804,8 @@ def create_app(cfg: Settings | None = None, store: AuthStore | None = None) -> S
         Route("/api/skill", r_skill),
         Route("/api/calibration", r_calibration),
         Route("/api/blight_skill", r_blight_skill),
+        Route("/api/posttest_skill", r_posttest_skill),
+        Route("/api/posttest_blight_skill", r_posttest_blight_skill),
         Route("/api/{rest:path}", lambda request: json_error("not found", 404)),
         Route("/", r_static),
         Route("/{path:path}", r_static),

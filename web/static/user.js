@@ -4,6 +4,7 @@
 import { state, bus, emit, send, api, esc, signOut, goToSquare, fmtLatLon, plainLatLon, SITE_NAMES, setState } from "./app.js";
 import { openSkill, openAbout, openUsers, openWhy, refreshDrawer } from "./panels.js";
 import { initHud } from "./hud.js";
+import { initFarm } from "./farm.js";
 import { initSearch, locateMe, focusSearch } from "./search.js";
 import { initFx, applyFxSetting } from "./fx.js";
 import { startTour } from "./tour.js";
@@ -598,6 +599,7 @@ export async function initUser() {
   });
   initSearch();
   initHud();
+  initFarm();
   initFx();
   // keep the dialog from closing on a backdrop click while it is locked (onboarding)
   $("#dialog").addEventListener("close", () => {

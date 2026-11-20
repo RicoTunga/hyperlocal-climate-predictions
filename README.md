@@ -53,7 +53,7 @@ Credentials: `GEE_PROJECT` in `.env` (see `.env.example`) and a Copernicus key i
 
 | Step | Command |
 |---|---|
-| Rainfall | `python -m src.ingestion.chirps` |
+| Rainfall (CHIRPS v2.0) | `python -m src.ingestion.chirps` (add `--allow-prelim` for days only the preliminary product covers; check the CHC-server route once with `python -m src.ingestion.chirps_check`) |
 | Weather | `python test_timeseries.py --site <site> --start 2016-01-01 --end 2026-10-21`, move the file to `data/raw/era5_manual/<site>/`, then `python -m src.ingestion.era5 --local --site <site>` |
 | Elevation | `python -m src.ingestion.elevation` |
 | Merge and features | `python -m src.features.merge`, then `python -m src.features.build` |
@@ -62,9 +62,11 @@ Credentials: `GEE_PROJECT` in `.env` (see `.env.example`) and a Copernicus key i
 | Intervals, calibration, SHAP | `python -m src.models.uncertainty`, `python -m src.models.calibration`, `python -m src.explain.shap_analysis` |
 | Final test (once) | `python -m src.models.final_test train`, then `python -m src.models.final_test analyse` |
 | Late blight | `python -m src.features.humid_hours --site nakuru`, then `python -m src.models.late_blight validate` / `test` |
+| After the test (frozen models) | `python -m src.features.extension_check --backup <folder> --until 2026-09-30`, `python -m src.models.posttest score`, then `analyse` |
+| Live mode (branch `feature/live`) | `python -m src.live.backtest fetch`, `run`, `analyse` (backtest on 2024); `python -m src.live.forecast` (live forecasts) |
 
-Splits: train 2016-2023, validation 2024, test 2025-01-08 to 2026-09-30 (settings in `config/experiment.yaml`;
-sites in `config/sites.yaml`). Tests: `python -m pytest -q` (148 tests).
+Splits: train 2016-2023, validation 2024, test 2025-01-08 to 2026-09-30, and a separately reported post-test period from
+2026-10-01 to the newest data (settings in `config/experiment.yaml`; sites in `config/sites.yaml`). Tests: `python -m pytest -q`.
 
 ## Dashboard
 
@@ -77,11 +79,17 @@ risk for potato and tomato from the tested model; guidance rules for maize,
 beans and wheat), search by coordinates or town, "use my location", a guided tour and subtle map animations.
 
 ```bash
-python -m app.build_data                      # dashboard data from the saved test forecasts
+python -m app.build_data                      # dashboard data from the saved test (and post-test) forecasts
 python -m app.build_shap                      # per-forecast explanations (~10 min, memory-heavy)
+python -m app.build_shap --posttest           # add explanations for the post-test rows only
 python -m web.users add <name> --role admin   # create an admin (password typed at a hidden prompt)
 python -m web.server                          # open http://127.0.0.1:8765, sign in or create an account
 ```
+
+Farmer accounts open on **My farm**: seven day cards for a saved farm (chance of rain in numbers and words, the usual
+chance, humidity, potato and tomato blight weather, how reliable each day is, the main reason, and what happened).
+Live mode (branch `feature/live` only): run `python -m src.live.forecast`, then start the server with `HL_LIVE=1` to show the live forecasts after the
+replay (off by default).
 
 Hosting (HTTPS, Docker, first admin, checks): [`deploy/README.md`](deploy/README.md). The image has not
 been built or deployed yet.
@@ -101,6 +109,7 @@ deploy/      hosting guide
 
 ## Acknowledgements and attribution
 
-CHIRPS (Funk et al., 2015; Climate Hazards Center, UC Santa Barbara). ERA5 (Hersbach et al., 2020;
+CHIRPS v2.0 (Funk et al., 2015; Climate Hazards Center, UC Santa Barbara). Live mode: weather data by Open-Meteo.com
+(ECMWF IFS 0.25°, CC BY 4.0). ERA5 (Hersbach et al., 2020;
 contains modified Copernicus Climate Change Service information). SRTM (NASA / USGS). Basemap
 © OpenStreetMap contributors © CARTO.

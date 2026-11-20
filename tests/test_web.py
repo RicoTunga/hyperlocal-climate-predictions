@@ -217,3 +217,57 @@ def test_tomato_layer_served_for_nakuru_only(client):
     ta, pa = (np.array(Image.open(BytesIO(r.content)))[..., 3] for r in (t, p))
     assert (ta == pa).all()  # ... over exactly the same values (opacity follows the value)
     assert client.get(f"/api/raster/busia/{issue}/2/blight_tomato/forecast.png").status_code == 400
+
+
+# ---------------------------------------------------------------- post-test period and data labels
+STATUS = {"test_end": "2026-09-30", "observed_through": "2026-11-14", "chirps_final_through": "2026-10-31",
+          "posttest_start": "2026-10-01", "era5t_from": "2026-08-01"}
+
+
+@pytest.mark.parametrize("day, period, rain, era5, note_has", [
+    ("2025-04-15", "test", "final", "final", ""),
+    ("2026-08-10", "test", "final", "era5t", ""),
+    ("2026-10-05", "posttest", "final", "era5t", "not part of the evaluated results"),
+    ("2026-11-03", "posttest", "preliminary", "era5t", "preliminary"),
+    ("2026-11-17", "forecast", "none", "none", "Not observed yet"),
+])
+def test_data_label_says_what_kind_of_day_it_is(day, period, rain, era5, note_has):
+    lab = C.data_label(day, STATUS)
+    assert (lab["period"], lab["rain"], lab["era5"]) == (period, rain, era5)
+    assert note_has in lab["note"] and (lab["note"] == "") == (note_has == "")
+
+
+@pytestmark_data
+def test_day_endpoint_labels_post_test_and_unobserved_days(client):
+    meta = client.get("/api/meta").json()["sites"]["nakuru"]
+    st = meta.get("status")
+    if not st or meta["issue_max"] <= st["test_end"]:
+        pytest.skip("no post-test period in app/data")
+    newest = client.get(f"/api/day/nakuru/{meta['issue_max']}").json()
+    for h, H in newest["horizons"].items():  # forecasts from the newest data reach past the last observed day
+        assert H["status"]["period"] == "forecast" and all(v is None for v in H["obs_rain_mm"]), h
+        assert all(v is not None for v in H["p_rain1"])
+    first = client.get(f"/api/day/nakuru/{meta['issue_min']}").json()
+    assert all(H["status"]["period"] == "test" for H in first["horizons"].values())
+    pid = newest["pixels"][0]
+    adv = client.get(f"/api/advice/nakuru/{pid}/{meta['issue_max']}?crops=potato").json()
+    assert all(d["status"]["period"] == "forecast" and d["words"] for d in adv["outlook"]["days"])
+    s = client.get(f"/api/pixel/nakuru/{pid}?h=1").json()
+    assert s["test_end"] == st["test_end"] and s["target"][-1] > st["test_end"]
+
+
+@pytestmark_data
+def test_post_test_skill_is_served_separately_from_the_test(client):
+    test_rows = client.get("/api/skill").json()
+    post = client.get("/api/posttest_skill").json()
+    assert {r["period"] for r in test_rows}.isdisjoint({r["period"] for r in post})
+    assert all(r["period"].startswith("post-test") for r in post)
+    assert client.get("/api/posttest_blight_skill").status_code == 200
+
+
+@pytestmark_data
+def test_farm_view_files_are_served_and_linked(client):
+    page = client.get("/").text
+    assert 'id="farm"' in page and "/farm.css" in page
+    for path in ("/farm.js", "/farm.css"):
+        assert client.get(path).status_code == 200, path

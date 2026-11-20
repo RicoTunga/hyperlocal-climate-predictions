@@ -166,8 +166,102 @@ def build_site(site: str, sites_cfg: dict, exp: dict) -> dict:
     return {"targets": list(targets), "typical": typical}
 
 
+def build_site_posttest(site: str, sites_cfg: dict, exp: dict, meta_site: dict) -> None:
+    """Explain the post-test rows (src.models.posttest) and put them into <site>_shap.parquet, replacing
+    any earlier post-test rows and keeping the test-period rows untouched. Same guards as build_site,
+    against posttest_predictions.parquet; the typical forecast (the model's expected value) must equal
+    the one already stored for the test period."""
+    from src.models.posttest import issue_table, posttest_bounds, risk_issue_table
+    fexp = final_config(exp)
+    wet_mm, exceed, window = fexp["rain"]["wet_threshold_mm"], fexp["rain"]["exceedance_mm"], fexp["climatology"]["window_days"]
+    train_start, train_end = split_bounds(fexp, "train")
+    horizons = sites_cfg["forecast"]["horizons"]
+    ps_start, ps_end, _ = posttest_bounds(exp)
+    issues = pd.date_range(ps_start - pd.Timedelta(days=max(horizons)), ps_end)
+    run = next((MODELS / site).glob("final_train*_score*"))
+    has_blight = site == "nakuru"
+    kinds = {"rain1": "prob", "rh": "pct"}
+    models = {(t, h): joblib.load(run / f"h{h}" / f) for t, f in (("rain1", "catboost_occ1.joblib"), ("rh", "catboost_rh.joblib"))
+              for h in horizons}
+    saved = {h: pd.read_parquet(run / f"h{h}" / "posttest_predictions.parquet",
+                                columns=["pixel_id", "target_date", "catboost__occ1", "catboost__rh"]) for h in horizons}
+    if has_blight:
+        daily = pd.read_parquet(PROCESSED / f"{site}_daily.parquet", columns=["pixel_id", "date", "t2m_min_c", "sp_hpa", "elev_mean_m"])
+        hours = pd.read_parquet(PROCESSED / f"{site}_humid_hours.parquet")
+        labels = risk_labels(daily[daily["date"] <= ps_end], hours[hours["date"] <= ps_end], train_start, train_end)
+        del daily, hours
+        tr_lab = labels[(labels["date"] >= train_start) & (labels["date"] <= train_end)]
+        clim_risk = {r: binary_climatology(tr_lab, f"met_{r}", window) for r in ("hutton", "humid")}
+        del tr_lab
+        for r in ("hutton", "humid"):
+            kinds[f"blight_{r}"] = "prob"
+            for h in horizons:
+                d = MODELS / site / "late_blight_final" / r / f"h{h}"
+                models[(f"blight_{r}", h)] = joblib.load(d / "catboost_risk.joblib")
+                saved[(r, h)] = pd.read_parquet(d / "posttest_predictions.parquet", columns=["pixel_id", "target_date", "catboost"])
+    all_px = dev_pixel_sample(site, 10 ** 9)
+    parts, worst = [], 0.0
+    for k in range(0, len(all_px), BATCH):
+        px = all_px[k:k + BATCH]
+        hist = load_features(site, px, until=train_end, start=train_start, columns=["pixel_id", "date", "precip_mm", "rh_pct"])
+        clim = fit_climatology(hist, wet_mm, exceed, window)
+        del hist
+        feat = load_features(site, px, until=ps_end, start=issues[0])
+        lab_b = labels[labels["pixel_id"].isin(px)] if has_blight else None
+        for h in horizons:
+            t = issue_table(feat, clim, h, issues)
+            t = t[t["target_date"] >= ps_start].reset_index(drop=True)
+            block = t[["pixel_id", "issue_date"]].copy()
+            block["horizon"] = np.int8(h)
+            s = t[["pixel_id", "target_date"]].merge(saved[h], on=["pixel_id", "target_date"], how="left", validate="one_to_one")
+            tables = {"rain1": (t, s["catboost__occ1"]), "rh": (t, s["catboost__rh"])}
+            if has_blight:
+                for r in ("hutton", "humid"):
+                    rt = risk_issue_table(feat, clim, lab_b, clim_risk[r], r, h, issues)
+                    rt = rt[rt["target_date"] >= ps_start].reset_index(drop=True)
+                    assert (rt["pixel_id"].to_numpy() == t["pixel_id"].to_numpy()).all()
+                    rs = rt[["pixel_id", "target_date"]].merge(saved[(r, h)], on=["pixel_id", "target_date"], how="left",
+                                                               validate="one_to_one")
+                    tables[f"blight_{r}"] = (rt, rs["catboost"])
+            for target, (tab, sv) in tables.items():
+                m = models[(target, h)]
+                cols = list(m.feature_names_)
+                assert set(cols) == set(feature_columns(tab) if target in ("rain1", "rh") else risk_columns(tab))
+                contrib, typ, err = explain(m, tab, cols, kinds[target], sv)
+                if abs(typ - meta_site["typical"][f"{target}|{h}"]) > 1e-9:
+                    raise SystemExit(f"{target} h{h}: typical forecast differs from the stored one")
+                worst = max(worst, err)
+                for g, name in enumerate(GROUPS):
+                    block[f"{target}|{name}"] = np.round(contrib[:, g] * 10).astype(np.int16)
+            parts.append(block)
+        del feat, clim
+        print(f"  {site}: post-test batch {k // BATCH + 1} explained ({len(px)} pixels x 7 horizons)", flush=True)
+    new = pd.concat(parts, ignore_index=True)
+    f = OUT / f"{site}_shap.parquet"
+    old = pd.read_parquet(f)
+    key = ["pixel_id", "issue_date", "horizon"]
+    # drop earlier post-test rows (same keys), keep every test-period row as it is
+    old = old.merge(new[key], on=key, how="left", indicator=True)
+    old = old[old["_merge"] == "left_only"].drop(columns="_merge")
+    out = pd.concat([old, new[old.columns]], ignore_index=True).sort_values(["issue_date", "horizon", "pixel_id"]).reset_index(drop=True)
+    assert not out.duplicated(key).any()
+    pq.write_table(pa.Table.from_pandas(out, preserve_index=False), f, row_group_size=50_000, compression="zstd")
+    print(f"  PASS  {site}: {len(new):,} post-test forecasts explained (max difference to saved {worst:.1g} points); "
+          f"{len(out):,} rows in {f.name}")
+
+
 def main() -> None:
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--posttest", action="store_true",
+                    help="explain only the post-test rows and add them to the existing files (test rows unchanged)")
+    args = ap.parse_args()
     sites_cfg, exp = load_configs()
+    if args.posttest:
+        meta = json.loads((OUT / "shap_meta.json").read_text(encoding="utf-8"))
+        for site in sites_cfg["sites"]:
+            build_site_posttest(site, sites_cfg, exp, meta["sites"][site])
+        return
     meta = {"groups": GROUPS, "labels": LABELS, "sites": {}}
     for site in sites_cfg["sites"]:
         meta["sites"][site] = build_site(site, sites_cfg, exp)

@@ -64,8 +64,10 @@ def catalogue() -> list[dict]:
 
 
 # ---------------------------------------------------------------- inputs
-def pixel_days(day: pd.DataFrame, pixel_id: str) -> list[dict]:
-    """The 7 forecast days for one square from one issue day's table (app.components.issue_day)."""
+def pixel_days(day: pd.DataFrame, pixel_id: str, status: dict | None = None) -> list[dict]:
+    """The 7 forecast days for one square from one issue day's table (app.components.issue_day).
+    With `status` (meta.json data status) each day also says what kind of day it is
+    (app.components.data_label: reported test, post-test, preliminary rain, not yet observed)."""
     g = day[day["pixel_id"] == pixel_id].sort_values("horizon")
     if len(g) != 7:
         raise KeyError(pixel_id)
@@ -73,10 +75,16 @@ def pixel_days(day: pd.DataFrame, pixel_id: str) -> list[dict]:
     out = []
     for _, r in g.iterrows():
         t = pd.Timestamp(r["target_date"])
-        out.append({"h": int(r["horizon"]), "date": str(t.date()), "label": f"{t:%a} {t.day} {t:%b}",
-                    "p1": num(r, "p_rain1"), "p10": num(r, "p_rain10"), "p25": num(r, "p_rain25"),
-                    "mm": num(r, "rain_mm"), "rh": num(r, "rh"), "clim_p1": num(r, "clim_rain1"),
-                    "clim_rh": num(r, "clim_rh"), "blight": num(r, "blight_hutton")})
+        d = {"h": int(r["horizon"]), "date": str(t.date()), "label": f"{t:%a} {t.day} {t:%b}",
+             "p1": num(r, "p_rain1"), "p10": num(r, "p_rain10"), "p25": num(r, "p_rain25"),
+             "mm": num(r, "rain_mm"), "rh": num(r, "rh"), "clim_p1": num(r, "clim_rain1"),
+             "clim_mm": num(r, "clim_rain_mm"), "clim_rh": num(r, "clim_rh"), "blight": num(r, "blight_hutton"),
+             "clim_blight": num(r, "clim_blight_hutton"),
+             "obs_mm": num(r, "obs_rain_mm"), "obs_rh": num(r, "obs_rh"), "obs_blight": num(r, "obs_blight_hutton")}
+        if status:
+            from app.components import data_label
+            d["status"] = data_label(t, status)
+        out.append(d)
     return out
 
 
@@ -145,9 +153,25 @@ def tag(days, site):
     out = []
     for d in days:
         t = "heavy" if heavy(d) else "wet" if wet(d) else "dry" if dry(d) else "mixed"
-        out.append({"h": d["h"], "label": d["label"], "tag": t, "p1": d["p1"], "humid": humid(d),
-                    "blight": d["blight"], "confidence": confidence(site, d["h"])})
+        out.append({"h": d["h"], "label": d["label"], "date": d.get("date"), "tag": t, "p1": d["p1"], "humid": humid(d),
+                    "blight": d["blight"], "confidence": confidence(site, d["h"]),
+                    "blight_confidence": confidence(site, d["h"], "blight"), "words": chance_words(d["p1"]),
+                    **{k: d.get(k) for k in ("p10", "p25", "mm", "rh", "clim_p1", "clim_mm", "clim_rh", "clim_blight",
+                                             "obs_mm", "obs_rh", "obs_blight", "status")}})
     return out
+
+
+def chance_words(p) -> str:
+    """A chance of rain in words a farmer would use ("7 in 10"), rounded to the nearest tenth."""
+    if p is None:
+        return ""
+    n = int(round(10 * p))
+    if n <= 0:
+        return "Very unlikely (under 1 in 10)"
+    if n >= 10:
+        return "Almost certain (over 9 in 10)"
+    kind = "Unlikely" if n <= 2 else "Possible" if n <= 4 else "Likely" if n <= 7 else "Very likely"
+    return f"{kind} ({n} in 10)"
 
 
 # ---------------------------------------------------------------- advice per crop

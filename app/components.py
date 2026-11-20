@@ -26,6 +26,34 @@ def issue_day(site: str, issue_date) -> pd.DataFrame:
     return pd.read_parquet(DATA / f"{site}_replay.parquet", filters=[("issue_date", "==", pd.Timestamp(issue_date))])
 
 
+def data_label(target_date, status: dict) -> dict:
+    """What kind of day a forecast target is, for the dashboard's labels (pure function).
+
+    status: meta.json["<site>"]["status"] (app/build_data.data_status). Returns
+      period: "test" (inside the reported, pre-registered test), "posttest" (after it, not part of
+              the reported results) or "forecast" (not observed yet);
+      rain:   "final", "preliminary" (CHIRPS preliminary: may change when the final is published)
+              or "none";
+      era5:   "final", "era5t" (ERA5's near-real-time release, possibly revised) or "none";
+      note:   one plain sentence for the user, or "" for an ordinary test day."""
+    t = pd.Timestamp(target_date)
+    test_end = pd.Timestamp(status["test_end"])
+    observed = pd.Timestamp(status["observed_through"])
+    if t > observed:
+        return {"period": "forecast", "rain": "none", "era5": "none",
+                "note": "Not observed yet: this day is still ahead of the newest data."}
+    period = "test" if t <= test_end else "posttest"
+    rain = "preliminary" if t > pd.Timestamp(status["chirps_final_through"]) else "final"
+    era5t_from = status.get("era5t_from")
+    era5 = "era5t" if era5t_from and t >= pd.Timestamp(era5t_from) else "final"
+    notes = []
+    if period == "posttest":
+        notes.append("After the reported test period: not part of the evaluated results.")
+    if rain == "preliminary":
+        notes.append("Observed rain is preliminary and may change when the final data are published.")
+    return {"period": period, "rain": rain, "era5": era5, "note": " ".join(notes)}
+
+
 def pixel_series(site: str, pixel_id: str, horizon: int, columns: list) -> pd.DataFrame:
     """One pixel at one horizon over the whole test period."""
     return pd.read_parquet(DATA / f"{site}_replay.parquet", columns=["issue_date", "target_date"] + columns,

@@ -202,8 +202,9 @@ export async function openSkill() {
   $("#skill-modal").hidden = false;
   if (!skillData) {
     $("#skill-body").innerHTML = `<div class="section-note">Loading…</div>`;
-    const [skill, cal, blight] = await Promise.all([api("/api/skill"), api("/api/calibration"), api("/api/blight_skill")]);
-    skillData = { skill, cal, blight };
+    const [skill, cal, blight, post] = await Promise.all([api("/api/skill"), api("/api/calibration"), api("/api/blight_skill"),
+      api("/api/posttest_skill").catch(() => [])]);
+    skillData = { skill, cal, blight, post };
   }
   renderSkill();
 }
@@ -231,7 +232,7 @@ function skillChart(rows, colourKey, colours, height = 280, width = 620) {
 }
 
 function renderSkill() {
-  const { skill, cal, blight } = skillData;
+  const { skill, cal, blight, post } = skillData;
   const periods = [...new Set(skill.map((d) => d.period))];
   const rows = skill.filter((d) => d.target === pick.target && d.reference === pick.reference && d.period === pick.period)
     .map((d) => ({ ...d, site: d.site[0].toUpperCase() + d.site.slice(1) }));
@@ -249,7 +250,12 @@ function renderSkill() {
     <div class="grid2" style="margin-top:14px">
       <div class="card"><h3>Late-blight risk (Nakuru)</h3><p>Post-hoc check on the same period. Day 1 is partly known on the issue day; day 2 onwards is the fair measure.</p><div id="s-blight"></div></div>
       <div class="card"><h3>Are the chances honest? (rain ≥ 1 mm)</h3><p>Bias near 0 and slope near 1 mean the stated chances match how often it rained.</p><div id="s-cal"></div></div>
-    </div>`;
+    </div>
+    ${post.length ? `<div class="card post-card" style="margin-top:14px"><h3>After the test: October and 1–14 November 2026</h3>
+      <p>The same frozen models on data that arrived after the reported test. <b>Not part of the evaluated results.</b> Only 31 + 14 days,
+      so the intervals are rough. November uses <b>preliminary</b> rain data, which may change. October 2026 was a quiet, dry month at Nakuru
+      (one widespread rain day), and day-1 rain there was no better than the normal for the date. In early November, Busia's rain forecasts
+      were slightly <b>worse</b> than the normal from day 2, while Nakuru's day-1 and day-2 rain forecasts were clearly better.</p><div id="s-post"></div></div>` : ""}`;
   $("#s-chart").append(skillChart(rows, "site", C.site, 300, 1000));
   const bl = blight.map((d) => ({ horizon: d.horizon, estimate: d.bss_vs_climatology, ci_low: d.bss_vs_climatology_low,
     ci_high: d.bss_vs_climatology_high, rule: d.rule === "hutton" ? "Hutton" : "Humidity only" }));
@@ -259,6 +265,20 @@ function renderSkill() {
     c.map((d) => `<tr><td>${d.site[0].toUpperCase() + d.site.slice(1)}</td><td>${d.horizon}</td><td>${Math.round(100 * d.observed_rate)}%</td>
       <td>${Math.round(100 * d.mean_forecast)}%</td><td>${d.bias >= 0 ? "+" : "−"}${Math.abs(100 * d.bias).toFixed(1)} pts</td><td>${d.slope.toFixed(2)}</td></tr>`).join("")
   }</tbody></table>`;
+  if (post.length) {
+    const pr = post.filter((d) => d.target === pick.target && d.reference === pick.reference && d.period !== "post-test all")
+      .map((d) => ({ ...d, series: `${d.site[0].toUpperCase() + d.site.slice(1)}, ${d.period.startsWith("post-test final") ? "Oct (final)" : "1–14 Nov (preliminary)"}` }));
+    const cols = { "Nakuru, Oct (final)": C.site.Nakuru, "Nakuru, 1–14 Nov (preliminary)": "#9ec5f4",
+      "Busia, Oct (final)": C.site.Busia, "Busia, 1–14 Nov (preliminary)": "#f2a07a" };
+    const fmt = (d) => `${d.estimate >= 0 ? "+" : "−"}${Math.abs(d.estimate).toFixed(3)} <small>[${d.ci_low.toFixed(2)}, ${d.ci_high.toFixed(2)}]</small>`;
+    const series = Object.keys(cols).filter((k) => pr.some((d) => d.series === k));
+    $("#s-post").innerHTML = `<table class="data"><thead><tr><th>Days ahead</th>${series.map((k) => `<th>${k}</th>`).join("")}</tr></thead><tbody>${
+      [1, 2, 3, 4, 5, 6, 7].map((h) => `<tr><td>${h}</td>${series.map((k) => {
+        const d = pr.find((x) => x.series === k && x.horizon === h);
+        return `<td class="${d && (d.ci_low > 0 || d.ci_high < 0) ? "clear" : ""}">${d ? fmt(d) : "–"}</td>`;
+      }).join("")}</tr>`).join("")}</tbody></table>
+      <p class="section-note">${TARGETS[pick.target]}, skill compared with ${pick.reference === "climatology" ? "the normal for the date" : "“same as today”"}. Bold: the 95% interval excludes 0.</p>`;
+  }
   $("#s-target").addEventListener("change", (e) => { pick.target = e.target.value; renderSkill(); });
   $("#s-ref").addEventListener("change", (e) => { pick.reference = e.target.value; renderSkill(); });
   $("#s-period").addEventListener("change", (e) => { pick.period = e.target.value; renderSkill(); });
@@ -268,8 +288,17 @@ function renderSkill() {
 export function openAbout() {
   const m = state.meta.sites;
   $("#about-body").innerHTML = `
-    <div class="notice">Research prototype (Strathmore University). A replay of past forecasts for 2025–2026, not a live or official
-    forecast: the Kenya Meteorological Department is the authority.</div>
+    <div class="notice">Research prototype (Strathmore University). A replay of past forecasts from January 2025 to the newest data
+    (${state.meta.sites.nakuru.issue_max}), not a live or official forecast: the Kenya Meteorological Department is the authority.</div>
+    <h3>What the replay covers</h3>
+    <p><b>8 Jan 2025 – 30 Sep 2026: the reported test.</b> Scored once, with the protocol fixed in advance; these are the results in
+    “How good is it?”. <b>From 1 Oct 2026: after the test.</b> The same frozen models, shown and scored separately. Observed rain from
+    1 Nov 2026 is <b>preliminary</b> (CHIRPS publishes the final values in the third week of the next month), and ERA5 values from about
+    August 2026 were the near-real-time release (ERA5T) when downloaded, which ECMWF can still revise. Forecasts made on the newest
+    data reach a few days past the last observed day: those days show “not observed yet”.</p>
+    <h3>Estimates for 5 km squares</h3>
+    <p>Every number is an estimate for a whole ~5 km square, from satellite, gauge and weather-model data. It is not a measurement at any
+    one farm, and rain can differ inside a square.</p>
     <h3>What it forecasts</h3>
     <p>Daily rain (chance of at least 1, 10 and 25 mm, and expected amount) and relative humidity, 1 to 7 days ahead, for each
     ~5 km square in Nakuru County (${m.nakuru.n_pixels} squares) and a Busia area (${m.busia.n_pixels} squares); plus a potato
@@ -278,11 +307,13 @@ export function openAbout() {
     <p>CatBoost gradient-boosting models trained on 2016–2024 with inputs from CHIRPS rainfall, ERA5 weather and SRTM elevation.
     Every result is compared with the normal for the date (climatology) and “same as today” (persistence).</p>
     <h3>Why a replay</h3>
-    <p>CHIRPS and ERA5 are published days to weeks after the fact, so the models cannot run in real time from these sources. The
-    dashboard replays forecasts for 2025–2026, which the models never saw, so each one can be shown next to what happened.</p>
+    <p>The models start from the weather up to the day the forecast is made. CHIRPS rain arrives 2–7 days late (preliminary) and
+    ERA5 about 5 days late, so the newest forecast the data allow is always a few days old. The replay shows forecasts the models never
+    saw during training, each next to what happened.</p>
     <h3>Caveats</h3>
     <ul>
-      <li>“Observed” is itself an estimate: CHIRPS (satellite plus gauges) for rain, ERA5 reanalysis (~28 km) for humidity.</li>
+      <li>“Observed” is itself an estimate: CHIRPS v2.0 (satellite plus gauges) for rain, ERA5 reanalysis (~28 km) for humidity.
+      Daily CHIRPS splits five-day totals into days using a weather model, so the timing of rain within a few days is approximate.</li>
       <li>Squares are about 5 km; the smooth map is a display choice (switch on “5 km squares” to see the true cells).</li>
       <li>Late-blight risk uses the Hutton criteria from Great Britain; their 10 °C minimum rarely occurs above 2,600 m, so a
       humidity-only version is shown too. No observed outbreak data were available to check it.</li>

@@ -32,7 +32,7 @@ Produce multi-step daily forecasts (1 to 7 days ahead) of **precipitation (mm)**
 
 | Item | Source | Notes |
 |---|---|---|
-| Rainfall | CHIRPS v3 daily via Earth Engine, collection `UCSB-CHG/CHIRPS/DAILY` (the proposal text says `UCSB-CHC`; that is a typo) | 0.05 degree, satellite plus gauge; extracted per pixel, monthly chunks cached in `data/raw/chirps/<site>/` |
+| Rainfall | CHIRPS **v2.0** daily via Earth Engine, collection `UCSB-CHG/CHIRPS/DAILY` (the catalogue titles it "Version 2.0 Final"; corrected 20 Nov 2026, this row previously said v3. The proposal text says `UCSB-CHC`; that is a typo). Since Nov 2026 months not yet in Earth Engine come from the CHC server (same v2.0 product, checked identical), optionally the preliminary product (`--allow-prelim`) | 0.05 degree, satellite plus gauge; extracted per pixel, monthly chunks cached in `data/raw/chirps/<site>/`. Daily values split pentad totals across days using CFSv2 (CHC readme). CHIRPS v2 production ends after December 2026 (v3 replaces it) |
 | Weather | ERA5 via the CDS time-series dataset `reanalysis-era5-single-levels-timeseries` (labelled experimental), one request per site | Hourly, 0.25 degree grid. Variables: 2 m temperature, 2 m dewpoint, surface pressure, 10 m wind u and v, total cloud cover. Download is a zip containing one NetCDF with `valid_time`, `latitude`, `longitude`. The gridded dataset `reanalysis-era5-single-levels` was too slow and rejected year-long requests as too large |
 | Humidity | Computed from temperature and dewpoint (Magnus formula), hourly, then aggregated | ERA5 single levels has no direct RH field |
 | Daily aggregation | UTC days (same convention as CHIRPS) | Means, plus min and max for RH and temperature, wind max |
@@ -253,3 +253,70 @@ What was added (branch `feature/user-journey`):
 
 Verification: `tests/test_accounts.py` (17: sign-up rules, login by email, single-use hashed expiring tokens, reset ends sessions, change password keeps only this session, delete cascades, admins cannot self-delete, old-database migration, places per user and validated, settings and crops validated, sign-up flow over HTTP with verification link, sign-up cannot make admins, honeypot / rate limit / closed setting, forgot and reset do not reveal accounts, CSRF and Origin on every write, geolocation policy, places and advice on real data), `tests/test_crops.py` (11: each rule fires on the pattern it describes), `tests/test_frontend.py` (13: coordinate parser in Node, every module parses, pages reference existing files). Full suite 146 passed. Checked by hand in the browser: sign-up, onboarding, tour, hover, save place (an HTML name is shown as text everywhere), menu, email confirmation, search, animations, phone layout; `python -m web.screenshot` reports no page errors or CSP violations. **Not tested:** real email delivery over SMTP, "use my location" on a real phone over HTTPS, and any usability test with farmers.
 - **Tomato late-blight map layer** (added 14 November 2026, at the user's request): "Tomato blight" in the Crops group (Nakuru only). There is no tomato-specific model: the layer shows the potato model's Hutton forecast **unchanged** (same columns, `app/components.py` layer with `crop="tomato"`), in its own tomato-red colour ramp, labelled "(potato model)" in the legend, hover and About text. Its animation is soft pink beads that swell into rings and fade ("dew": long leaf wetness drives the disease), distinct from the potato layer's drifting spores. Tests (`tests/test_web.py`): same columns as potato, a different ramp that brightens with the value, identical opacity pattern to the potato raster (so identical values), Busia refuses it. Full suite 148 passed.
+
+## 20. Supervisor review follow-up (20 November 2026)
+
+The supervisor reviewed the demo on 20 November 2026. The plan, the options and the sources checked online that day are in `docs/NEXT_STEPS.md`. The user approved the plan and the config changes. Work is on branch `feature/posttest-farmer`, not yet committed.
+
+**Data extension (approved config change).** `config/sites.yaml` period end moved from 2026-09-30 to **2026-11-14**, the common end of CHIRPS preliminary and ERA5T on 20 Nov.
+- `config/experiment.yaml` gained a `posttest` split: 2026-10-01 to 2026-11-14, with `final_through` 2026-10-31. The `test` split is unchanged.
+- CHIRPS: Earth Engine still ended on 2026-09-30, so `src/ingestion/chirps.py` gained a CHC-server route for the same v2.0 product: final GeoTIFFs, plus the preliminary product with `--allow-prelim`.
+- Preliminary chunks are never cached, and `data/raw/chirps_<site>_sources.json` lists their dates.
+- `python -m src.ingestion.chirps_check` showed that CHC final equals the Earth Engine cache for September 2026 (pixel ids identical, maximum difference 0 mm, both sites).
+- Preliminary against final, October 2026 (`reports/data_summary/chirps_prelim_vs_final.csv`):
+  - Nakuru: 1.27 against 1.96 mm/day; 94.2% wet/dry agreement; correlation 0.857.
+  - Busia: 6.77 against 5.97 mm/day; 100% wet/dry agreement; correlation 0.999.
+- ERA5: a new file `ts_<site>_2026-10-22_2026-11-14.nc` holds only the new days. The old file is untouched.
+- `python -m src.features.extension_check` confirmed every merged, feature, humid-hours and raw row up to 2026-09-30 is identical to before (backup in `data/backup_pre_posttest/`).
+- Earth Engine could not be initialised on 20 Nov because the `GEE_PROJECT` value in `.env` is malformed (it contains a space and a slash). `chirps.py` now falls back to the CHC route, which is verified identical. **The user should fix `.env`.**
+- The ERA5 time-series files carry no `expver` flag, so ERA5T rows cannot be identified. The days from about August 2026 were most likely ERA5T when downloaded.
+
+**Post-test period** (`src/models/posttest.py`; separate from the reported test; never used for training or choices).
+- Frozen final models, with the 2016-2024 climatology.
+- Guard: the code path reproduced 2,800 saved test forecasts per horizon with a difference of 0, for every horizon, both sites and both late-blight rules.
+- Results are in `reports/posttest/`. CatBoost skill against climatology, day 1:
+
+| Period | Rain >= 1 mm, Nakuru | Rain >= 1 mm, Busia | Humidity, Nakuru | Humidity, Busia |
+|---|---|---|---|---|
+| October 2026 (final) | +0.009 [-0.035, +0.056] | +0.079 [-0.069, +0.238] | +0.437* | +0.322* |
+| 1-14 Nov 2026 (preliminary) | +0.198* | -0.028 | +0.349* | +0.265* |
+
+- Busia rain in 1-14 Nov is clearly worse than climatology on days 2 and 4-6 (-0.03 to -0.09).
+- October 2026 at Nakuru was quiet: 1 of 31 days had more than half the squares wet, against 10 of 45 days in 1 Oct-14 Nov 2025. Day-to-day variation in the area-wide wet share was 0.127 against 0.299. Day-1 AUC was 0.662 against climatology's 0.603.
+- Against persistence the models are clearly better for rain at every horizon.
+- Late blight (Hutton) stayed clearly skilful on days 1-7 (day 2: +0.251 [+0.127, +0.443]).
+- Algorithms in the post-test period: 60 of 294 paired differences were clear, with LightGBM 22, CatBoost 20 and XGBoost 18 wins (no consistent winner over 45 days).
+
+**Dashboard.**
+- `app/build_data.py` merges test and post-test rows with a `period` code: 0 test, 1 post-test final, 2 post-test preliminary, 3 not observed yet. It writes data-status dates to `meta.json`. The replay issue days now run from 2025-01-07 to 2026-11-14.
+- `app.components.data_label` labels each day: reported test, after the test, preliminary rain, ERA5T, or not observed yet.
+- `app.build_shap --posttest` added 238,728 (Nakuru) and 74,088 (Busia) explanations without touching the test rows (maximum difference to the saved forecasts 4e-13 points).
+- New **"My farm" view** (`web/static/farm.js`, `farm.css`), the default for Farmer accounts. It has:
+  - seven day cards: chance of rain in numbers and words, usual chance, average amount, humidity, potato and tomato blight weather;
+  - a reliability label from the test skill and a one-line main reason from SHAP;
+  - "what happened", or "not observed yet";
+  - the 5 km estimate notice;
+  - crop advice.
+- "How good is it?" has a separate post-test table, and About explains the periods and the 5 km estimates.
+
+**Explainability (point 3).** `docs/EXPLAINABILITY_EVALUATION.md` covers the three audiences (farmers, extension officers, researchers and Kenya Met) and a comprehension protocol with an answer key and success criteria fixed in advance.
+
+**Live mode (point 1; option a of `docs/NEXT_STEPS.md` section 12). The code is on branch `feature/live` only; the main line has no live code.**
+- `src/live/openmeteo.py` fetches Open-Meteo ECMWF IFS 0.25 at ERA5's own grid nodes, with `elevation=nan`. That model was chosen because it answers at exactly the 0.25 degree points; the 9 km IFS uses its own grid and terrain.
+- `src/live/backtest.py` is the input-swap backtest on validation 2024 with the development models (results below).
+- `src/live/forecast.py` makes live forecasts with the frozen final models into `app/data/live/`.
+- `app/live_data.py` shows them in the dashboard only when `HL_LIVE=1`.
+- IFS 0.25 against ERA5 inputs, Nakuru, March-December 2024: temperature -1.1 C, surface pressure MAE 5.3 hPa (1.8% outside the training range), **cloud cover -0.36** (correlation 0.71), humidity bias -0.1% (MAE 3.1). Busia: **surface pressure +13.6 hPa (19.2% outside the training range)**, cloud cover -0.35, temperature -0.9 C. IFS rain against CHIRPS: correlation 0.40 (Nakuru) and 0.47 (Busia); wet/dry agreement 63% and 70%.
+- **Backtest results (run 20 Nov 2026; `reports/live/backtest_skill.csv`, `backtest_differences.csv`).** Development models, targets 2024-04-14..2024-12-31. Guards passed at both sites: standard inputs reproduce every saved validation forecast (difference 0), and the per-issue-day rebuild equals the full build. Skill against climatology, with 95% block-bootstrap intervals:
+  - Nakuru rain (BSS): with weather from IFS only (S1), day 1 falls from 0.215 to 0.187 (difference -0.027 [-0.044, -0.008]): a small loss. With the rain gap also filled by IFS (S2, the realistic live case), **day 1 falls to -0.131 [-0.343, +0.030]**, worse than climatology (difference -0.346 [-0.523, -0.205]), and day 2 to 0.012. Days 4-7 are unchanged (they were near climatology anyway). The loss comes from the missing CHIRPS days, not from the weather inputs.
+  - Nakuru humidity (RMSE skill): day 1 falls from 0.398 to 0.276 (still clearly above 0), and day 2 from 0.163 to 0.084.
+  - Busia: replacing the weather alone already costs rain skill at days 1-4 (about -0.07). Days 2-4 become worse than climatology. Humidity at day 1 falls from 0.178 to 0.057 (no longer distinguishable from 0), and days 6-7 become worse than climatology. Most likely cause (not yet tested): the surface pressure offset, which puts 19% of values outside the training range.
+  - The first version as built (frozen models, IFS weather, IFS rain for the gap) should **not** be shown to farmers as a forecast: Nakuru day-1 rain and all of Busia lose their skill.
+- **Fixes tested (same day, user chose "test fixes on 2024"; scenarios S3-S5 in `src/live/backtest.py`, validation 2024 only).**
+  - **S3, bias-corrected weather:** one offset per pixel and variable (mean ERA5 minus IFS), cross-fitted in time (March-July corrected with offsets from August-December and the other way round). It removes the input biases (Busia surface pressure MAE 14.1 to 0.16 hPa, 0% outside the training range) and **restores rain skill fully** when the rain is CHIRPS (Nakuru day 1: 0.216 against 0.215; Busia 0.049 against 0.051). Humidity recovers only partly (Nakuru day 1: 0.299 against 0.398).
+  - **S4, realistic live with ERA5 to t-5:** ERA5T arrives about 5 days late, so the corrected IFS is needed only for the last 5 days. With raw IFS rain in the gap, Nakuru day-1 rain is still worse than climatology (-0.239).
+  - **S5 = S4 with the gap rain quantile-mapped to CHIRPS** (one map per site, cross-fitted). This is the best live setup: **rain about as good as climatology at every lead time at both sites** (Nakuru day 1: 0.043 [-0.052, 0.131]; mapping improves on S4 by +0.281 [0.130, 0.481]). **Nakuru humidity stays clearly skilful on days 1-2** (0.302, 0.118). Busia humidity at day 1 (0.061) cannot be told apart from climatology.
+  - Cause of the remaining loss: the missing CHIRPS days (2-7 per issue day). The rain on the issue day is the most important input (`PROJECT_CONTEXT.md` section 6), and no weather-model rain replaces it. A better real-time rain source (IMERG Early, CHIRPS v3 preliminary) is the next step to try, as future work.
+  - The configuration was chosen on validation 2024, so its scores there are slightly optimistic. Late blight was not backtested live.
+- **Live job updated to S5** (`src/live/forecast.py`): ERA5 wherever the merged table has it, corrected IFS only for the days after it, and quantile-mapped IFS rain for days CHIRPS has not published. Offsets and the rain map are fitted on all of March-December 2024 (`fit_live_corrections`). Run on 20 Nov 2026: forecasts issued 15-19 November (15th from CHIRPS preliminary, 16th-19th from mapped IFS rain), 0 missing values.
+- **Dashboard in live mode:** live days use the backtest's reliability, not the test's (`web/crops.py` `LIVE_RAIN_SKILL_DAYS = 0`), so every live day is a "rough guide" and blight is not marked reliable either. The farm view says so. "How good is it?" shows the backtest table (normal vs live inputs) from `/api/live_backtest_skill`, served only with `HL_LIVE=1`. Screenshots: `web/screenshots/21_farm_newest.png` and `24_skill_live.png` (taken with `HL_LIVE=1`). 180 tests pass.

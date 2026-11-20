@@ -5,6 +5,11 @@ splits:
   train:      {start: 2016-01-01, end: 2023-12-31}
   validation: {start: 2024-01-01, end: 2024-12-31}
   test:       {start: 2025-01-01, end: 2026-09-30}   # final reporting only; code refuses to touch it
+  # Added 20 Nov 2026 (approved): an extra period AFTER the reported test, scored only with the
+  # frozen final models (src/models/posttest.py), reported separately, never used for training or
+  # for any choice. Targets from `start` (no gap needed: the models were trained to 2024-12-31).
+  # Days after `final_through` use PRELIMINARY CHIRPS and are reported as provisional.
+  posttest:   {start: 2026-10-01, end: 2026-11-14, final_through: 2026-10-31}
 
 # Minimum number of clear days between the last target day of one split and the first
 # target day of the next (at least the longest forecast horizon).
