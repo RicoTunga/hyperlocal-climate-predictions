@@ -290,7 +290,24 @@ function renderLegend() {
     <div class="legend-ticks">${br.map((x, k) => `<span>${label(x, k)}</span>`).join("")}</div>`;
 }
 
+/** True when the shown issue day is a live forecast (HL_LIVE=1 on the server and past the replay's end). */
+export function isLiveIssue(site = state.site, issue = state.issue) {
+  const m = state.meta.sites[site];
+  return Boolean(m.live && issue > m.replay_issue_max);
+}
+
+function renderBadge() {
+  const b = document.querySelector("#brand .badge");
+  if (!b) return;
+  const live = isLiveIssue();
+  b.textContent = live ? "Live research forecast · not an official forecast" : "Research replay · not an official forecast";
+  b.classList.toggle("live", live);
+  b.title = live ? `${state.meta.sites[state.site].live.attribution}. Kenya Meteorological Department is the forecasting authority.`
+    : "Kenya Meteorological Department is the forecasting authority";
+}
+
 function renderHeadline() {
+  renderBadge();
   const H = state.day?.horizons[state.h];
   const target = H ? H.target : addDays(state.issue, state.h);
   $("#headline").textContent = fmtDate(target, { weekday: "long", day: "numeric", month: "long", year: "numeric" });

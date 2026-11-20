@@ -38,6 +38,7 @@ API
     /api/shap_summary                             what drives the forecasts overall (validation SHAP)
     /api/skill, /api/calibration, /api/blight_skill   committed result tables (reported test period)
     /api/posttest_skill, /api/posttest_blight_skill   post-test period (after the reported test; [] if not run)
+    /api/live_backtest_skill   2024 backtest of live inputs vs normal inputs (only with HL_LIVE=1; else [])
     /api/admin/users                              (admin) accounts and recent sign-in events
 """
 import hmac
@@ -214,7 +215,8 @@ def api_day(site, issue):
     d = day(site, issue)
     order = list(pixels(site)["pixel_id"])
     cols = DAY_COLUMNS + (BLIGHT_COLUMNS if meta()[site]["has_blight"] else [])
-    out = {"issue": issue, "pixels": order, "horizons": {}}
+    from app import live_data
+    out = {"issue": issue, "pixels": order, "horizons": {}, "live": live_data.enabled() and live_data.is_live(site, issue, meta())}
     status = meta()[site].get("status")
     for h, g in d.groupby("horizon"):
         g = g.set_index("pixel_id").reindex(order)
@@ -254,8 +256,12 @@ def api_why(site, pixel_id, issue):
     if pixel_id not in set(pixels(site)["pixel_id"]):
         raise BadRequest(f"unknown pixel '{pixel_id}'")
     m = shap_meta()
-    rows = pd.read_parquet(C.DATA / f"{site}_shap.parquet",
-                           filters=[("issue_date", "==", pd.Timestamp(issue)), ("pixel_id", "==", pixel_id)])
+    from app import live_data
+    if live_data.enabled() and live_data.is_live(site, issue, meta()):
+        rows = live_data.shap_rows(site, issue, pixel_id)
+    else:
+        rows = pd.read_parquet(C.DATA / f"{site}_shap.parquet",
+                               filters=[("issue_date", "==", pd.Timestamp(issue)), ("pixel_id", "==", pixel_id)])
     out = {"groups": [{"key": g, "label": m["labels"][g]} for g in m["groups"]], "targets": {}}
     for target in m["sites"][site]["targets"]:
         per_h = {}
@@ -291,6 +297,10 @@ def api_advice(site, pixel_id, issue, crops_param):
         if c not in crops_mod.CROPS:
             raise BadRequest(f"unknown crop '{c}'")
     days = crops_mod.pixel_days(day(site, issue), pixel_id, meta()[site].get("status"))
+    from app import live_data
+    if live_data.enabled() and live_data.is_live(site, issue, meta()):
+        for d in days:
+            d["live"] = True  # reliability then comes from the live backtest, not the final test
     has_blight = meta()[site]["has_blight"]
     return {"issue": issue, "site": site, "pixel_id": pixel_id, "outlook": crops_mod.outlook(days, site),
             "crops": [crops_mod.advise(c, days, site, has_blight) for c in wanted]}
@@ -438,6 +448,15 @@ def r_posttest_skill(request):
     if not (C.REPORTS / "posttest" / "skill.csv").exists():
         return json_ok([])
     return json_ok(table("posttest/skill.csv", "model == 'catboost' and metric in ['bss', 'rmse_skill']"))
+
+
+def r_live_backtest_skill(request):
+    """Validation-2024 backtest (src.live.backtest): the same development models with normal inputs
+    ('standard') and with the live inputs actually used ('live_v2_qm'). Shown only when live mode is on."""
+    from app import live_data
+    if not live_data.enabled() or not (C.REPORTS / "live" / "backtest_skill.csv").exists():
+        return json_ok([])
+    return json_ok(table("live/backtest_skill.csv", "model in ['standard', 'live_v2_qm'] and metric in ['bss', 'rmse_skill']"))
 
 
 def r_posttest_blight_skill(request):
@@ -806,6 +825,7 @@ def create_app(cfg: Settings | None = None, store: AuthStore | None = None) -> S
         Route("/api/blight_skill", r_blight_skill),
         Route("/api/posttest_skill", r_posttest_skill),
         Route("/api/posttest_blight_skill", r_posttest_blight_skill),
+        Route("/api/live_backtest_skill", r_live_backtest_skill),
         Route("/api/{rest:path}", lambda request: json_error("not found", 404)),
         Route("/", r_static),
         Route("/{path:path}", r_static),

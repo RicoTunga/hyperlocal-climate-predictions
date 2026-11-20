@@ -30,6 +30,11 @@ DRY_RUN = 3          # consecutive dry days that make a harvesting / drying wind
 # rain >= 1 mm days 1-2 in Nakuru, 1-3 in Busia; humidity the whole week; late blight about days 1-5
 RAIN_SKILL_DAYS = {"nakuru": 2, "busia": 3}
 BLIGHT_SKILL_DAYS = 5
+# live forecasts (HL_LIVE=1) use near-real-time inputs. In the 2024 backtest (reports/live/backtest_skill.csv,
+# scenario live_v2_qm) their rain was no better than the normal for the date at ANY lead time, because the
+# newest CHIRPS days are missing; late blight was not backtested live. So no live day is marked reliable.
+LIVE_RAIN_SKILL_DAYS = 0
+LIVE_BLIGHT_SKILL_DAYS = 0
 
 
 @dataclass(frozen=True)
@@ -143,8 +148,20 @@ def names(days, hs) -> str:
     return parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + " and " + parts[-1]
 
 
-def confidence(site, h, kind="rain") -> str:
-    limit = BLIGHT_SKILL_DAYS if kind == "blight" else RAIN_SKILL_DAYS.get(site, 2)
+def is_live(days) -> bool:
+    """True when the days come from a live forecast (the server marks them; see api_advice)."""
+    return bool(days and days[0].get("live"))
+
+
+def rain_skill_days(site, live=False) -> int:
+    return LIVE_RAIN_SKILL_DAYS if live else RAIN_SKILL_DAYS.get(site, 2)
+
+
+def confidence(site, h, kind="rain", live=False) -> str:
+    if kind == "blight":
+        limit = LIVE_BLIGHT_SKILL_DAYS if live else BLIGHT_SKILL_DAYS
+    else:
+        limit = rain_skill_days(site, live)
     return "good" if h <= limit else "low"
 
 
@@ -154,8 +171,8 @@ def tag(days, site):
     for d in days:
         t = "heavy" if heavy(d) else "wet" if wet(d) else "dry" if dry(d) else "mixed"
         out.append({"h": d["h"], "label": d["label"], "date": d.get("date"), "tag": t, "p1": d["p1"], "humid": humid(d),
-                    "blight": d["blight"], "confidence": confidence(site, d["h"]),
-                    "blight_confidence": confidence(site, d["h"], "blight"), "words": chance_words(d["p1"]),
+                    "blight": d["blight"], "confidence": confidence(site, d["h"], live=d.get("live", False)),
+                    "blight_confidence": confidence(site, d["h"], "blight", live=d.get("live", False)), "words": chance_words(d["p1"]),
                     **{k: d.get(k) for k in ("p10", "p25", "mm", "rh", "clim_p1", "clim_mm", "clim_rh", "clim_blight",
                                              "obs_mm", "obs_rh", "obs_blight", "status")}})
     return out
@@ -183,8 +200,12 @@ def _result(crop, status, headline, actions, days, site, extra_caveat=None):
                        "against crop outcomes.")
     if extra_caveat:
         caveats.append(extra_caveat)
-    caveats.append(f"Rain forecasts beat the normal for the date only {RAIN_SKILL_DAYS.get(site, 2)} days ahead; "
-                   "treat later days as a rough guide.")
+    if is_live(days):
+        caveats.append("Live forecast: in a test on 2024, live rain forecasts were no better than the normal for the "
+                       "date, because the newest satellite rain data arrive days late; treat them as a rough guide.")
+    else:
+        caveats.append(f"Rain forecasts beat the normal for the date only {RAIN_SKILL_DAYS.get(site, 2)} days ahead; "
+                       "treat later days as a rough guide.")
     return {"crop": crop, "name": c.name, "local": c.local, "basis": c.basis, "status": status,
             "headline": headline, "actions": actions, "days": tag(days, site), "caveats": caveats}
 
@@ -326,4 +347,5 @@ def outlook(days: list[dict], site: str) -> dict:
     if not parts:
         parts.append("no strong signal; close to normal for the time of year")
     line = "; ".join(parts)
-    return {"summary": line[0].upper() + line[1:] + ".", "days": tag(days, site), "rain_skill_days": RAIN_SKILL_DAYS.get(site, 2)}
+    return {"summary": line[0].upper() + line[1:] + ".", "days": tag(days, site), "rain_skill_days": rain_skill_days(site, is_live(days)),
+            "live": is_live(days)}

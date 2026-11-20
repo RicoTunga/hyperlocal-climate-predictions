@@ -14,7 +14,8 @@ PIXEL_HALF = 0.025  # CHIRPS cells are 0.05 degrees; each square spans +/- half 
 
 # ---------------------------------------------------------------- data access
 def meta() -> dict:
-    return json.loads((DATA / "meta.json").read_text(encoding="utf-8"))
+    from app import live_data  # live mode (HL_LIVE=1) extends the issue days; off by default
+    return live_data.overlay_meta(json.loads((DATA / "meta.json").read_text(encoding="utf-8")))
 
 
 def pixels(site: str) -> pd.DataFrame:
@@ -23,6 +24,9 @@ def pixels(site: str) -> pd.DataFrame:
 
 def issue_day(site: str, issue_date) -> pd.DataFrame:
     """All pixels and horizons forecast on one issue day (reads only that day's row groups)."""
+    from app import live_data
+    if live_data.enabled() and live_data.is_live(site, issue_date, meta()):
+        return live_data.issue_day(site, issue_date)
     return pd.read_parquet(DATA / f"{site}_replay.parquet", filters=[("issue_date", "==", pd.Timestamp(issue_date))])
 
 
@@ -56,8 +60,12 @@ def data_label(target_date, status: dict) -> dict:
 
 def pixel_series(site: str, pixel_id: str, horizon: int, columns: list) -> pd.DataFrame:
     """One pixel at one horizon over the whole test period."""
-    return pd.read_parquet(DATA / f"{site}_replay.parquet", columns=["issue_date", "target_date"] + columns,
-                           filters=[("pixel_id", "==", pixel_id), ("horizon", "==", horizon)])
+    from app import live_data
+    s = pd.read_parquet(DATA / f"{site}_replay.parquet", columns=["issue_date", "target_date"] + columns,
+                        filters=[("pixel_id", "==", pixel_id), ("horizon", "==", horizon)])
+    if live_data.enabled() and "live" in meta().get(site, {}):
+        s = pd.concat([s, live_data.pixel_rows(site, pixel_id, horizon, columns)], ignore_index=True)
+    return s
 
 
 # ---------------------------------------------------------------- colour (validated palette, OKLab ramps)

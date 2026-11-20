@@ -202,9 +202,9 @@ export async function openSkill() {
   $("#skill-modal").hidden = false;
   if (!skillData) {
     $("#skill-body").innerHTML = `<div class="section-note">Loading…</div>`;
-    const [skill, cal, blight, post] = await Promise.all([api("/api/skill"), api("/api/calibration"), api("/api/blight_skill"),
-      api("/api/posttest_skill").catch(() => [])]);
-    skillData = { skill, cal, blight, post };
+    const [skill, cal, blight, post, live] = await Promise.all([api("/api/skill"), api("/api/calibration"), api("/api/blight_skill"),
+      api("/api/posttest_skill").catch(() => []), api("/api/live_backtest_skill").catch(() => [])]);
+    skillData = { skill, cal, blight, post, live };
   }
   renderSkill();
 }
@@ -232,7 +232,7 @@ function skillChart(rows, colourKey, colours, height = 280, width = 620) {
 }
 
 function renderSkill() {
-  const { skill, cal, blight, post } = skillData;
+  const { skill, cal, blight, post, live } = skillData;
   const periods = [...new Set(skill.map((d) => d.period))];
   const rows = skill.filter((d) => d.target === pick.target && d.reference === pick.reference && d.period === pick.period)
     .map((d) => ({ ...d, site: d.site[0].toUpperCase() + d.site.slice(1) }));
@@ -255,7 +255,13 @@ function renderSkill() {
       <p>The same frozen models on data that arrived after the reported test. <b>Not part of the evaluated results.</b> Only 31 + 14 days,
       so the intervals are rough. November uses <b>preliminary</b> rain data, which may change. October 2026 was a quiet, dry month at Nakuru
       (one widespread rain day), and day-1 rain there was no better than the normal for the date. In early November, Busia's rain forecasts
-      were slightly <b>worse</b> than the normal from day 2, while Nakuru's day-1 and day-2 rain forecasts were clearly better.</p><div id="s-post"></div></div>` : ""}`;
+      were slightly <b>worse</b> than the normal from day 2, while Nakuru's day-1 and day-2 rain forecasts were clearly better.</p><div id="s-post"></div></div>` : ""}
+    ${live.length ? `<div class="card post-card live-card" style="margin-top:14px"><h3>Live forecasts: how much do the live inputs cost?</h3>
+      <p>A live forecast cannot wait for the satellite rain (CHIRPS) and ERA5 weather the models were trained on: they arrive days late.
+      The live forecasts use ERA5 where it exists, the ECMWF IFS weather model (via Open-Meteo, adjusted to ERA5) for the newest days, and the
+      weather model's rain (adjusted to CHIRPS) for the days CHIRPS has not published yet. This test re-ran 2024 (the validation year) both ways with
+      the development models. <b>With live inputs, rain was no better than the normal for the date at any lead time</b>, because the newest
+      rain days are missing; Nakuru's humidity stayed clearly better than the normal on days 1–2. Late blight was not tested this way.</p><div id="s-live"></div></div>` : ""}`;
   $("#s-chart").append(skillChart(rows, "site", C.site, 300, 1000));
   const bl = blight.map((d) => ({ horizon: d.horizon, estimate: d.bss_vs_climatology, ci_low: d.bss_vs_climatology_low,
     ci_high: d.bss_vs_climatology_high, rule: d.rule === "hutton" ? "Hutton" : "Humidity only" }));
@@ -278,6 +284,19 @@ function renderSkill() {
         return `<td class="${d && (d.ci_low > 0 || d.ci_high < 0) ? "clear" : ""}">${d ? fmt(d) : "–"}</td>`;
       }).join("")}</tr>`).join("")}</tbody></table>
       <p class="section-note">${TARGETS[pick.target]}, skill compared with ${pick.reference === "climatology" ? "the normal for the date" : "“same as today”"}. Bold: the 95% interval excludes 0.</p>`;
+  }
+  if (live.length) {
+    const lr = live.filter((d) => d.target === pick.target && d.reference === pick.reference)
+      .map((d) => ({ ...d, series: `${d.site[0].toUpperCase() + d.site.slice(1)}, ${d.model === "standard" ? "normal inputs" : "live inputs"}` }));
+    const series = ["Nakuru, normal inputs", "Nakuru, live inputs", "Busia, normal inputs", "Busia, live inputs"].filter((k) => lr.some((d) => d.series === k));
+    const fmt = (d) => `${d.estimate >= 0 ? "+" : "−"}${Math.abs(d.estimate).toFixed(3)} <small>[${d.ci_low.toFixed(2)}, ${d.ci_high.toFixed(2)}]</small>`;
+    $("#s-live").innerHTML = series.length ? `<table class="data"><thead><tr><th>Days ahead</th>${series.map((k) => `<th>${k}</th>`).join("")}</tr></thead><tbody>${
+      [1, 2, 3, 4, 5, 6, 7].map((h) => `<tr><td>${h}</td>${series.map((k) => {
+        const d = lr.find((x) => x.series === k && x.horizon === h);
+        return `<td class="${d && (d.ci_low > 0 || d.ci_high < 0) ? "clear" : ""}">${d ? fmt(d) : "–"}</td>`;
+      }).join("")}</tr>`).join("")}</tbody></table>
+      <p class="section-note">${TARGETS[pick.target]}, skill compared with ${pick.reference === "climatology" ? "the normal for the date" : "“same as today”"}, validation 2024 (14 Apr – 31 Dec). Bold: the 95% interval excludes 0.</p>`
+      : `<p class="section-note">Not scored for this choice.</p>`;
   }
   $("#s-target").addEventListener("change", (e) => { pick.target = e.target.value; renderSkill(); });
   $("#s-ref").addEventListener("change", (e) => { pick.reference = e.target.value; renderSkill(); });
