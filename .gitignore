@@ -45,3 +45,6 @@ docs/report/
 
 # Local data backups (parquet) - never commit
 data/backup_*/
+
+# Private demo script and defence Q&A (personal notes, not part of the system)
+docs/DEMO_SCRIPT_AND_DEFENCE_PREP.pdf
