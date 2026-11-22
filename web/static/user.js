@@ -5,6 +5,7 @@ import { state, bus, emit, send, api, esc, signOut, goToSquare, fmtLatLon, plain
 import { openSkill, openAbout, openUsers, openWhy, refreshDrawer } from "./panels.js";
 import { initHud } from "./hud.js";
 import { initFarm } from "./farm.js";
+import { initNotify, openAlerts } from "./notify.js";
 import { initSearch, locateMe, focusSearch } from "./search.js";
 import { initFx, applyFxSetting } from "./fx.js";
 import { startTour } from "./tour.js";
@@ -27,6 +28,7 @@ const ICON = {
   locate: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/><circle cx="12" cy="12" r="7"/></svg>',
   search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
   close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  bell: '<svg viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2H4.5zM10 20.5a2 2 0 0 0 4 0"/></svg>',
   mail: '<svg viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3.5 7l8.5 6 8.5-6"/></svg>',
 };
 export { ICON };
@@ -431,6 +433,10 @@ export function renderMenu() {
              <button class="btn small" data-act="crops">${ICON.leaf}<span>Choose crops</span></button>`}
       </section>
       <section class="menu-sec">
+        <div class="menu-title"><span>Alerts</span></div>
+        <button class="menu-item" data-act="alerts">${ICON.bell}<span>My alerts<small>Blight risk, dry windows, heavy rain and humid spells at my places</small></span></button>
+      </section>
+      <section class="menu-sec">
         <div class="menu-title"><span>Explore</span></div>
         <button class="menu-item" data-act="skill">${ICON.chart}<span>How good is it?<small>Accuracy on 21 months the models never saw</small></span></button>
         <button class="menu-item" data-act="why">${ICON.bulb}<span>Why these forecasts?<small>What drives the models</small></span></button>
@@ -493,6 +499,7 @@ function wireMenu() {
       case "locate": go(() => locateMe({ offerSave: true })); break;
       case "search": go(focusSearch); break;
       case "crops": cropsDialog(); break;
+      case "alerts": go(openAlerts); break;
       case "skill": go(openSkill); break;
       case "why": go(openWhy); break;
       case "about": go(openAbout); break;
@@ -600,6 +607,7 @@ export async function initUser() {
   initSearch();
   initHud();
   initFarm();
+  initNotify();
   initFx();
   // keep the dialog from closing on a backdrop click while it is locked (onboarding)
   $("#dialog").addEventListener("close", () => {

@@ -26,6 +26,16 @@ export function openFarm() {
   renderFarm();
 }
 
+/** Open "My farm" on one saved place at its newest forecast (used by the alerts list). */
+export async function showFarmPlace(placeId) {
+  const p = placeById(placeId);
+  if (!p) return;
+  shownPlace = placeId;
+  const dates = state.dates[p.site];
+  if (dates?.length) await setState({ site: p.site, issue: dates[dates.length - 1] });
+  openFarm();
+}
+
 export function closeFarm() {
   $("#farm").hidden = true;
   document.body.classList.remove("farm-open");
