@@ -456,7 +456,7 @@ export function renderMenu() {
         ${admin ? `<button class="menu-item" data-act="users">${ICON.users}<span>Users<small>Accounts and sign-in events</small></span></button>` : ""}
         <button class="menu-item" data-act="signout">${ICON.out}<span>Sign out</span></button>
       </section>
-      <p class="menu-foot">Research prototype · Strathmore University. A replay of 2025–26 forecasts, not an official forecast:
+      <p class="menu-foot">Research prototype · Strathmore University. Research forecasts, not an official forecast:
         the Kenya Meteorological Department is the authority.</p>
     </div>`;
 }

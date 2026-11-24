@@ -306,10 +306,18 @@ function renderSkill() {
 // ---------------------------------------------------------------- about overlay
 export function openAbout() {
   const m = state.meta.sites;
+  const live = m.nakuru.live || m.busia.live;
   $("#about-body").innerHTML = `
-    <div class="notice">Research prototype (Strathmore University). A replay of past forecasts from January 2025 to the newest data
-    (${state.meta.sites.nakuru.issue_max}), not a live or official forecast: the Kenya Meteorological Department is the authority.</div>
-    <h3>What the replay covers</h3>
+    <div class="notice">Research prototype (Strathmore University). ${live
+      ? `Live research forecasts up to ${esc(live.issue_max)}, and every past forecast since January 2025 next to what happened.`
+      : `Forecasts from January 2025 to the newest data (${m.nakuru.issue_max}), each next to what happened.`}
+    Not an official forecast: the Kenya Meteorological Department is the authority.</div>
+    ${live ? `<h3>Live forecasts</h3>
+    <p>Each day the same frozen models make a new forecast from the newest data. Rain the satellites have not yet published (the last
+    2–7 days) and the newest weather (about 5 days) come from the ECMWF IFS weather model via Open-Meteo, adjusted to match the data the
+    models were trained on. In a test on 2024, live rain forecasts were no better than the normal for the date, so every live day is
+    marked as a rough guide; humidity held up better. ${esc(live.attribution)}.</p>` : ""}
+    <h3>What the past forecasts cover</h3>
     <p><b>8 Jan 2025 – 30 Sep 2026: the reported test.</b> Scored once, with the protocol fixed in advance; these are the results in
     “How good is it?”. <b>From 1 Oct 2026: after the test.</b> The same frozen models, shown and scored separately. Observed rain from
     1 Nov 2026 is <b>preliminary</b> (CHIRPS publishes the final values in the third week of the next month), and ERA5 values from about
@@ -325,10 +333,10 @@ export function openAbout() {
     <h3>How</h3>
     <p>CatBoost gradient-boosting models trained on 2016–2024 with inputs from CHIRPS rainfall, ERA5 weather and SRTM elevation.
     Every result is compared with the normal for the date (climatology) and “same as today” (persistence).</p>
-    <h3>Why a replay</h3>
+    <h3>Why past forecasts are shown</h3>
     <p>The models start from the weather up to the day the forecast is made. CHIRPS rain arrives 2–7 days late (preliminary) and
-    ERA5 about 5 days late, so the newest forecast the data allow is always a few days old. The replay shows forecasts the models never
-    saw during training, each next to what happened.</p>
+    ERA5 about 5 days late${live ? ", which is why live forecasts need a weather model for the newest days" : ", so the newest forecast the data allow is always a few days old"}.
+    Past forecasts show what the models said on days they never saw during training, each next to what happened.</p>
     <h3>Caveats</h3>
     <ul>
       <li>“Observed” is itself an estimate: CHIRPS v2.0 (satellite plus gauges) for rain, ERA5 reanalysis (~28 km) for humidity.
