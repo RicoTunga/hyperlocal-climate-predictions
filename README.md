@@ -8,8 +8,22 @@ late-blight risk layer for Nakuru.
 **Mutunga Eric Musyimi**, final-year BSc project (ICS Project II), Strathmore University, 2026.
 
 > **Research prototype, not an official forecast.** The Kenya Meteorological Department is the forecasting
-> authority. The dashboard is a *replay* of forecasts for 2025-2026, which the models never saw during
-> development, so every forecast can be compared with what actually happened.
+> authority. The platform shows live forecasts for the coming week and every past forecast since January 2025,
+> each next to what actually happened. Each forecast says how far to trust it.
+
+## Run the live system
+
+Once the data, models and dashboard files exist (see [Reproduce](#reproduce) and [Dashboard](#dashboard)):
+
+```bash
+.venv\Scripts\activate                         # Windows; on Linux/macOS: source .venv/bin/activate
+python -m src.live.forecast                    # once a day, with internet: forecasts from yesterday's data
+set HL_LIVE=1 && python -m web.server          # PowerShell: $env:HL_LIVE=1; python -m web.server
+```
+
+Open http://127.0.0.1:8765 and sign in. Health check: http://127.0.0.1:8765/healthz answers `ok`.
+Tests: `python -m pytest -q`. To roll back, check out an earlier release tag (for example `git checkout v1.0`),
+or start the server without `HL_LIVE` to show only the evaluated forecasts.
 
 ## Results (final test, January 2025 to September 2026, run once)
 
@@ -63,7 +77,7 @@ Credentials: `GEE_PROJECT` in `.env` (see `.env.example`) and a Copernicus key i
 | Final test (once) | `python -m src.models.final_test train`, then `python -m src.models.final_test analyse` |
 | Late blight | `python -m src.features.humid_hours --site nakuru`, then `python -m src.models.late_blight validate` / `test` |
 | After the test (frozen models) | `python -m src.features.extension_check --backup <folder> --until 2026-09-30`, `python -m src.models.posttest score`, then `analyse` |
-| Live mode (branch `feature/live`) | `python -m src.live.backtest fetch`, `run`, `analyse` (backtest on 2024); `python -m src.live.forecast` (live forecasts) |
+| Live mode | `python -m src.live.backtest fetch`, `run`, `analyse` (backtest on 2024); `python -m src.live.forecast` (live forecasts) |
 
 Splits: train 2016-2023, validation 2024, test 2025-01-08 to 2026-09-30, and a separately reported post-test period from
 2026-10-01 to the newest data (settings in `config/experiment.yaml`; sites in `config/sites.yaml`). Tests: `python -m pytest -q`.
@@ -88,7 +102,7 @@ python -m web.server                          # open http://127.0.0.1:8765, sign
 
 Farmer accounts open on **My farm**: seven day cards for a saved farm (chance of rain in numbers and words, the usual
 chance, humidity, potato and tomato blight weather, how reliable each day is, the main reason, and what happened).
-Live mode (branch `feature/live` only): run `python -m src.live.forecast`, then start the server with `HL_LIVE=1` to show the live forecasts after the
+Live mode: run `python -m src.live.forecast`, then start the server with `HL_LIVE=1` to show the live forecasts after the
 replay (off by default).
 
 Hosting (HTTPS, Docker, first admin, checks): [`deploy/README.md`](deploy/README.md). The image has not

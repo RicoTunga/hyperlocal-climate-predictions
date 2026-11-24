@@ -333,3 +333,8 @@ In-app alerts for saved places, built after the supervisor review so farmers are
 - **Reliability label on every alert**, from the test skill (95% interval above 0 in `reports/test/skill.csv`): rain >= 1 mm days 1-2 (Nakuru) / 1-3 (Busia), rain >= 10 mm days 1-2, humidity days 1-7 (Nakuru) / 1-3 (Busia), blight days 1-5. An alert is "reliable" if all its days fall within these lead times, "partly" if only the first does, else a "rough guide". Live alerts use the live backtest instead: no rain or blight day is reliable live, and humidity only on days 1-2 at Nakuru.
 - **Not evaluated:** the alert rules were not checked against farm outcomes (no field data), the same as the crop guidance rules. Report them as an extension, not as a tested result. Email and SMS delivery (for example Africa's Talking) are future work; browser push needs HTTPS hosting.
 - Checked in the browser on 20 Nov (dev server, test account): bell count, list, mark read, opening an alert shows that place's "My farm" at the newest forecast, settings switches, phone width. A scripted check with `HL_LIVE=1` gave 32 alerts for 32 places, all marked live and "rough guide".
+
+## 22. Live mode on main and release v1.0 (24 November 2026)
+
+At the user's request, `feature/live` was merged into `main` on 24 November 2026, so live mode, the farm outlook and alerts are now part of the main line (live mode is still off unless `HL_LIVE=1`). The submitted, evaluated and demonstrated version is tagged `v1.0`. The report (Chapter 5, section 5.6) names this tag.
+
