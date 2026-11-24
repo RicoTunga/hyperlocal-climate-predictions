@@ -266,6 +266,18 @@ def test_post_test_skill_is_served_separately_from_the_test(client):
 
 
 @pytestmark_data
+def test_live_backtest_is_served_only_in_live_mode(client, monkeypatch):
+    from app import live_data
+    monkeypatch.setenv("HL_LIVE", "0")
+    assert client.get("/api/live_backtest_skill").json() == []
+    monkeypatch.setenv("HL_LIVE", "1")
+    if not live_data.enabled():
+        pytest.skip("no live forecasts on disk (python -m src.live.forecast)")
+    rows = client.get("/api/live_backtest_skill").json()
+    assert rows and {r["model"] for r in rows} == {"standard", "live_v2_qm"}
+
+
+@pytestmark_data
 def test_farm_view_files_are_served_and_linked(client):
     page = client.get("/").text
     assert 'id="farm"' in page and "/farm.css" in page

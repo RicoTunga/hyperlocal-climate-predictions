@@ -137,8 +137,8 @@ export async function renderHud() {
           <span class="dot" aria-hidden="true"></span><b>${esc(a.name)}</b><span class="st">${STATUS[a.status]}</span>
           <span class="hl">${esc(a.headline)}</span></button>`).join("")}</div>`
         : `<button class="link-btn hud-addcrops" data-act="crops">${ICON.leaf} Add your crops for crop advice</button>`}
-      <p class="hud-foot">Replay · issued ${fmtDate(issue, { day: "numeric", month: "short", year: "numeric" })} ·
-        rain reliable to day ${skill}; faded bars are less certain</p>
+      <p class="hud-foot">Issued ${fmtDate(issue, { day: "numeric", month: "short", year: "numeric" })} ·
+        ${skill > 0 ? `rain reliable to day ${skill}; faded bars are less certain` : "live rain: no better than usual in testing"}</p>
     </div>`;
   hud.querySelector(".hud-place-name b").textContent = p.name;
 }

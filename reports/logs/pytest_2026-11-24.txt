@@ -1,0 +1,10 @@
+........................................................................ [ 37%]
+........................................................................ [ 74%]
+.................................................                        [100%]
+============================== warnings summary ===============================
+tests\test_accounts.py:7
+  C:\Users\ericm\hyperlocal-climate-predictions\tests\test_accounts.py:7: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+193 passed, 1 warning in 26.26s

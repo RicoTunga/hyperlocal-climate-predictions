@@ -378,3 +378,39 @@ code { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-siz
 .hud.collapsed .hud-head .eyebrow, .hud.collapsed #hud-place { display: none; }
 .hud.collapsed .hud-place { display: none; }
 @media (max-width: 760px) { .hud { bottom: 156px; } .hud.collapsed { padding: 8px 10px; } }
+
+/* ---------- alerts (notify.js): bell with unread count, alert list ---------- */
+.bell-btn { position: relative; width: 32px; height: 32px; border-radius: 50%; flex: none; }
+.bell-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; stroke-linecap: round; }
+.bell-count { display: none; position: absolute; top: -5px; right: -6px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px;
+  background: var(--act); color: #1a1a19; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; border: 2px solid var(--surface-solid); }
+.bell-btn.has .bell-count { display: block; }
+.bell-btn.has svg { stroke: var(--ink); }
+.alerts-bar { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 10px; }
+.alerts-bar .btn[disabled] { opacity: .45; cursor: default; }
+.alert-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.alert-go { width: 100%; display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: start; text-align: left;
+  padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.03); }
+.alert-go:hover { background: rgba(255,255,255,0.07); }
+.alert.act .alert-go { box-shadow: inset 3px 0 0 var(--act); }
+.alert.watch .alert-go { box-shadow: inset 3px 0 0 var(--warn); }
+.alert.info .alert-go { box-shadow: inset 3px 0 0 var(--good); }
+.alert.quiet .alert-go { opacity: .62; box-shadow: none; }
+.alert-icon { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: rgba(255,255,255,0.06); }
+.alert-icon svg { width: 18px; height: 18px; fill: none; stroke: var(--ink-2); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.alert.act .alert-icon svg { stroke: var(--act); }
+.alert.watch .alert-icon svg { stroke: var(--warn); }
+.alert.info .alert-icon svg { stroke: var(--good); }
+.alert-text { display: grid; gap: 3px; min-width: 0; }
+.alert-top { display: flex; gap: 10px; justify-content: space-between; align-items: baseline; flex-wrap: wrap; }
+.alert-when { color: var(--ink-2); font-size: 12px; white-space: nowrap; }
+.alert-place { display: flex; align-items: center; gap: 4px; color: var(--ink-2); font-size: 12px; }
+.alert-place svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.alert-body { color: var(--ink); font-size: 13px; }
+.alert-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+.rel { font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--ink-2); }
+.rel.good { border-color: rgba(46,194,142,0.55); color: #8fe0c2; }
+.rel.low { border-color: rgba(224,178,74,0.55); color: #ecd08f; }
+.rel.partly { border-color: rgba(46,194,142,0.35); color: #c9d9a8; }
+.alert-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); margin-top: 6px; }
+.alerts-foot { margin: 12px 2px 0; color: var(--ink-3); font-size: 11.5px; }

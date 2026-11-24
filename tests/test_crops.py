@@ -96,3 +96,18 @@ def test_chance_in_words_rounds_to_tenths_and_names_the_extremes():
     assert chance_words(0.66) == "Likely (7 in 10)"
     assert chance_words(0.83) == "Very likely (8 in 10)"
     assert chance_words(0.97).startswith("Almost certain")
+
+
+def test_live_days_take_reliability_from_the_live_backtest():
+    """Live forecasts were no better than climatology for rain in the 2024 backtest: no day is 'good'."""
+    days = week()
+    tested = C.outlook(days, "nakuru")
+    assert tested["rain_skill_days"] == C.RAIN_SKILL_DAYS["nakuru"] and not tested["live"]
+    assert tested["days"][0]["confidence"] == "good"
+    for d in days:
+        d["live"] = True
+    live = C.outlook(days, "nakuru")
+    assert live["live"] and live["rain_skill_days"] == C.LIVE_RAIN_SKILL_DAYS == 0
+    assert all(d["confidence"] == "low" and d["blight_confidence"] == "low" for d in live["days"])
+    adv = C.advise("potato", days, "nakuru", True)
+    assert any("Live forecast" in c for c in adv["caveats"])

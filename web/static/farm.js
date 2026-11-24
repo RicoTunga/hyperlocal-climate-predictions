@@ -4,7 +4,7 @@
 // happened (the app is a replay), and clear labels: a 5 km estimate, not a measurement at the farm;
 // days after the reported test; preliminary data; days not observed yet.
 // Everything from the server or the user is escaped (esc) before it is put into HTML.
-import { state, bus, esc, fmtDate, setState, goToSquare, SITE_NAMES, fmtLatLon, api } from "./app.js";
+import { state, bus, esc, fmtDate, setState, goToSquare, SITE_NAMES, fmtLatLon, api, isLiveIssue } from "./app.js";
 import { homePlace, placeById, placeCoords, getAdvice, ICON, cropsDialog } from "./user.js";
 import { locateMe, focusSearch } from "./search.js";
 import { openSkill } from "./panels.js";
@@ -24,6 +24,16 @@ export function openFarm() {
   document.body.classList.add("farm-open");
   $("#farm-btn")?.setAttribute("aria-pressed", "true");
   renderFarm();
+}
+
+/** Open "My farm" on one saved place at its newest forecast (used by the alerts list). */
+export async function showFarmPlace(placeId) {
+  const p = placeById(placeId);
+  if (!p) return;
+  shownPlace = placeId;
+  const dates = state.dates[p.site];
+  if (dates?.length) await setState({ site: p.site, issue: dates[dates.length - 1] });
+  openFarm();
 }
 
 export function closeFarm() {
@@ -175,6 +185,13 @@ export async function renderFarm() {
     ? `<select id="farm-place" aria-label="Farm shown">${state.places.map((q) => `<option value="${q.id}" ${q.id === p.id ? "selected" : ""}>${esc(q.name)}</option>`).join("")}</select>`
     : "";
   const notes = [];
+  const live = isLiveIssue(p.site, issue);
+  if (live) {
+    const L = state.meta.sites[p.site].live;
+    const src = L.rain_source?.[issue];
+    notes.push(`Live forecast, made from data up to ${fmtDate(issue, { day: "numeric", month: "short" })}: the newest days' weather comes from the ECMWF IFS weather model (via Open-Meteo, adjusted to match ERA5), and ${src === "ifs_rain" ? "the newest days' rain is the weather model's estimate (adjusted to match CHIRPS), because satellite rain data (CHIRPS) are not published yet" : "rain from CHIRPS" + (src === "chirps_prelim" ? " preliminary data" : "")}. These inputs differ from what the models were trained on; a test on 2024 measures the cost (see How reliable is it?).`);
+    notes.push(L.attribution);
+  }
   if (kinds.has("posttest") || kinds.has("forecast")) {
     notes.push(`Forecast made after the reported test period (which ended ${fmtDate(st.test_end || "2026-09-30", { day: "numeric", month: "short", year: "numeric" })}); these days are not part of the evaluated results.`);
   }
@@ -189,13 +206,15 @@ export async function renderFarm() {
     <div class="farm-issue">
       <button class="icon-sm" data-act="prev" aria-label="Forecast made one day earlier"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
       <div><b>Forecast made ${fmtDate(issue, { weekday: "short", day: "numeric", month: "short", year: "numeric" })}</b>
-        <small>${newest ? "the newest forecast the data allow" : "a replay: what the app would have said that day"}</small></div>
+        <small>${live ? "live forecast from near-real-time inputs" : newest ? "the newest forecast the data allow" : "a replay: what the app would have said that day"}</small></div>
       <button class="icon-sm" data-act="next" aria-label="Forecast made one day later" ${newest ? "disabled" : ""}><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
       ${newest ? "" : '<button class="btn small" data-act="newest">Newest</button>'}
     </div>
     <p class="farm-summary">${esc(adv.outlook.summary)}</p>
     <ol class="farm-days">${days.map((d, k) => cardHTML(d, k, hasBlight, why)).join("")}</ol>
-    <p class="farm-trust">Rain forecasts here beat the usual for the time of year only <b>${skill} day${skill > 1 ? "s" : ""} ahead</b>; later days are a rough guide, close to what is normal for the date. Humidity and blight weather hold up longer.
+    <p class="farm-trust">${skill > 0
+      ? `Rain forecasts here beat the usual for the time of year only <b>${skill} day${skill > 1 ? "s" : ""} ahead</b>; later days are a rough guide, close to what is normal for the date. Humidity and blight weather hold up longer.`
+      : `In a test on 2024, live rain forecasts were <b>no better than the usual for the time of year</b>, because the newest satellite rain data arrive days late. Treat every day as a rough guide.`}
       <button class="link-btn" data-act="skill">How reliable is it?</button></p>
     ${notes.length ? `<div class="farm-notes">${notes.map((n) => `<p>${esc(n)}</p>`).join("")}</div>` : ""}
     ${adv.crops.length ? `<h3 class="farm-h3">Your crops</h3><div class="farm-crops">${adv.crops.map((a) => `

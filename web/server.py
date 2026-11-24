@@ -38,6 +38,10 @@ API
     /api/shap_summary                             what drives the forecasts overall (validation SHAP)
     /api/skill, /api/calibration, /api/blight_skill   committed result tables (reported test period)
     /api/posttest_skill, /api/posttest_blight_skill   post-test period (after the reported test; [] if not run)
+    /api/live_backtest_skill   2024 backtest of live inputs vs normal inputs (only with HL_LIVE=1; else [])
+    /api/notifications                            alerts for the saved places from the newest forecast (GET; refreshes
+                                                  them first); POST /api/notifications/read {ids|all},
+                                                  /api/notifications/prefs {kind: on/off}  (see web/notify.py)
     /api/admin/users                              (admin) accounts and recent sign-in events
 """
 import hmac
@@ -63,6 +67,8 @@ from web import crops as crops_mod
 from web import raster
 from web.auth import ABSOLUTE_SECONDS, AuthError, AuthStore, PolicyError, RateLimiter
 from web.mailer import make_mailer, reset_message, verify_message
+from web.notify import KIND_NAMES, NotificationStore, NotifyError
+from web.notify import detect as detect_alerts
 from web.settings import Settings, settings
 from web.userdata import USER_TYPES, UserData, UserDataError
 
@@ -214,7 +220,8 @@ def api_day(site, issue):
     d = day(site, issue)
     order = list(pixels(site)["pixel_id"])
     cols = DAY_COLUMNS + (BLIGHT_COLUMNS if meta()[site]["has_blight"] else [])
-    out = {"issue": issue, "pixels": order, "horizons": {}}
+    from app import live_data
+    out = {"issue": issue, "pixels": order, "horizons": {}, "live": live_data.enabled() and live_data.is_live(site, issue, meta())}
     status = meta()[site].get("status")
     for h, g in d.groupby("horizon"):
         g = g.set_index("pixel_id").reindex(order)
@@ -254,8 +261,12 @@ def api_why(site, pixel_id, issue):
     if pixel_id not in set(pixels(site)["pixel_id"]):
         raise BadRequest(f"unknown pixel '{pixel_id}'")
     m = shap_meta()
-    rows = pd.read_parquet(C.DATA / f"{site}_shap.parquet",
-                           filters=[("issue_date", "==", pd.Timestamp(issue)), ("pixel_id", "==", pixel_id)])
+    from app import live_data
+    if live_data.enabled() and live_data.is_live(site, issue, meta()):
+        rows = live_data.shap_rows(site, issue, pixel_id)
+    else:
+        rows = pd.read_parquet(C.DATA / f"{site}_shap.parquet",
+                               filters=[("issue_date", "==", pd.Timestamp(issue)), ("pixel_id", "==", pixel_id)])
     out = {"groups": [{"key": g, "label": m["labels"][g]} for g in m["groups"]], "targets": {}}
     for target in m["sites"][site]["targets"]:
         per_h = {}
@@ -290,10 +301,47 @@ def api_advice(site, pixel_id, issue, crops_param):
     for c in wanted:
         if c not in crops_mod.CROPS:
             raise BadRequest(f"unknown crop '{c}'")
-    days = crops_mod.pixel_days(day(site, issue), pixel_id, meta()[site].get("status"))
+    days = place_days(site, pixel_id, issue)  # live days: reliability comes from the live backtest, not the final test
     has_blight = meta()[site]["has_blight"]
     return {"issue": issue, "site": site, "pixel_id": pixel_id, "outlook": crops_mod.outlook(days, site),
             "crops": [crops_mod.advise(c, days, site, has_blight) for c in wanted]}
+
+
+def newest_issue(site) -> str:
+    return str(pd.Timestamp(meta()[site]["issue_max"]).date())
+
+
+def place_days(site, pixel_id, issue) -> list[dict]:
+    """The 7 forecast days for one square, with live days marked (as in api_advice)."""
+    days = crops_mod.pixel_days(day(site, issue), pixel_id, meta()[site].get("status"))
+    from app import live_data
+    if live_data.enabled() and live_data.is_live(site, issue, meta()):
+        for d in days:
+            d["live"] = True
+    return days
+
+
+def refresh_alerts(app, user_id: int) -> None:
+    """Check each saved place against the newest forecast of its site and merge the result (web/notify.py)."""
+    ud: UserData = app.state.userdata
+    store: NotificationStore = app.state.notify
+    prefs, crops = store.prefs(user_id), ud.crops(user_id)
+    kinds = [k for k, on in prefs.items() if on]
+    for p in ud.places(user_id):
+        if p["site"] not in SITES or p["pixel_id"] not in set(pixels(p["site"])["pixel_id"]):
+            continue
+        issue = newest_issue(p["site"])
+        days = place_days(p["site"], p["pixel_id"], issue)
+        events = detect_alerts(days, p["site"], crops, meta()[p["site"]]["has_blight"], kinds)
+        store.sync(user_id, p["id"], issue, days, events)
+
+
+def api_notifications(app, user_id: int) -> dict:
+    refresh_alerts(app, user_id)
+    store: NotificationStore = app.state.notify
+    items = store.items(user_id, {s: newest_issue(s) for s in SITES})
+    return {"items": items, "unread": sum(1 for i in items if not i["read"] and i["state"] == "active" and not i["ended"]),
+            "prefs": store.prefs(user_id), "kinds": KIND_NAMES}
 
 
 def table(path, query=None):
@@ -355,7 +403,7 @@ def writer(fn):
             return err
         try:
             return await fn(request)
-        except (BadRequest, PolicyError, UserDataError) as e:
+        except (BadRequest, PolicyError, UserDataError, NotifyError) as e:
             return json_error(str(e), 400)
     return endpoint
 
@@ -440,6 +488,15 @@ def r_posttest_skill(request):
     return json_ok(table("posttest/skill.csv", "model == 'catboost' and metric in ['bss', 'rmse_skill']"))
 
 
+def r_live_backtest_skill(request):
+    """Validation-2024 backtest (src.live.backtest): the same development models with normal inputs
+    ('standard') and with the live inputs actually used ('live_v2_qm'). Shown only when live mode is on."""
+    from app import live_data
+    if not live_data.enabled() or not (C.REPORTS / "live" / "backtest_skill.csv").exists():
+        return json_ok([])
+    return json_ok(table("live/backtest_skill.csv", "model in ['standard', 'live_v2_qm'] and metric in ['bss', 'rmse_skill']"))
+
+
 def r_posttest_blight_skill(request):
     if not (C.REPORTS / "posttest" / "late_blight_skill.csv").exists():
         return json_ok([])
@@ -499,6 +556,24 @@ async def r_place_edit(request):
 async def r_crops_set(request):
     b = await read_json(request)
     return json_ok({"crops": request.app.state.userdata.set_crops(uid(request), b.get("crops"))})
+
+
+async def r_notifications(request):
+    return json_ok(await run_in_threadpool(api_notifications, request.app, uid(request)))
+
+
+@writer
+async def r_notifications_read(request):
+    b = await read_json(request)
+    ids = None if b.get("all") is True else b.get("ids")
+    if ids is None and b.get("all") is not True:
+        raise BadRequest("give ids or all: true")
+    return json_ok({"marked": request.app.state.notify.mark_read(uid(request), ids)})
+
+
+@writer
+async def r_notifications_prefs(request):
+    return json_ok({"prefs": request.app.state.notify.set_prefs(uid(request), await read_json(request))})
 
 
 @writer
@@ -787,6 +862,9 @@ def create_app(cfg: Settings | None = None, store: AuthStore | None = None) -> S
         Route("/api/places/{place_id}", r_place_edit, methods=["POST", "DELETE"]),
         Route("/api/crops", r_crops, methods=["GET"]),
         Route("/api/crops", r_crops_set, methods=["POST"]),
+        Route("/api/notifications", r_notifications, methods=["GET"]),
+        Route("/api/notifications/read", r_notifications_read, methods=["POST"]),
+        Route("/api/notifications/prefs", r_notifications_prefs, methods=["POST"]),
         Route("/api/account", r_account, methods=["POST"]),
         Route("/api/account/password", r_account_password, methods=["POST"]),
         Route("/api/account/sessions", r_account_sessions, methods=["POST"]),
@@ -806,6 +884,7 @@ def create_app(cfg: Settings | None = None, store: AuthStore | None = None) -> S
         Route("/api/blight_skill", r_blight_skill),
         Route("/api/posttest_skill", r_posttest_skill),
         Route("/api/posttest_blight_skill", r_posttest_blight_skill),
+        Route("/api/live_backtest_skill", r_live_backtest_skill),
         Route("/api/{rest:path}", lambda request: json_error("not found", 404)),
         Route("/", r_static),
         Route("/{path:path}", r_static),
@@ -814,6 +893,7 @@ def create_app(cfg: Settings | None = None, store: AuthStore | None = None) -> S
     app.state.settings = cfg
     app.state.store = store or AuthStore(cfg.auth_db)
     app.state.userdata = UserData(app.state.store.path, SITES, crops_mod.CROP_IDS)
+    app.state.notify = NotificationStore(app.state.store.path)  # after UserData: its table refers to places
     app.state.mailer = make_mailer(cfg.smtp)
     app.state.limiter = RateLimiter(limit=20, window=600)
     app.state.signup_limiter = RateLimiter(limit=5, window=3600)

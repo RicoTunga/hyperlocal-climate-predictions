@@ -202,9 +202,9 @@ export async function openSkill() {
   $("#skill-modal").hidden = false;
   if (!skillData) {
     $("#skill-body").innerHTML = `<div class="section-note">Loading…</div>`;
-    const [skill, cal, blight, post] = await Promise.all([api("/api/skill"), api("/api/calibration"), api("/api/blight_skill"),
-      api("/api/posttest_skill").catch(() => [])]);
-    skillData = { skill, cal, blight, post };
+    const [skill, cal, blight, post, live] = await Promise.all([api("/api/skill"), api("/api/calibration"), api("/api/blight_skill"),
+      api("/api/posttest_skill").catch(() => []), api("/api/live_backtest_skill").catch(() => [])]);
+    skillData = { skill, cal, blight, post, live };
   }
   renderSkill();
 }
@@ -232,7 +232,7 @@ function skillChart(rows, colourKey, colours, height = 280, width = 620) {
 }
 
 function renderSkill() {
-  const { skill, cal, blight, post } = skillData;
+  const { skill, cal, blight, post, live } = skillData;
   const periods = [...new Set(skill.map((d) => d.period))];
   const rows = skill.filter((d) => d.target === pick.target && d.reference === pick.reference && d.period === pick.period)
     .map((d) => ({ ...d, site: d.site[0].toUpperCase() + d.site.slice(1) }));
@@ -255,7 +255,13 @@ function renderSkill() {
       <p>The same frozen models on data that arrived after the reported test. <b>Not part of the evaluated results.</b> Only 31 + 14 days,
       so the intervals are rough. November uses <b>preliminary</b> rain data, which may change. October 2026 was a quiet, dry month at Nakuru
       (one widespread rain day), and day-1 rain there was no better than the normal for the date. In early November, Busia's rain forecasts
-      were slightly <b>worse</b> than the normal from day 2, while Nakuru's day-1 and day-2 rain forecasts were clearly better.</p><div id="s-post"></div></div>` : ""}`;
+      were slightly <b>worse</b> than the normal from day 2, while Nakuru's day-1 and day-2 rain forecasts were clearly better.</p><div id="s-post"></div></div>` : ""}
+    ${live.length ? `<div class="card post-card live-card" style="margin-top:14px"><h3>Live forecasts: how much do the live inputs cost?</h3>
+      <p>A live forecast cannot wait for the satellite rain (CHIRPS) and ERA5 weather the models were trained on: they arrive days late.
+      The live forecasts use ERA5 where it exists, the ECMWF IFS weather model (via Open-Meteo, adjusted to ERA5) for the newest days, and the
+      weather model's rain (adjusted to CHIRPS) for the days CHIRPS has not published yet. This test re-ran 2024 (the validation year) both ways with
+      the development models. <b>With live inputs, rain was no better than the normal for the date at any lead time</b>, because the newest
+      rain days are missing; Nakuru's humidity stayed clearly better than the normal on days 1–2. Late blight was not tested this way.</p><div id="s-live"></div></div>` : ""}`;
   $("#s-chart").append(skillChart(rows, "site", C.site, 300, 1000));
   const bl = blight.map((d) => ({ horizon: d.horizon, estimate: d.bss_vs_climatology, ci_low: d.bss_vs_climatology_low,
     ci_high: d.bss_vs_climatology_high, rule: d.rule === "hutton" ? "Hutton" : "Humidity only" }));
@@ -279,6 +285,19 @@ function renderSkill() {
       }).join("")}</tr>`).join("")}</tbody></table>
       <p class="section-note">${TARGETS[pick.target]}, skill compared with ${pick.reference === "climatology" ? "the normal for the date" : "“same as today”"}. Bold: the 95% interval excludes 0.</p>`;
   }
+  if (live.length) {
+    const lr = live.filter((d) => d.target === pick.target && d.reference === pick.reference)
+      .map((d) => ({ ...d, series: `${d.site[0].toUpperCase() + d.site.slice(1)}, ${d.model === "standard" ? "normal inputs" : "live inputs"}` }));
+    const series = ["Nakuru, normal inputs", "Nakuru, live inputs", "Busia, normal inputs", "Busia, live inputs"].filter((k) => lr.some((d) => d.series === k));
+    const fmt = (d) => `${d.estimate >= 0 ? "+" : "−"}${Math.abs(d.estimate).toFixed(3)} <small>[${d.ci_low.toFixed(2)}, ${d.ci_high.toFixed(2)}]</small>`;
+    $("#s-live").innerHTML = series.length ? `<table class="data"><thead><tr><th>Days ahead</th>${series.map((k) => `<th>${k}</th>`).join("")}</tr></thead><tbody>${
+      [1, 2, 3, 4, 5, 6, 7].map((h) => `<tr><td>${h}</td>${series.map((k) => {
+        const d = lr.find((x) => x.series === k && x.horizon === h);
+        return `<td class="${d && (d.ci_low > 0 || d.ci_high < 0) ? "clear" : ""}">${d ? fmt(d) : "–"}</td>`;
+      }).join("")}</tr>`).join("")}</tbody></table>
+      <p class="section-note">${TARGETS[pick.target]}, skill compared with ${pick.reference === "climatology" ? "the normal for the date" : "“same as today”"}, validation 2024 (14 Apr – 31 Dec). Bold: the 95% interval excludes 0.</p>`
+      : `<p class="section-note">Not scored for this choice.</p>`;
+  }
   $("#s-target").addEventListener("change", (e) => { pick.target = e.target.value; renderSkill(); });
   $("#s-ref").addEventListener("change", (e) => { pick.reference = e.target.value; renderSkill(); });
   $("#s-period").addEventListener("change", (e) => { pick.period = e.target.value; renderSkill(); });
@@ -287,10 +306,18 @@ function renderSkill() {
 // ---------------------------------------------------------------- about overlay
 export function openAbout() {
   const m = state.meta.sites;
+  const live = m.nakuru.live || m.busia.live;
   $("#about-body").innerHTML = `
-    <div class="notice">Research prototype (Strathmore University). A replay of past forecasts from January 2025 to the newest data
-    (${state.meta.sites.nakuru.issue_max}), not a live or official forecast: the Kenya Meteorological Department is the authority.</div>
-    <h3>What the replay covers</h3>
+    <div class="notice">Research prototype (Strathmore University). ${live
+      ? `Live research forecasts up to ${esc(live.issue_max)}, and every past forecast since January 2025 next to what happened.`
+      : `Forecasts from January 2025 to the newest data (${m.nakuru.issue_max}), each next to what happened.`}
+    Not an official forecast: the Kenya Meteorological Department is the authority.</div>
+    ${live ? `<h3>Live forecasts</h3>
+    <p>Each day the same frozen models make a new forecast from the newest data. Rain the satellites have not yet published (the last
+    2–7 days) and the newest weather (about 5 days) come from the ECMWF IFS weather model via Open-Meteo, adjusted to match the data the
+    models were trained on. In a test on 2024, live rain forecasts were no better than the normal for the date, so every live day is
+    marked as a rough guide; humidity held up better. ${esc(live.attribution)}.</p>` : ""}
+    <h3>What the past forecasts cover</h3>
     <p><b>8 Jan 2025 – 30 Sep 2026: the reported test.</b> Scored once, with the protocol fixed in advance; these are the results in
     “How good is it?”. <b>From 1 Oct 2026: after the test.</b> The same frozen models, shown and scored separately. Observed rain from
     1 Nov 2026 is <b>preliminary</b> (CHIRPS publishes the final values in the third week of the next month), and ERA5 values from about
@@ -306,10 +333,10 @@ export function openAbout() {
     <h3>How</h3>
     <p>CatBoost gradient-boosting models trained on 2016–2024 with inputs from CHIRPS rainfall, ERA5 weather and SRTM elevation.
     Every result is compared with the normal for the date (climatology) and “same as today” (persistence).</p>
-    <h3>Why a replay</h3>
+    <h3>Why past forecasts are shown</h3>
     <p>The models start from the weather up to the day the forecast is made. CHIRPS rain arrives 2–7 days late (preliminary) and
-    ERA5 about 5 days late, so the newest forecast the data allow is always a few days old. The replay shows forecasts the models never
-    saw during training, each next to what happened.</p>
+    ERA5 about 5 days late${live ? ", which is why live forecasts need a weather model for the newest days" : ", so the newest forecast the data allow is always a few days old"}.
+    Past forecasts show what the models said on days they never saw during training, each next to what happened.</p>
     <h3>Caveats</h3>
     <ul>
       <li>“Observed” is itself an estimate: CHIRPS v2.0 (satellite plus gauges) for rain, ERA5 reanalysis (~28 km) for humidity.
